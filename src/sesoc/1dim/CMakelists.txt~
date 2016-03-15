@@ -1,6 +1,0 @@
-
-#Required CMake Version
-cmake_minium_required(VERSION 3.0)
-
-
-#Add Subdirectories
