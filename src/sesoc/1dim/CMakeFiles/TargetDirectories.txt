@@ -1,0 +1,3 @@
+/home/max/git/sesoc/src/sesoc/1dim/CMakeFiles/edit_cache.dir
+/home/max/git/sesoc/src/sesoc/1dim/CMakeFiles/rebuild_cache.dir
+/home/max/git/sesoc/src/sesoc/1dim/CMakeFiles/1dim.dir

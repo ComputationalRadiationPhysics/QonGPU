@@ -1,0 +1,1 @@
+/usr/bin/c++   --std=c++11 -O3   CMakeFiles/1dim.dir/1dim_generated_main.cu.o  -o 1dim -rdynamic /opt/cuda/lib64/libcudart_static.a -lpthread -ldl -lrt -lhdf5_hl -lhdf5 -lhdf5_hl -lhdf5 -lpthread -lz -ldl -lm 

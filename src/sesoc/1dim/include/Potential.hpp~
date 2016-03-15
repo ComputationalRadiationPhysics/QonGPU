@@ -1,0 +1,9 @@
+#ifnedf POTENTIAL
+#define POTENTIAL
+
+__device__ double V(x,t){
+
+	return 0; 
+
+};
+#endif 

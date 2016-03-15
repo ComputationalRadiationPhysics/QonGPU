@@ -1,0 +1,9 @@
+#ifndef DATAINIT_HPP
+#define DATAINIT_HPP
+
+
+typedef struct SimData{
+	double* energy;
+	double* Psi;
+} data;
+#endif
