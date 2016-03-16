@@ -6,6 +6,7 @@
 #include "Definition.hpp"
 #include "Potential.hpp"
 #include "NumerovKernel.hpp"
+#include "StaticSolver.hpp"
 int main(int argc, char **argv){
 
 	SimData* s=Allocation(NE,NX);
