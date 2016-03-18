@@ -16,7 +16,6 @@ project(qsolve)
 
 set(CMAKE_CXX_FLAGS "--std=c++11")
 
-
 ######
 #Find Packages
 #####
@@ -26,7 +25,7 @@ find_package(CUDA REQUIRED)
 set(LIBS ${LIBS} ${CUDA_LIBRARIES})
 set(LIBS ${LIBS} ${CUDA_CUBLAS_LIBRARIES})
 set(LIBS ${LIBS} ${CUDA_cusparse_LIBRARY})
-
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_20)
 
 #Find MPI
 #find_package(MPI REQUIRED)
@@ -45,7 +44,9 @@ include_directories(${BOOST_INCLUDE_DIR})
 
 if(${CUDA_FOUND})
   message("-- Using CUDA")
-  include_directories("${PROJECT_SOURCE_DIR}/include")
+  include_directories("${PROJECT_SOURCE_DIR}/include/")
+  include_directories("${PROJECT_SOURCE_DIR}/include/*")
+  link_directories("${PROJECT_SOURCE_DIR}/include/")
   file(GLOB SRC_FILES "main.cu")
   cuda_add_executable(qsolve ${SRC_FILES})
   target_link_libraries(qsolve ${LIBS} )

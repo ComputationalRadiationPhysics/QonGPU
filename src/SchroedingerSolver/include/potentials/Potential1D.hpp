@@ -1,6 +1,6 @@
 #ifndef POTENTIAL1D_H
-#define POTENTIAL_H
-#include "Potential1D.hpp"
+#define POTENTIAL1D_H
+#include "Potential.hpp"
 class Potential1D : public Potential{
 
 };

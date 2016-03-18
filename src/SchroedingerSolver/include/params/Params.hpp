@@ -1,6 +1,10 @@
+
 #ifndef PARAMS_H
 #define PARAMS_H
 
-class Params{};
+class Params{
+
+public:
+};
 
 #endif

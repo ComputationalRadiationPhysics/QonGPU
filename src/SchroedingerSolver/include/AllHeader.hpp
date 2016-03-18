@@ -16,8 +16,11 @@
 #include "static/StaticSolver2D.hpp"
 #include "static/StaticSolver3D.hpp"
 
-#include "params/Params.hpp"
+#include "potentials/Potential.hpp"
+#include "potentials/Potential1D.hpp"
+#include "potentials/Potential2D.hpp"
+#include "potentials/Potential3D.hpp"
 
-
-
+#include "output/IOHandle.hpp"
+#include "static/Numerov1D.hpp"
 #endif

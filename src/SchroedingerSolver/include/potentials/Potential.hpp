@@ -2,7 +2,7 @@
 #define POTENTIAL_H
 
 class Potential{};
-x
+
 
 
 #endif

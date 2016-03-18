@@ -1,7 +1,11 @@
 #ifndef STATICSOLVER_H
 #define STATICSOLVER_H
 
-class StaticSolver{};
+class StaticSolver{
+public:
+	StaticSolver(){};
+    void solve();
+};
 
 #endif
 
