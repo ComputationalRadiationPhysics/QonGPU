@@ -29,8 +29,18 @@ class Numerov: protected StaticSolver1D {
 
 public:
 	void solve();
-	Numerov(Params1D& p,std::complex<double>* ps){};
+	void allocresult();
+	void bisect();
+	Numerov(Params1D* pa,std::complex<double>* ps){
+		param=pa;
+		p=ps;
+	};
+	
 	Numerov(){};
+protected:
+	std::complex<double>* psil;
+	std::complex<double>* p;
+	Params1D* param;
 };
 
 
