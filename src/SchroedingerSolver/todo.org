@@ -1,0 +1,3 @@
+* TASKS
+** TODO get type checking working
+*** TODO in SimDef.cu

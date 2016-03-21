@@ -6,8 +6,6 @@
 #include "boost/static_assert.hpp"
 #include "boost/type_traits/is_base_of.hpp"
 #include "thrust/complex.h"
-#include "thrust/host_vector.h"
-#include "thrust/device_vector.h"
 #include "AllHeader.hpp"
 
 
@@ -19,14 +17,16 @@ class SimDef
 
 	
 public:
-	SimDef(Params1D *p){
-		da=p;
+	SimDef(Params1D *p):da(p),s(p,psi0){
+		 
 	};
-	SimDef(Params2D *p){
+	SimDef(Params2D *p):da(p){
 	};
-	SimDef(Params3D *p){
+	SimDef(Params3D *p):da(p){
 	};
 	void staticsolve(){
+		std::cout << "Debug 1" << std::endl;
+		s.solve();
     };
 	void timerev(){
 
@@ -34,7 +34,16 @@ public:
 	void printres(){
 
 	};
-
+	~SimDef(){
+		delete &s;
+		delete &t;
+		delete &io;
+		delete &p;
+		delete da;
+		free(psi0);
+		free(psi);
+		free(npsi);
+	};
 
 	
 private:
@@ -46,7 +55,7 @@ private:
 	Para *da;
 	std::complex<double>* psi0;
 	std::complex<double>* psi;
-	double npsi;
+	double* npsi;
 
 
 

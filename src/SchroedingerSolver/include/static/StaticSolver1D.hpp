@@ -3,9 +3,9 @@
 
 class StaticSolver1D: StaticSolver {
 public:
-	StaticSolver1D(Params1D& p,std::complex<double>* ps):psi0(ps){};
+	StaticSolver1D(Params1D* pa,std::complex<double>* ps):p(pa),psi0(ps){};
 	StaticSolver1D(){};
-    void solve();
+    void staticsolve();
 protected:
 	std::complex<double>* psi0;
     Params1D* p;
