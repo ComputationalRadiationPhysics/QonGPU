@@ -11,11 +11,7 @@
 
 
 template <class StatSolver,class TimeOp,class IO,class Pot,class Para,int dim>
-class SimDef
-{
-
-
-	
+class SimDef{
 public:
 	SimDef(Params1D *p):da(p),s(p,psi0){
 		 
@@ -27,22 +23,13 @@ public:
 	void staticsolve(){
 		std::cout << "Debug 1" << std::endl;
 		s.solve();
-    };
+		DEBUG("CALL 2")
+	};
 	void timerev(){
 
 	};
 	void printres(){
 
-	};
-	~SimDef(){
-		delete &s;
-		delete &t;
-		delete &io;
-		delete &p;
-		delete da;
-		free(psi0);
-		free(psi);
-		free(npsi);
 	};
 
 	
