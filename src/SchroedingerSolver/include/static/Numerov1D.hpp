@@ -10,7 +10,7 @@
 
 
 __device__ double V(double x,double t){
-	return 0.5*x*x;
+	return 1/sqrt(1+x*x);
 };
 
 
@@ -36,25 +36,26 @@ __global__ void Numerov(double* psi, int ne,int nx,double  xmax, double xmin){
 };
 */
 
-__global__ void NumerovKernel(double* psi, int nx,int ne, double xmax,double xmin){
-	int tid = nx*(threadIdx.x+blockIdx.x*blockDim.x);
-	int offset = nx*blockDim.x*gridDim.x;
-	double dx = xmax/((double)nx);
+__global__ void NumerovKernel(double* psi,size_t nx,size_t ne, double xmax,double xmin){
+	unsigned int tid = nx*(threadIdx.x+blockIdx.x*blockDim.x);//Should always show to the psi_n(x=0) at the energy level E_n
+    uint offset = nx*blockDim.x*gridDim.x;
+	double dx = (xmax-xmin)/((double)nx);
 	double E;
+	double dE=-1.0;
 	double f1,f2,f3;
-	double xpos;
 	while(tid<ne*nx){
-		E=1/((double)ne)*((double)tid/nx);
-		for(int i = 2; i<nx-1;i++){
-			xpos=dx*(double)i;
-			f1=1/(1+dx*dx/6*(E-V(xpos,0)));
-			f2=(1-5.0/6.0*dx*dx*(E-V(xpos+dx,0)));
-			f3=(1+dx*dx/6.0*(E-V(xpos-dx,0)));
+		E=tid*dE/(ne*nx);
+		printf("Using Numerov with Energy %lf \n",E);
+		for(size_t i = 2; i<nx;i++){
+			f1=1/(1+dx*dx*(E+V((i+1)*dx+xmin,0))/12);
+			f2=(1-5*dx*dx/12*(E+V(i*dx+xmin,0)));
+			f3=(1+dx*dx/12*(E+V((i-1)*dx+xmin,0)));	
 			psi[i+1+tid]=f1*(2*psi[i+tid]*f2-psi[i-1+tid]*f3);
 		};			
 		tid+=offset;
 	};
 };
+
 
 class Numerov1D: protected StaticSolver1D {
 
@@ -63,12 +64,14 @@ public:
 	void allocresult();
 	void bisect();
 	Numerov1D(Params1D* pa,std::complex<double>* ps):param(pa),p(ps){
-		 nx = (param->getnx());
-		 ne =  (param->getne());
+	    nx = (param->getnx());
+		ne =  (param->getne());
+		DEBUG("CALL 3")		 
 		psi=(double*) malloc(sizeof(double)*nx*ne);
-		for(int i = 0; i < nx*ne; i+=nx){
-			psi[i]=0;
-			psi[i+1]=1e-5;
+		DEBUG("CALL 4")
+		for(size_t i = 0; i < nx*ne; i+=nx){
+    		psi[i]=0;
+    		psi[i+1]=1e-7;
 		};
 	};
 	Numerov1D(){};
@@ -83,7 +86,7 @@ protected:
 	Params1D* param;
 	Potential1D pot;
 	void tempprint(double* temp,Params1D* p);
-	int nx,ne;
+	size_t nx,ne;
 };
 
 
@@ -94,12 +97,13 @@ protected:
  */ 
 void Numerov1D::solve(){
 	double* dev_ptr;
+	DEBUG("CALL: BEGIN_SOLVE")
 	//Allocate needed Memomry, in this case an nx*ne double array!
 	cudaMalloc((void**)&dev_ptr,sizeof(double)*nx*ne);
 	//copy Memory to the device
 	cudaMemcpy(dev_ptr,psi,sizeof(double)*nx*ne,cudaMemcpyHostToDevice);
 	//call the actual Kernel
-	NumerovKernel<<<256,1>>>(dev_ptr,nx,ne,param->getxmax(),param->getxmin());
+	NumerovKernel<<<100,1>>>(dev_ptr,nx,ne,param->getxmax(),param->getxmin());
 	//fetch the results into the psi array!
 	cudaMemcpy(psi,dev_ptr,sizeof(double)*nx*ne,cudaMemcpyDeviceToHost);
 	//free the cuda Memory
@@ -148,27 +152,9 @@ void Numerov1D::tempprint(double* temp,Params1D* p){
  *and include the index as well as the energy in a std::vector<double>
  *
  */
-/*
+
 void Numerov1D::bisect(){
-	int pre=signbit(psi[nx]);
-	int preindex=nx;
-	for(int i = 2*nx; i<ne*nx;i+=ne){
-		if( signbit(psi[i])!= pre){
-			pre=signbit(psi[i]);
-			preindex=i;
-			std::cout<<"No Level on this index pair!"<<std::endl;
-			std::cout<<"Sign of Psi(pre): "<<pre<<std::endl;
-		}
-		else{
-			if(fabs(psi[preindex])<fabs(psi[i])){
-				std::cout<<"Energy Level found!"<<std::endl;
-				
-			}
-			else{
-				std::cout<<"Energy Level found!"<<std::endl;
-			}
-		}
-	}	
-	};
-*/
+	
+};
+
 #endif

@@ -14,14 +14,13 @@ template <class StatSolver,class TimeOp,class IO,class Pot,class Para,int dim>
 class SimDef{
 public:
 	SimDef(Params1D *p):da(p),s(p,psi0){
-		 
+		DEBUG("CALL CONSTRUCTOR")
 	};
 	SimDef(Params2D *p):da(p){
 	};
 	SimDef(Params3D *p):da(p){
 	};
 	void staticsolve(){
-		std::cout << "Debug 1" << std::endl;
 		s.solve();
 		DEBUG("CALL 2")
 	};
