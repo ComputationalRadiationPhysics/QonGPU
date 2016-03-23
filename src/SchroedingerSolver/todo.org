@@ -1,13 +1,13 @@
 * TASKS
-** TODO 1.get type checking working
-*** TODO For the whole project:
+*** TODO 1.Get type checking working
+**** TODO For the whole project:
 Since I had the glourious idea to use some templates, 
 I failed horribly to get type safety working. Therefore I'll need
 a way to get some Typesafety in SimDef.hpp. I improvised and since I know 
 not a single person willing to us/intrested in the project it's not that important 
-** TODO 2.rewrite to thrus::vector<cuDoubleComplex>
+*** TODO 2.Rewrite to thrus::vector<cuDoubleComplex>
 *** TODO in Numerov1d!!
-
+	
 * Known BUGS
 ** TODO 1. High resource needs will fail: 
 Since psi is first saved in an array of dimension ne*nx, the attempt to allocate 
@@ -18,17 +18,8 @@ future, but since time is currently an important factor I simply don't have the 
 
 * Current status:
   | Bug  number | status |
-  |          1. | TBD    |
-  |             |        |
-  |             |        |
-  |             |        |
-  |             |        |
-  |             |        |
-  |             |        |
-  |             |        |
-  |             |        |
-  |             |        |
+  |          1. | :x:    |
   | Task number | status |
-  |          1. | TBD    |
-  |          2. | TBD    |
+  |          1. | :x:    |
+  |          2. | :x:    |
   
