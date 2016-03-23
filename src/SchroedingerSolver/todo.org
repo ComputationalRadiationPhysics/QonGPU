@@ -12,7 +12,7 @@ not a single person willing to us/intrested in the project it's not that importa
 ** TODO 1. High resource needs will fail: 
 Since psi is first saved in an array of dimension ne*nx, the attempt to allocate 
 an array bigger in size than size_t will fail horribly! I will fix this in the
-future, but since time is currently an important factor I simply don't have the time!
+future, but since time is currently an important factor I simply cannot!
 
 
 
