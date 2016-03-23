@@ -10,7 +10,7 @@
 
 
 __device__ double V(double x,double t){
-	return 1/sqrt(1+x*x);
+	return 1/sqrt(x*x);
 };
 
 
@@ -40,20 +40,21 @@ __global__ void NumerovKernel(double* psi,size_t nx,size_t ne, double xmax,doubl
 	unsigned int tid = nx*(threadIdx.x+blockIdx.x*blockDim.x);//Should always show to the psi_n(x=0) at the energy level E_n
     uint offset = nx*blockDim.x*gridDim.x;
 	double dx = (xmax-xmin)/((double)nx);
-	double E;
-	double dE=-1.0;
+	double E= -1.0;
+	double dE=E/((double)ne);
 	double f1,f2,f3;
+   
 	while(tid<ne*nx){
-		E=tid*dE/(ne*nx);
-		printf("Using Numerov with Energy %lf \n",E);
-		for(size_t i = 2; i<nx;i++){
-			f1=1/(1+dx*dx*(E+V((i+1)*dx+xmin,0))/12);
-			f2=(1-5*dx*dx/12*(E+V(i*dx+xmin,0)));
-			f3=(1+dx*dx/12*(E+V((i-1)*dx+xmin,0)));	
+		E=tid*dE/(nx);
+		printf("Using Numerov with E=%lf \n",E);
+		for(size_t i = 2; i<nx ;i++){
+			f1=1/(1+dx*dx*(1*(E+V((i+1)*dx+xmin,0)))/12);
+			f2=(1-5*dx*dx/12*(2*(E+V(i*dx+xmin,0))));
+			f3=(1+dx*dx/12*(2*(E+V((i-1)*dx+xmin,0))));	
 			psi[i+1+tid]=f1*(2*psi[i+tid]*f2-psi[i-1+tid]*f3);
 		};			
 		tid+=offset;
-	};
+    };
 };
 
 
@@ -66,12 +67,10 @@ public:
 	Numerov1D(Params1D* pa,std::complex<double>* ps):param(pa),p(ps){
 	    nx = (param->getnx());
 		ne =  (param->getne());
-		DEBUG("CALL 3")		 
 		psi=(double*) malloc(sizeof(double)*nx*ne);
-		DEBUG("CALL 4")
 		for(size_t i = 0; i < nx*ne; i+=nx){
     		psi[i]=0;
-    		psi[i+1]=1e-7;
+    		psi[i+1]=1e-8;
 		};
 	};
 	Numerov1D(){};
@@ -103,7 +102,7 @@ void Numerov1D::solve(){
 	//copy Memory to the device
 	cudaMemcpy(dev_ptr,psi,sizeof(double)*nx*ne,cudaMemcpyHostToDevice);
 	//call the actual Kernel
-	NumerovKernel<<<100,1>>>(dev_ptr,nx,ne,param->getxmax(),param->getxmin());
+	NumerovKernel<<<256,1>>>(dev_ptr,nx,ne,param->getxmax(),param->getxmin());
 	//fetch the results into the psi array!
 	cudaMemcpy(psi,dev_ptr,sizeof(double)*nx*ne,cudaMemcpyDeviceToHost);
 	//free the cuda Memory
@@ -118,7 +117,7 @@ void Numerov1D::solve(){
 /*
  *This function provides temporariy the possibility to print out the
  *wave function! It will late be removed. This has to be here, because the
- *results should be tested firtst!
+ *4 should be tested firtst!
  */
 void Numerov1D::tempprint(double* temp,Params1D* p){
 	hid_t fileid;
