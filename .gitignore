@@ -5,5 +5,12 @@ Makefile
 CMakeFiles/
 CMakeFiles/*
 cmake_install.cmake
+*.h5
+qsolve
+*.swp
+#*
+.#*
 *~
 *#
+.ipynb_checkpoints/
+*.swo
