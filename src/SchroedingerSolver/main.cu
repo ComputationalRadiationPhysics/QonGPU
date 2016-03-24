@@ -6,7 +6,7 @@
 
 int main(int argc,char** argv){
 	
-	std::complex<double> xma=20.0;
+	std::complex<double> xma=30.0;
 	std::complex<double> xmi=0.0;
 	std::complex<double> tmi=0.0;
 	std::complex<double> tma=5.0;

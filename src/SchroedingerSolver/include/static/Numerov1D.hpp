@@ -158,20 +158,19 @@ void Numerov1D::bisect(){
 	bool prev=false;
     hindex=0;
 	for(auto i=1;i<ne;i++){
-		act=sign(psi[(nx-1)*i]);
-		prev=sign(psi[(nx-1)*(i-1)]);
-	    if((act==prev)){
-		
-		}
-		else{
-			eindex[hindex]=i;
+		act=sign(psi[nx*i+nx-1]);
+		prev=sign(psi[nx*(i-1)+nx-1]);
+	    if(!(act==prev)){
+			if(psi[nx*i+nx-1]<1e-3){
+			eindex[hindex]=i-1;
 			hindex+=1;
 			DEBUG("AN ENERGY LEVEL WAS FOUND!")
 			DEBUG("Actual sign: "<<act<<"  Previous sign: "<<prev)
-	        DEBUG("Actual psi: "<<psi[(nx-1)*i]<<"  Previous psi: "<<psi[(nx-1)*(i-1)])
+		    DEBUG("Actual psi: "<<psi[i*nx+nx-1]<<"  Previous psi: "<<psi[nx*(i-1)+nx-1])
 		    DEBUG("The index is: "<<eindex[hindex-1])
 		    DEBUG("Energylevel is: E"<<hindex-1<<" With energy:"<<-(double)eindex[hindex-1]/(double)ne)
-	  }		    		  
+				}
+		}		    		  
 	};
 	DEBUG(hindex<<" Energy levels were found!")
 };
