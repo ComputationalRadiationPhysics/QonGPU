@@ -4,9 +4,11 @@
 
 #include <vector>
 #include "math.h"
+#include <cmath>
 #include "hdf5_hl.h"
 #include "stdio.h"
-#define DEBUG(x) std::cout<<"Debug "<<x<<endl;
+#include <assert.h>
+#define DEBUG(x) std::cout<<x<<endl;
 
 
 __device__ double V(double x,double t){
@@ -14,27 +16,6 @@ __device__ double V(double x,double t){
 };
 
 
-/*
-//This function executes the Numerov method!
-__global__ void Numerov(double* psi, int ne,int nx,double  xmax, double xmin){
-    
-	int tid = nx*(threadIdx.x+blockIdx.x*blockDim.x);
-	int offset = nx*blockDim.x*gridDim.x;
-	double dx=xmax/((double)nx);
-	double E=0;
-	double f1,f2,f3;
-	while(tid<nx*ne){
-		E=((double)tid)/((double)nx*ne)*(-1.0);
-		for(int i = 2; i < nx;i++){
-			f1=1/((1+dx*dx/6*(E-V(((double)i)*dx,0.0))));
-			f2=(1-5/6*dx*dx*(E-V(((double)i-1)*dx,0)));
-			f3=(1+dx*dx*(E-V(((double)i-2)*dx,0)));
-			psi[i+tid]=f1*(psi[i-1+tid]*f2+psi[i-2+tid]*f3);	
-		};
-		tid+=offset;
-	};
-};
-*/
 
 __global__ void NumerovKernel(double* psi,size_t nx,size_t ne, double xmax,double xmin){
 	unsigned int tid = nx*(threadIdx.x+blockIdx.x*blockDim.x);//Should always show to the psi_n(x=0) at the energy level E_n
@@ -46,7 +27,6 @@ __global__ void NumerovKernel(double* psi,size_t nx,size_t ne, double xmax,doubl
    
 	while(tid<ne*nx){
 		E=tid*dE/(nx);
-		printf("Using Numerov with E=%lf \n",E);
 		for(size_t i = 2; i<nx ;i++){
 			f1=1/(1+dx*dx*(1*(E+V((i+1)*dx+xmin,0)))/12);
 			f2=(1-5*dx*dx/12*(2*(E+V(i*dx+xmin,0))));
@@ -68,10 +48,16 @@ public:
 	    nx = (param->getnx());
 		ne =  (param->getne());
 		psi=(double*) malloc(sizeof(double)*nx*ne);
-		for(size_t i = 0; i < nx*ne; i+=nx){
-    		psi[i]=0;
-    		psi[i+1]=1e-8;
-		};
+		if(psi!=NULL){
+			for(size_t i = 0; i < nx*ne; i+=nx){
+				psi[i]=0;
+				psi[i+1]=1e-8;
+			};
+		}
+		else{
+			std::cout<<"Error: Allocation failed!"<<std::endl;
+			assert(psi!=NULL);
+		}
 	};
 	Numerov1D(){};
 	~Numerov1D(){
@@ -80,12 +66,15 @@ public:
 protected:
 	std::complex<double>* psil;
 	std::complex<double>* p;
-	std::vector<double> energy;
+	//initilize the energy index vector
+	std::vector<int> eindex=std::vector<int>(100);
 	double* psi;
 	Params1D* param;
 	Potential1D pot;
 	void tempprint(double* temp,Params1D* p);
 	size_t nx,ne;
+	bool sign(double x);
+	int hindex=0;
 };
 
 
@@ -96,8 +85,7 @@ protected:
  */ 
 void Numerov1D::solve(){
 	double* dev_ptr;
-	DEBUG("CALL: BEGIN_SOLVE")
-	//Allocate needed Memomry, in this case an nx*ne double array!
+    //Allocate needed Memomry, in this case an nx*ne double array!
 	cudaMalloc((void**)&dev_ptr,sizeof(double)*nx*ne);
 	//copy Memory to the device
 	cudaMemcpy(dev_ptr,psi,sizeof(double)*nx*ne,cudaMemcpyHostToDevice);
@@ -107,10 +95,11 @@ void Numerov1D::solve(){
 	cudaMemcpy(psi,dev_ptr,sizeof(double)*nx*ne,cudaMemcpyDeviceToHost);
 	//free the cuda Memory
 	cudaFree(&dev_ptr);
-	//generate output
-	tempprint(psi,param);
 	//use bisection method
 	bisect();
+    //generate output
+	tempprint(psi,param);
+	
 };
 
 
@@ -135,25 +124,56 @@ void Numerov1D::tempprint(double* temp,Params1D* p){
 	fileid = H5Fcreate("static_results.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
 	//Print the parameters in the file
 	H5LTmake_dataset(fileid,"/params1d",1,&dim, H5T_NATIVE_DOUBLE,tempdata);
+    free(tempdata);
 	//rewrite dims
 	dim = (p->getnx())*(p->getne());
 	//print the simulation results in the HDF5 file
 	H5LTmake_dataset(fileid, "/numres", 1, &dim, H5T_NATIVE_DOUBLE,temp);
+	//now write the energy indices to the file
+	tempdata =(double*) malloc(sizeof(double)*(hindex));
+	for(auto i=0;i<hindex;i++){
+		tempdata[i]=(double)eindex[i];
+	}
+	//create the index file
+	dim=hindex;
+	H5LTmake_dataset(fileid,"/levels",1,&dim,H5T_NATIVE_DOUBLE,tempdata);
+	free(tempdata);
 	//close the file
 	H5Fclose(fileid);
 	//free memory
 	DEBUG("OUTPUT_CALL")
-	free(tempdata);
+	
 };
 
 /*
  *Find out if in the searched interval any energy levels were found
- *and include the index as well as the energy in a std::vector<double>
+ *and include the index as well as the energy in a std::vector<double>.
  *
  */
-
+bool Numerov1D::sign(double x){
+	return std::signbit(x);
+}
 void Numerov1D::bisect(){
-	
+	bool act=false;
+	bool prev=false;
+    hindex=0;
+	for(auto i=1;i<ne;i++){
+		act=sign(psi[(nx-1)*i]);
+		prev=sign(psi[(nx-1)*(i-1)]);
+	    if((act==prev)){
+		
+		}
+		else{
+			eindex[hindex]=i;
+			hindex+=1;
+			DEBUG("AN ENERGY LEVEL WAS FOUND!")
+			DEBUG("Actual sign: "<<act<<"  Previous sign: "<<prev)
+	        DEBUG("Actual psi: "<<psi[(nx-1)*i]<<"  Previous psi: "<<psi[(nx-1)*(i-1)])
+		    DEBUG("The index is: "<<eindex[hindex-1])
+		    DEBUG("Energylevel is: E"<<hindex-1<<" With energy:"<<-(double)eindex[hindex-1]/(double)ne)
+	  }		    		  
+	};
+	DEBUG(hindex<<" Energy levels were found!")
 };
 
 #endif
