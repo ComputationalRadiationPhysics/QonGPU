@@ -20,6 +20,7 @@
 #include "potentials/Potential1D.hpp"
 #include "potentials/Potential2D.hpp"
 #include "potentials/Potential3D.hpp"
+#include "potentials/Core1D.hpp"
 
 #include "output/IOHandle.hpp"
 #include "static/Numerov1D.hpp"
