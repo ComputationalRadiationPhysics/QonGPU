@@ -1,23 +1,32 @@
-#!/bin/bash
 
-if [$1 = "-m"];then
-    echo"Module loading enabled!"
-    module purge
-    module load gcc/4.9.2
-    module load cuda/7.5
-    module load hdf5
-    module load cmake/3.3.0
-    module load boost
-fi
+#!/bin/sh
 
 
 cmake .
-mv CMakeFiles/ build/
-mv CMakeCache.txt build/
-mv cmake_install.cmake build/
+
+p
+
+
+#check number of cores for later use with make
+cores=1
+if [ $(which nproc) ]
+then
+	cores=$(nproc)
+elif [ $(which grep) -a -f /proc/cpuinfo ]
+then
+	cores=$(grep -c ^processor /proc/cpuinfo)
+fi
+
+echo "Found number of Cores: ${cores}. Use $(expr ${cores} + 1) jobs for parallel build using make."
+
+echo "Running make"
+
+make -j$((cores+1)) --no-print-directory
+
+echo "Finished"
 
 echo "Running qsolve"
-build/Solver/qsolve
+#build/Solver/qsolve
 
 
 
