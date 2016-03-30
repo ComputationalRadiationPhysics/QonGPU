@@ -1,3 +1,4 @@
+
 #ifndef ALLHEADER_H
 #define ALLHEADER_H
 
@@ -23,5 +24,6 @@
 #include "potentials/Core1D.hpp"
 
 #include "output/IOHandle.hpp"
+#include "output/IOHandle1D.hpp"
 #include "static/Numerov1D.hpp"
 #endif
