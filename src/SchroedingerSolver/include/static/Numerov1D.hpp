@@ -23,7 +23,16 @@ __device__  double V(double x, double t,double z) {
   return 2*z/sqrt(1+x*x);
 };
 
+__global__void NumerovKernel2(double* psi, int nx, int ne, double xmax, double xmin, double z){
+    unsigned int tid = nx*(threadIdx.x+blockIdx.x*blockDim.x);//Should always show to the psi_n(x=0) at the energy level E_n
+    uint offset = nx*blockDim.x*gridDim.x;
+    double dx = (xmax-xmin)/((double)nx);
+    double E= -2.0;
+    double dE=E/((double)ne);
+    double f1,f2,f3;
+    double heff=1/12*dx*dx;
 
+}
 
 __global__ void NumerovKernel(double* psi,size_t nx,size_t ne, double xmax,double xmin,double z){
 	unsigned int tid = nx*(threadIdx.x+blockIdx.x*blockDim.x);//Should always show to the psi_n(x=0) at the energy level E_n
@@ -32,7 +41,7 @@ __global__ void NumerovKernel(double* psi,size_t nx,size_t ne, double xmax,doubl
 	double E= -2.0;
 	double dE=E/((double)ne);
 	double f1,f2,f3;
-	double heff=4.4736;
+	double heff=1.0;
 	while(tid<ne*nx){
 		E=tid*dE/(nx);
 		for(size_t i = 2; i<nx ;i++){
@@ -171,11 +180,11 @@ void Numerov1D::bisect(){
 	prev=sign(psi[nx*(i-1)+nx-1]);
 	if(!(act==prev)){
 	    if(fabs(psi[nx*i+nx-1])< fine) {
-		DEBUG((fabs(psi[nx*i+nx-1])< fine))
-		DEBUG((psi[nx*i+nx-1]))
-		eindex[hindex]=i-1;
-		hindex+=1;
-		
+            if(fabs(psi[nx*i+nx/2])<1e-6) {
+                DEBUG((psi[nx * i + nx - 1]))
+                eindex[hindex] = i - 1;
+                hindex += 1;
+            }
 	    }
 	    else{
 		DEBUG("Psi was too large")

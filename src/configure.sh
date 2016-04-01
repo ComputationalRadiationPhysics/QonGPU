@@ -26,7 +26,7 @@ make -j$((cores+1)) --no-print-directory
 echo "Finished"
 
 echo "Running qsolve"
-#build/Solver/qsolve
+build/Solver/qsolve
 
 
 

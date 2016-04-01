@@ -7,8 +7,8 @@
 #include "include/SimDef.hpp"
 
 int main(int argc, char** argv) {
-  std::complex<double> xma = 35.0;
-  std::complex<double> xmi = 0.0;
+  std::complex<double> xma = 10.0;
+  std::complex<double> xmi = -10.0;
   std::complex<double> tmi = 0.0;
   std::complex<double> tma = 5.0;
   Params1D p(xma, xmi, tma, tmi, 1e5, 2, 1000,1);
