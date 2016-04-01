@@ -62,7 +62,7 @@ public:
     void allocresult();
     void bisect();
     Numerov1D(Params1D* pa,std::complex<double>* ps):param(pa),p(ps)
-    ,pot(){
+    ,pot(),eindex(100),out(pa){
 	nx = (param->getnx());
 	ne =  (param->getne());
 	psi=(double*) malloc(sizeof(double)*nx*ne);
@@ -85,7 +85,7 @@ protected:
     std::complex<double>* psil;
     std::complex<double>* p;
     //initilize the energy index vector
-    std::vector<int> eindex=std::vector<int>(100);
+    std::vector<int> eindex;
     double* psi;
     Params1D* param;
     Potential1D pot;
@@ -94,6 +94,7 @@ protected:
     bool sign(double x);
     int hindex=0;
     double z=param->getz();
+    IOHandle1D out;
 };
 
 
@@ -117,14 +118,15 @@ void Numerov1D::solve(){
     //use bisection method
     bisect();
     //generate output
-    tempprint(psi,param); 
+    //tempprint(psi,param); 
+    
 };
 
 
 /*
  *This function provides temporariy the possibility to print out the
  *wave function! It will late be removed. This has to be here, because the
- *4 should be tested firtst!
+ *static results should be tested firtst!
  */
 void Numerov1D::tempprint(double* temp,Params1D* p){
     hid_t fileid;
@@ -180,20 +182,28 @@ void Numerov1D::bisect(){
 	prev=sign(psi[nx*(i-1)+nx-1]);
 	if(!(act==prev)){
 	    if(fabs(psi[nx*i+nx-1])< fine) {
+<<<<<<< HEAD
             if(fabs(psi[nx*i+nx/2])<1e-6) {
                 DEBUG((psi[nx * i + nx - 1]))
                 eindex[hindex] = i - 1;
                 hindex += 1;
             }
+=======
+		DEBUG((fabs(psi[nx*i+nx-1])< fine))
+		DEBUG((psi[nx*i+nx-1]))
+		eindex[hindex]=i-1;
+		hindex+=1;		
+>>>>>>> 60a7de3ef6574de3382a1427a768358b8147e1f6
 	    }
-	    else{
+	    else {
 		DEBUG("Psi was too large")
 	    }
  	}		    		  
     };
+  
     DEBUG("----------------------------------")
-    DEBUG("Finished!")
-    DEBUG(hindex<<" Energy levels were found!")
+	DEBUG("Finished!")
+	DEBUG(hindex<<" Energy levels were found!")
 };
 
 #endif

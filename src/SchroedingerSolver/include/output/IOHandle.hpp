@@ -1,8 +1,10 @@
-#ifndef IOHANDLE
-#define IOHANDLE
+#ifndef IOHANDLE_H_
+#define IOHANDLE_H_
 
-class IOHandle{
+#include "hdf5.h"
 
-};
+#include "hdf5_hl.h"
+
+class IOHandle{};
 
 #endif
