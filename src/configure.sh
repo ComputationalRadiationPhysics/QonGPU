@@ -2,9 +2,9 @@
 #!/bin/sh
 
 
-cmake .
+cmake . || exit 1
 
-p
+
 
 
 #check number of cores for later use with make
@@ -21,12 +21,14 @@ echo "Found number of Cores: ${cores}. Use $(expr ${cores} + 1) jobs for paralle
 
 echo "Running make"
 
-make -j$((cores+1)) --no-print-directory
+make -j$((cores+1)) --no-print-directory || exit 1
 
 echo "Finished"
 
 echo "Running qsolve"
 build/Solver/qsolve
 
-
-
+#if [ "$1"=="-py" ]; then
+#        echo "Use Python graphics script"
+#        python pyscripts/Graphicscript.py
+#fi
