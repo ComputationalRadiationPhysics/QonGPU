@@ -2,14 +2,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 import h5py
 import functools
-
 i=0
 def drawsol(event,a,nx,ne):
     global i
     j=i
     offset=10
     print("j:"+str(j)+"/"+str(ne))
-    for j in range(0,int(ne),10): 
+    for j in range(0,5): 
         plt.plot(a[j*nx:j*nx+nx])
         plt.draw()
     print(i)
@@ -17,7 +16,6 @@ def drawsol(event,a,nx,ne):
     if(i>ne):
         plt.close()
 def main():
-    
     file=h5py.File("./static_results.h5")
     d1=file.get("/numres")
     d2=file.get("/params1d")

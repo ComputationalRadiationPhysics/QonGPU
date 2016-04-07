@@ -1,3 +1,4 @@
+
 #ifndef NUMEROV1D_H
 #define NUMEROV1D_H
 
@@ -18,10 +19,10 @@
 
 #define DEBUG(x) std::cout<<x<<endl;
 
-#define BACKWARDS
+#define FORWARDS
 
 __device__  double V(double x, double t,double z) {
-  return z/(1+x*x);
+  return 2*z/sqrt(1+x*x);
 };
 //NumerovKernel to iterate from right to left!
 __global__ void NumerovKernel2(double* psi,
@@ -37,7 +38,7 @@ __global__ void NumerovKernel2(double* psi,
     double E = -V(0,0,z);
     double dE = E/ne;
     double f1, f2,f3;
-    double heff = dx * dx / 12;
+    double heff = dx * dx / 12.0;
     while(tid < nx * ne) {
         E = dE * tid /  nx;
         for(auto i = nx-1; i>1;i--) {
@@ -96,7 +97,7 @@ public:
 	if(psi!=NULL){
 	    for(size_t i = nx-1; i < nx*ne; i+=nx){
 		    psi[i]=0;
-		    psi[i-1]=-1e-10;
+		    psi[i-1]=1e-10;
 	    };
 	}
 #endif
@@ -104,7 +105,7 @@ public:
     if(psi!=NULL){
 	    for(size_t i = 0; i < nx*ne; i+=nx){
 	    	psi[i]=0;
-		    psi[i+1]=-1e-10;
+		    psi[i+1]=1e-10;
 	    };
 	}
 #endif
@@ -250,7 +251,7 @@ void Numerov1D::bisect(){
 void Numerov1D::bisect2() {
     auto act = false;
     auto prev = false;
-    double fine = 1;
+    double fine = 1e-4;
     hindex=0;
     for(auto i = 1;i < ne; i++){
         act = sign(psi[nx*i]);
@@ -266,7 +267,6 @@ void Numerov1D::bisect2() {
                 DEBUG("Psi was too large")
             }
         }
-    DEBUG("Current sign: "<<act<<" Sign before"<<prev)
     }
 
     DEBUG("----------------------------------")
