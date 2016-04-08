@@ -92,14 +92,16 @@ protected:
     vector<double> chunk;
     vector<double> cache;
     list<vector<double>> results;
+    list<double> eval;
     void savelevels();
     bool sign(double s);
-    void bisect();
+    void bisect(int j);
     const int nx,ne;
     int z;
     double E;
     const double xmax,xmin;
     Params1D *param;
+    
 };
 
 #endif 

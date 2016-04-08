@@ -35,18 +35,45 @@ void Numerov::solve(){
     auto E_lok=0.0;
     for(auto j = 0; j < ne;j+=CHUNKSIZE) {
 	//push the chunk vector (with initial conditions
-	//into the allocated device memory
-	
+	//into the allocated device memory	
 	E_lok+=dE*(double)j;
-cudaMemcpy(dev_ptr,chunk.data(),sizeof(double)*CHUNKSIZE*nx,cudaMemcpyHostToDevice);
-       STATUS("Calculating the "<<j<<"-th Chunk")
-       iter1<<<256,4>>>(dev_ptr,nx,CHUNKSIZE,xmax,xmin,z,E_lok,dE);
-       cudaMemcpy(cache.data(),dev_ptr,sizeof(double)*CHUNKSIZE*nx,cudaMemcpyDeviceToHost);
-       ENDSTATUS
+	cudaMemcpy(dev_ptr,chunk.data(),sizeof(double)*CHUNKSIZE*nx,cudaMemcpyHostToDevice);
+	STATUS("Calculating the "<<j<<"-th Chunk")
+        iter1<<<256,4>>>(dev_ptr,nx,CHUNKSIZE,xmax,xmin,z,E_lok,dE);
+	cudaMemcpy(cache.data(),dev_ptr,sizeof(double)*CHUNKSIZE*nx,cudaMemcpyDeviceToHost);
+	ENDSTATUS
+	STATUS("Running bisection")
+        bisect(j);
+        ENDSTATUS
     }
     cudaFree(dev_ptr);
 }
 void Numerov::savelevels(){}
-void Numerov::bisect(){
+bool Numerov::sign(double s){
+    return std::signbit(s);
+}
+void Numerov::bisect(int j){
+    for(auto it=cache.begin();it!=cache.end();it+=nx){
+	if(sign(*(it+nx-1))!=sign(*(it-1))){
+	        DEBUG("Signchange detected!")
+		if(fabs(*(it+nx-1))<fabs(*(it-1))&&
+					 fabs(*(it+nx-1))<1e-3){
+		       vector<double> v(it,(it+nx-1));
+		       results.push_back(v);
+		       eval.push_back((double)j*E/(double)ne);
+		       DEBUG("Energy level found at"<<(eval.back()))
+		}
+	        else if(fabs(*(it-1))<1e-3){
+		    vector<double> v(it-nx-1,it-1);
+		    results.push_back(v);
+		    eval.push_back((double)(j-1)*E/(double)ne);
+		    DEBUG("Energy level found at"<<(eval.back()))
+		}
+	}
+	else{
+	    DEBUG("No sign change detected")
+	    }
+    }
+			   
 }
 
