@@ -14,3 +14,5 @@ qsolve
 *#
 .ipynb_checkpoints/
 *.swo
+*flymake*
+.idea/

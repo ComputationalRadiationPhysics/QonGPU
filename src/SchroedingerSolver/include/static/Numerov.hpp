@@ -5,16 +5,23 @@
 
 #include <cmath>
 
+#include <list>
+
+#include <iterator>
+
 #include "hdf5.h"
 
 #include "hdf5_hl.h"
 
 #define DEBUG(x) std::cout<<x<<std::endl;
 
-#define STATUS(x) std::cout<<x;
+#define STATUS(x) std::cout<<x<<"...";
 
-#define ENDSTATUS(x) std::cout<<x<<std::endl;
-__device__  double V(double x, double t,double z) {
+#define ENDSTATUS std::cout<<"DONE!"<<std::endl;
+
+#define CHUNKSIZE 128
+using namespace std;
+__host__ __device__  double V(double x, double t,double z) {
   return 2*z/sqrt(1+x*x);
 };
 //NumerovKernel to iterate from right to left!
@@ -49,21 +56,22 @@ __global__ void iter2(double* psi,
 }
 //iteration from left to right
 __global__ void iter1(double* psi,
-                              size_t nx,
-                              size_t ne,
-                              double xmax,
-                              double xmin,
-                              double z) {
+		      size_t nx,
+		      size_t ne,
+		      double xmax,
+		      double xmin,
+		      double z,
+		      double Es,
+		      double dE) {
 	int tid = nx*(threadIdx.x+blockIdx.x*blockDim.x);
-    //Should always show to the psi_n(x=0) at the energy level E_n
+	//Should always show to the psi_n(x=0) at the energy level E_n
 	int offset = nx*blockDim.x*gridDim.x;
 	double dx = fabs(xmax-xmin)/((double)nx);
-	double E = V(0,0,z);
-	double dE=E/((double)ne);
+	double E = Es;
 	double f1,f2,f3;
 	double heff=1.0;
 	while(tid<ne*nx){
-		E=tid*dE/(nx);
+		E=Es+tid*dE/(nx);
 		for(auto i = 2; i<nx ;i++){
 			f1=1.0/(1.0+dx*dx*(heff*(V((i+1)*dx+xmin,0,z)-E))/12.0);
 			f2=(1.0-5.0*dx*dx/12.0*(heff*(V(i*dx+xmin,0,z)-E)));
@@ -71,7 +79,7 @@ __global__ void iter1(double* psi,
 			psi[i+1+tid]=f1*(2.0*psi[i+tid]*f2-psi[i-1+tid]*f3);
 		};
 		tid+=offset;
-    };
+	};
 };
 
 class Numerov: protected StaticSolver1D {
@@ -81,16 +89,17 @@ public:
     Numerov();
     ~Numerov();
 protected:
-    void savelevels(std::vector<int> en,int hind);
+    vector<double> chunk;
+    vector<double> cache;
+    list<vector<double>> results;
+    void savelevels();
+    bool sign(double s);
     void bisect();
-    bool sign(double x);
-    int nx,ne,z;
-    Params1D *params;
-    //Psi1 = rightwardsiter, Psi2 = leftwardsiter
-    double *psi1,*psi2;
-    //wavefunction for later purposes
-    std::complex<double> psi;    
-    
+    const int nx,ne;
+    int z;
+    double E;
+    const double xmax,xmin;
+    Params1D *param;
 };
 
 #endif 
