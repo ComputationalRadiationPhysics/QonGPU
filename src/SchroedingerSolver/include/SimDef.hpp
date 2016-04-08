@@ -31,7 +31,6 @@ class SimDef{
   }
   void staticsolve() {
     s.solve();
-    DEBUG("CALL 2")
         }
   void timerev() {
   }

@@ -26,4 +26,6 @@
 #include "output/IOHandle.hpp"
 #include "output/IOHandle1D.hpp"
 #include "static/Numerov1D.hpp"
+//#include "static/Numerov.cpp"
+
 #endif

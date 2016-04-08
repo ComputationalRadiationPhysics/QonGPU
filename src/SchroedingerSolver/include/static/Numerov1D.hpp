@@ -1,4 +1,3 @@
-
 #ifndef NUMEROV1D_H
 #define NUMEROV1D_H
 
@@ -61,8 +60,9 @@ __global__ void NumerovKernel(double* psi,
                               double xmax,
                               double xmin,
                               double z) {
-	int tid = nx*(threadIdx.x+blockIdx.x*blockDim.x);//Should always show to the psi_n(x=0) at the energy level E_n
-    int offset = nx*blockDim.x*gridDim.x;
+	int tid = nx*(threadIdx.x+blockIdx.x*blockDim.x);
+    //Should always show to the psi_n(x=0) at the energy level E_n
+	int offset = nx*blockDim.x*gridDim.x;
 	double dx = fabs(xmax-xmin)/((double)nx);
 	double E = V(0,0,z);
 	double dE=E/((double)ne);
@@ -85,7 +85,6 @@ class Numerov1D: protected StaticSolver1D {
 
 public:
     void solve();
-    void allocresult();
     void bisect();
     void bisect2();
     Numerov1D(Params1D* pa,std::complex<double>* ps) : param(pa), p(ps)
@@ -142,6 +141,7 @@ protected:
  *It's primarily here to be used as an interface, which helps to allocate memory
  *and call the important functions! 
  */ 
+
 void Numerov1D::solve(){
     double* dev_ptr;
     //Allocate required device Memomry, in this case an nx*ne double array!
@@ -242,7 +242,6 @@ void Numerov1D::bisect(){
 	    }
  	}		    		  
     };
-  
     DEBUG("----------------------------------")
 	DEBUG("Finished!")
 	DEBUG(hindex<<" Energy levels were found!")
@@ -268,7 +267,6 @@ void Numerov1D::bisect2() {
             }
         }
     }
-
     DEBUG("----------------------------------")
     DEBUG("Finished!")
     DEBUG(hindex<<" Energy levels were found!")
