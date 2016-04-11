@@ -1,13 +1,10 @@
 // Copyright Maxmilian Böhme
 
-#include <iostream>
-
-#include <complex>
 
 #include "include/SimDef.hpp"
 
 int main(int argc, char** argv) {
-  std::complex<double> xma = 25.0;
+  std::complex<double> xma = 5.0;
   std::complex<double> xmi = 0.0;
   std::complex<double> tmi = 0.0;
   std::complex<double> tma = 5.0;

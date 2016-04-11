@@ -2,21 +2,14 @@
 #define NUMEROV_H_
 
 #include <assert.h>
-
 #include <cmath>
-
 #include <list>
-
 #include <iterator>
-
 #include "hdf5.h"
-
 #include "hdf5_hl.h"
 
 #define DEBUG(x) std::cout<<x<<std::endl;
-
 #define STATUS(x) std::cout<<x<<"...";
-
 #define ENDSTATUS std::cout<<"DONE!"<<std::endl;
 
 #define CHUNKSIZE 128
@@ -72,6 +65,7 @@ __global__ void iter1(double* psi,
 	double heff=1.0;
 	while(tid<ne*nx){
 		E=Es+tid*dE/(nx);
+		printf("Using Energy: %lf \n",E);
 		for(auto i = 2; i<nx ;i++){
 			f1=1.0/(1.0+dx*dx*(heff*(V((i+1)*dx+xmin,0,z)-E))/12.0);
 			f2=(1.0-5.0*dx*dx/12.0*(heff*(V(i*dx+xmin,0,z)-E)));
