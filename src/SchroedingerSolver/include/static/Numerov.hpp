@@ -72,8 +72,8 @@ __global__ void iter1(double* psi,
 
 		E += tid * dE / (double)(nx);
 		//This loop implements the numerov method
-        printf("Initial conditions Psi0 = %f \n",psi[tid]);
 		for(auto i = 2; i < nx ;i++){
+
 			f1 = 1.0 / (1.0 + dx * dx  / 12.0 *  (heff * ( V( ( i + 1) * dx + xmin, 0 , z) - E)));
 			f2 = ( 1.0 - 5.0 * dx * dx / 12.0 * ( heff *( V( i * dx + xmin, 0, z) - E)));
 			f3 = ( 1.0 + dx * dx / 12.0 * ( heff *( V( ( i - 1) * dx + xmin, 0, z) - E)));
