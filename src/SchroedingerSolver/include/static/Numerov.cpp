@@ -53,26 +53,26 @@ void Numerov::solve(){
         ENDSTATUS
         STATUS("Running bisection")
         std::cout<<" "<<std::endl;
-		//bisect(j);
+		bisect(j);
 		ENDSTATUS
     }
     cudaFree(dev_ptr);
     STATUS("Saving Energy Levels")
-    //savelevels();
-    tempprint();
+    savelevels();
+    //tempprint();
     ENDSTATUS
 }
 
 void Numerov::savelevels(){
     // Function to provide saving functionality of the energy Levels
     // First Allocate an appropiate vector
-    vector<double> buffer1(results.size()*nx);
+    vector<double> buffer1(results.size());
     vector<double> buffer2(eval.size());
     vector<double> buffer3(nx);
     // Save the results into buffer1 vector
-    for(auto i = 0; i < results.size()*nx;i+=nx){
+    for(auto i = 0; i < results.size();i+=nx){
         // Write the first list elements into a vector
-        buffer3 = results.front();
+        buffer3 = results.back();
         // Now we write the data into another vector
         // I know this is stupid, but since list has no direct data access
         // I see no other choice.
@@ -80,24 +80,34 @@ void Numerov::savelevels(){
             buffer1[i+j] = buffer3[j];
         }
         // Now pop the first element from the list
-        results.pop_front();
+        results.pop_back();
     }
     for(auto it = 0; it < eval.size(); it++) {
         // We do the analog thing for the enegy
         // It's a lot simpler!
-        buffer2[it] = eval.front();
-        eval.pop_front();
+        buffer2[it] = eval.back();
+        eval.pop_back();
     }
     // Create a new HDF5 file
     hid_t file_id;
-    file_id = H5Fcreate ("res.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-
+    DEBUG("CALL 1")
+    file_id = H5Fcreate("static_results.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+    DEBUG("CALL 2")
     hsize_t dims = buffer1.size();
     // Create a HDF5 Data set and write buffer1
+    DEBUG("CALL 3")
     H5LTmake_dataset(file_id, "/numres", 1, &dims, H5T_NATIVE_DOUBLE, buffer1.data());
     // Analog for buffer2
+    DEBUG("CALL 4")
     dims = buffer2.size();
+    DEBUG("CALL 5")
     H5LTmake_dataset(file_id, "/evals", 1, &dims, H5T_NATIVE_DOUBLE, buffer2.data());
+    //Save some necessary parameters
+    vector<double> p(2);
+    p[0] = nx;
+    p[1] = ne;
+    dims = 2;
+    H5LTmake_dataset( file_id, "/params", 1, &dims, H5T_NATIVE_DOUBLE, p.data());
     // close the file
     H5Fclose(file_id);
 }
@@ -110,24 +120,36 @@ bool Numerov::sign(double s){
 
 void Numerov::bisect(int j) {
     // Iterate through chunk data
-	for(auto it = chunk.begin() + nx; it != chunk.end(); it += nx){
+	int d;
+    for(auto it = chunk.begin() + nx; it != chunk.end(); it += nx){
      //   DEBUG("Current Psi: " <<  *(it+nx-1))
-        if(sign( *( it + nx - 1)) != sign( *( it-1))) {
+
+        if(sign( *( it)) != sign( *( it - nx -1))) {
         DEBUG("Signchange detected!")
-		if(fabs( *(it + nx - 1)) < fabs( *(it-1))&&
-                (fabs(*( it + nx - 1)) <= 1e-3)) {
-                DEBUG("Psi0 = " << *(it - 1))
-                DEBUG("Psi1 = "<< *(it + nx - 1) )
-                vector<double> v( it,(it - 1));
+		if(fabs( *(it)) < fabs( *(it - nx -1))&&
+                ( fabs( *( it)) < 1e-3)) {
+                DEBUG("Psi0 = " << *(it))
+                DEBUG("Psi1 = "<< *(it - nx - 1) )
+                d = std::distance(chunk.begin(),it)/nx;
+                vector<double> v( it,( it + nx - 1));
                 results.push_back(v);
-                eval.push_back((double)j*E/(double)ne);
-                DEBUG("Energy level found at j = "<< j)
+                DEBUG("First element: "<<results.back()[100])
+                eval.push_back((double)d*E/(double)ne);
+                DEBUG("Energy level found at index = "<< d)
 		}
-        else if(fabs(*(it-1))<1e-3){
-		    vector<double> v(it-nx-1,it-1);
-            results.push_back(v);
-            eval.push_back((double)(j-1)*E/(double)ne);
-		    DEBUG("Energy level found at j = " << j)
+        else {
+            if (fabs(*(it - nx - 1)) < 1e-3) {
+
+                d = std::distance(chunk.begin(),it - nx - 1)/nx;
+                DEBUG("SEGFAULT ?")
+                vector<double> v(it - 2 * nx - 1, it - nx - 1);
+                results.push_back(v);
+                eval.push_back((double) ( d - 1) * E / (double) ne);
+                DEBUG("Psi0 = " << *(it))
+                DEBUG("Psi1 = "<< *(it - nx - 1) )
+                DEBUG("Energy level found at index = " << d)
+
+            }
         }
 	}
 	else{

@@ -1,7 +1,7 @@
 
 #!/bin/sh
 
-mkdir build/
+mkdir -p build/
 
 cd build
 cmake .. || exit 1
@@ -28,7 +28,9 @@ make -j$((cores+1)) --no-print-directory || exit 1
 echo "Finished"
 
 echo "Running qsolve"
-build/Solver/qsolve
+loc=$(find -name qsolve)
+mv ${loc}  ./build/
+build/qsolve
 
 #if [ "$1"=="-py" ]; then
 #        echo "Use Python graphics script"
