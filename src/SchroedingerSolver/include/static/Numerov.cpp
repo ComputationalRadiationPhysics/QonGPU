@@ -12,11 +12,14 @@ Numerov::Numerov(Params1D *pa,complex<double>* ps): param(pa),
                                                     xmin(pa->getxmin()) {
     // usin the init cache as long as necessary
     for(auto it=cache.begin(); it!=cache.end();it+=nx) {
-      *(it)=0;
-      *(it+1)=1e-10;
+      *(it) = 0;
+      *(it+1) = 1e-10;
+
     }
-    //get the minimal energy E_n is in [-V(0,0,z),0]
-    E=-V(0,0,z);
+    //get the minimal energy E_n is in [V(0,0,z),0]
+    //We'll define it as positive
+    //Kernel code then uses negaive values!
+    E = V(0,0,z);
 }
 
 Numerov::~Numerov(){}
@@ -29,22 +32,22 @@ void Numerov::solve(){
     //which gets analyzed and the overwritten
     //after each step
     STATUS("Allocation of graphics memory")
-    cudaMalloc((void**)&dev_ptr,sizeof(double)*nx*CHUNKSIZE);
+    cudaMalloc( (void**)&dev_ptr, sizeof(double) * nx * CHUNKSIZE);
     ENDSTATUS
-    double dE = E/(double) ne;
-    auto E_lok=0.0;
-    for(auto j = 0; j < ne;j+=CHUNKSIZE) {
+    double dE = E / (double) ne;
+    auto E_lok = 0.0;
+    for(auto j = 0; j < ne; j += CHUNKSIZE) {
         //push the chunk vector (with initial conditions
         //into the allocated device memory
-        E_lok+=dE*(double)j;
-        DEBUG("Using local energy"<<E_lok)
-        cudaMemcpy(dev_ptr,chunk.data(),sizeof(double)*CHUNKSIZE*nx,cudaMemcpyHostToDevice);
+        E_lok += dE * (double) j;
+        DEBUG("Using local energy "<<E_lok)
+        cudaMemcpy( dev_ptr, cache.data(), sizeof(double)*CHUNKSIZE*nx, cudaMemcpyHostToDevice);
         STATUS("Calculating the "<<j<<"-th Chunk")
-        iter1<<<256,4>>>(dev_ptr,nx,CHUNKSIZE,xmax,xmin,z,E_lok,dE);
-        cudaMemcpy(cache.data(),dev_ptr,sizeof(double)*CHUNKSIZE*nx,cudaMemcpyDeviceToHost);
+        iter1<<< 256, 4>>>( dev_ptr, nx, CHUNKSIZE, xmax, xmin, z, E_lok, dE);
+        cudaMemcpy(cache.data(), dev_ptr, sizeof(double) * CHUNKSIZE * nx, cudaMemcpyDeviceToHost);
         ENDSTATUS
         STATUS("Running bisection")
-        std::cout<<""<<std::endl;
+        std::cout<<" "<<std::endl;
 		bisect(j);
 		ENDSTATUS
     }
@@ -58,15 +61,18 @@ bool Numerov::sign(double s){
 }
 
 void Numerov::bisect(int j) {
-	for(auto it=cache.begin();it!=cache.end();it+=nx){
+	for(auto it=cache.begin()+nx;it!=cache.end();it+=nx){
+     //   DEBUG("Current Psi: " <<  *(it+nx-1))
         if(sign(*(it+nx-1))!=sign(*(it-1))){
         DEBUG("Signchange detected!")
 		if(fabs(*(it+nx-1))<fabs(*(it-1))&&
            fabs(*(it+nx-1))<1) {
+            DEBUG("Psi0 = " << *(it-1))
+            DEBUG("Psi1 = "<< *(it+nx-1) )
             vector<double> v(it,(it+nx-1));
             results.push_back(v);
             eval.push_back((double)j*E/(double)ne);
-            DEBUG("Energy level found at"<<(eval.back()))
+            DEBUG("Energy level found at E = "<<(eval.back()))
 		}
         else if(fabs(*(it-1))<1e-3){
 		    vector<double> v(it-nx-1,it-1);
@@ -76,7 +82,7 @@ void Numerov::bisect(int j) {
         }
 	}
 	else{
-	    DEBUG("No sign change detected")
+	    //DEBUG("No sign change detected")
 	    }
     }
 }
