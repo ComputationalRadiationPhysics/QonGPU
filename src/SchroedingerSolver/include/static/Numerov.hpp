@@ -99,11 +99,13 @@ protected:
     void savelevels();
     bool sign(double s);
     void bisect(int j);
+    void tempprint();
     const int nx,ne;
     int z;
     double E;
     const double xmax,xmin;
     Params1D *param;
+
     
 };
 

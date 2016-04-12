@@ -10,11 +10,12 @@ Numerov::Numerov(Params1D *pa,complex<double>* ps): param(pa),
                                                     z(pa->getz()),
                                                     xmax(pa->gettmax()),
                                                     xmin(pa->getxmin()) {
-    // usin the init cache as long as necessary
-    for(auto it=cache.begin(); it!=cache.end();it+=nx) {
-      *(it) = 0;
-      *(it+1) = -1e-10;
-
+    // initialize the cache, with the inital values
+    for(auto it = cache.begin(); it != cache.end(); it += nx) {
+        // the first entry always has to be zero, the second
+        // is an arbitrary small value
+        *(it) = 0;
+        *(it+1) = -1e-10;
     }
     //get the minimal energy E_n is in [V(0,0,z),0]
     //We'll define it as positive
@@ -36,6 +37,7 @@ void Numerov::solve(){
     ENDSTATUS
     double dE = E / (double) ne;
     auto E_lok = 0.0;
+    DEBUG("Initial cache: " <<cache[0])
     for(auto j = 0; j < ne; j += CHUNKSIZE) {
         //push the chunk vector (with initial conditions
         //into the allocated device memory
@@ -44,16 +46,20 @@ void Numerov::solve(){
         cudaMemcpy( dev_ptr, cache.data(), sizeof(double)*CHUNKSIZE*nx, cudaMemcpyHostToDevice);
         STATUS("Calculating the "<<j<<"-th Chunk")
         iter1<<< 256, 4>>>( dev_ptr, nx, CHUNKSIZE, xmax, xmin, z, E_lok, dE);
-        cudaMemcpy(cache.data(), dev_ptr, sizeof(double) * CHUNKSIZE * nx, cudaMemcpyDeviceToHost);
+        cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * CHUNKSIZE * nx, cudaMemcpyDeviceToHost);
+        DEBUG("first value: "<< chunk[0])
+        DEBUG("second value: "<< chunk[1])
+        DEBUG("third value: "<< chunk[2])
         ENDSTATUS
         STATUS("Running bisection")
         std::cout<<" "<<std::endl;
-		bisect(j);
+		//bisect(j);
 		ENDSTATUS
     }
     cudaFree(dev_ptr);
     STATUS("Saving Energy Levels")
-    savelevels();
+    //savelevels();
+    tempprint();
     ENDSTATUS
 }
 
@@ -100,16 +106,19 @@ bool Numerov::sign(double s){
     return std::signbit(s);
 }
 
+
+
 void Numerov::bisect(int j) {
-	for(auto it=cache.begin()+nx;it!=cache.end();it+=nx){
+    // Iterate through chunk data
+	for(auto it = chunk.begin() + nx; it != chunk.end(); it += nx){
      //   DEBUG("Current Psi: " <<  *(it+nx-1))
-        if(sign(*(it+nx-1))!=sign(*(it-1))){
+        if(sign( *( it + nx - 1)) != sign( *( it-1))) {
         DEBUG("Signchange detected!")
-		if(fabs(*(it+nx-1))<fabs(*(it-1))&&
-                (fabs(*(it+nx-1)) <= 1e-3)) {
-                DEBUG("Psi0 = " << *(it-1))
-                DEBUG("Psi1 = "<< *(it+nx-1) )
-                vector<double> v(it,(it+nx-1));
+		if(fabs( *(it + nx - 1)) < fabs( *(it-1))&&
+                (fabs(*( it + nx - 1)) <= 1e-3)) {
+                DEBUG("Psi0 = " << *(it - 1))
+                DEBUG("Psi1 = "<< *(it + nx - 1) )
+                vector<double> v( it,(it - 1));
                 results.push_back(v);
                 eval.push_back((double)j*E/(double)ne);
                 DEBUG("Energy level found at j = "<< j)
@@ -126,4 +135,30 @@ void Numerov::bisect(int j) {
 	    }
     }
 }
-
+void Numerov::tempprint(){
+    hid_t fileid;
+    hsize_t dim=7;
+    //Create temporal array for parameter location:
+    double* tempdata = (double*) malloc(sizeof(double)*7);
+    tempdata[0]=param->getxmax();
+    tempdata[1]=param->getxmin();
+    tempdata[2]=param->gettmax();
+    tempdata[3]=param->gettmin();
+    tempdata[4]=(double) param->getnx();
+    tempdata[5]=(double) param->getnt();
+    tempdata[6]=(double) param->getne();
+    //create the hdf5 file:
+    fileid = H5Fcreate("res_temp.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+    //Print the parameters in the file
+    H5LTmake_dataset(fileid,"/params1d",1,&dim, H5T_NATIVE_DOUBLE,tempdata);
+    free(tempdata);
+    //rewrite dims
+    dim = (param->getnx())*(param->getne());
+    //print the simulation results in the HDF5 file
+    H5LTmake_dataset(fileid, "/numres", 1, &dim, H5T_NATIVE_DOUBLE,chunk.data());
+    //now write the energy indices to the file
+    //close the file
+    H5Fclose(fileid);
+    //free memory
+    DEBUG("Finished saving!")
+};

@@ -212,7 +212,7 @@ void Numerov1D::tempprint(double* temp,Params1D* p){
     //close the file
     H5Fclose(fileid);
     //free memory
-    DEBUG("Finished saving!")	
+    DEBUG("Finished saving!")
 };
 
 /*
