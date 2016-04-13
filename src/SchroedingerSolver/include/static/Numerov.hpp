@@ -8,12 +8,10 @@
 #include "hdf5.h"
 #include "hdf5_hl.h"
 
-#define DEBUG(x) std::cout<<x<<std::endl;
-#define STATUS(x) std::cout<<x<<"...";
-#define ENDSTATUS std::cout<<"DONE!"<<std::endl;
-
-#define CHUNKSIZE 100
 using namespace std;
+
+
+#define CHUNKSIZE 128
 __host__ __device__  double V(double x, double t,double z) {
   return 2*z/sqrt(1+x*x);
 };
@@ -34,7 +32,9 @@ __global__ void iter2(double* psi,
     double heff = dx * dx / 12.0;
     while(tid < nx * ne) {;
         E = dE * (double) tid / (double) nx;
+        ;
         for(auto i = nx-1; i>1;i--) {
+
             //refine the first pre-factor for psi_(n-1)
             f1 = 1.0 + heff * (E + V(xmax - (i-2) * dx, 0, z));
             //redefine the next prefactor for psi_n
@@ -71,7 +71,7 @@ __global__ void iter1(double* psi,
 	while( tid < ne * nx) {
 
 		E += tid * dE / (double)(nx);
-		//This loop implements the numerov method
+        printf("Using Energy: %lf \n",E);
 		for(auto i = 2; i < nx ;i++){
 
 			f1 = 1.0 / (1.0 + dx * dx  / 12.0 *  (heff * ( V( ( i + 1) * dx + xmin, 0 , z) - E)));
