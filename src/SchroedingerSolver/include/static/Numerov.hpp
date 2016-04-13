@@ -11,7 +11,7 @@
 using namespace std;
 
 
-#define CHUNKSIZE 128
+#define CHUNKSIZE 1000
 __host__ __device__  double V(double x, double t,double z) {
   return 2*z/sqrt(1+x*x);
 };
@@ -71,15 +71,14 @@ __global__ void iter1(double* psi,
 	while( tid < ne * nx) {
 
 		E += tid * dE / (double)(nx);
-        printf("Using Energy: %lf \n",E);
-		for(auto i = 2; i < nx ;i++){
+		for(auto i = 2; i < nx ; i++){
 
 			f1 = 1.0 / (1.0 + dx * dx  / 12.0 *  (heff * ( V( ( i + 1) * dx + xmin, 0 , z) - E)));
 			f2 = ( 1.0 - 5.0 * dx * dx / 12.0 * ( heff *( V( i * dx + xmin, 0, z) - E)));
 			f3 = ( 1.0 + dx * dx / 12.0 * ( heff *( V( ( i - 1) * dx + xmin, 0, z) - E)));
 			psi[ i + 1 + tid] = f1 * ( 2.0 * psi[ i + tid] * f2 - psi[ i - 1 + tid] * f3);
 		};
-		tid+=offset;
+		tid += offset;
 	};
 };
 

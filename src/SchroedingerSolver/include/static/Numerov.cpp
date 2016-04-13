@@ -30,37 +30,35 @@ Numerov::Numerov(Params1D *pa,complex<double>* ps): param(pa),
 Numerov::~Numerov(){}
 
 void Numerov::solve(){
-    //create a double device ponter
+    // Create the Device Pointer calculating the chunks
     double* dev_ptr;
-    //now we enter a loop
-    //which computes a "chunk" of Solutions
-    //which gets analyzed and the overwritten
-    //after each step
-    STATUS("Allocation of graphics memory")
-    cudaMalloc( (void**)&dev_ptr, sizeof(double) * nx * CHUNKSIZE);
-    ENDSTATUS
-    double dE = E / (double) ne;
-    auto E_lok = 0.0;
-    for(auto j = 0; j < ne; j += CHUNKSIZE) {
-        //push the chunk vector (with initial conditions
-        //into the allocated device memory
-        E_lok = dE * (double) j;
-        DEBUG("Using local energy "<<E_lok)
-        cudaMemcpy( dev_ptr, cache.data(), sizeof(double)*CHUNKSIZE*nx, cudaMemcpyHostToDevice);
-        STATUS("Calculating the "<<j/CHUNKSIZE<<"-th Chunk")
-        iter1<<< 256, 4>>>( dev_ptr, nx, CHUNKSIZE, xmax, xmin, z, E_lok, dE);
-        cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * CHUNKSIZE * nx, cudaMemcpyDeviceToHost);
-        ENDSTATUS
-        STATUS("Running bisection")
-        std::cout<<" "<<std::endl;
-		bisect(j);
-		ENDSTATUS
+    int dev_ne = 0;
+    // Next let's allocate the required chunk memory on the device side
+    cudaMalloc((void**)&dev_ptr,sizeof(double)*nx*CHUNKSIZE);
+    // Make use of some local variables
+    int index = 0;
+    double dE = V(0,0,z)/ (double)ne;
+    // This will be the starting energy for each chunk calculation
+    DEBUG("Minimal Energy is " << V(0,0,z))
+    double En = 0;
+    while( index < ne) {
+        //copy initals on device
+        dev_ne = CHUNKSIZE;
+        if( index + CHUNKSIZE > ne){
+            dev_ne = ne - index;
+            cudaFree(dev_ptr);
+            cudaMalloc((void**) &dev_ptr, sizeof(double) * nx * dev_ne);
+        }
+        DEBUG("Calculating chunk: "<< index/CHUNKSIZE)
+        cudaMemcpy( dev_ptr, cache.data(), sizeof(double)*nx*dev_ne, cudaMemcpyHostToDevice);
+        En = dE * (double) index;
+        DEBUG("Calculating with starting energy: " << En)
+        iter1<<< dev_ne, 1>>>( dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
+        cudaMemcpy( chunk.data(), dev_ptr, sizeof(double)*nx*dev_ne, cudaMemcpyDeviceToHost);
+        bisect(index);
+        index += CHUNKSIZE;
     }
-    cudaFree(dev_ptr);
-    STATUS("Saving Energy Levels")
     savelevels();
-    //tempprint();
-    ENDSTATUS
 }
 
 void Numerov::savelevels(){
@@ -119,21 +117,21 @@ void Numerov::bisect(int j) {
     // Iterate through chunk data
     // create local variable for the offset
     // off is the index of the last Element
-
+    DEBUG("Bisecting")
     const int off = nx - 1;
     auto it = chunk.begin();
     vector<double> temp( nx);
     for( auto i = 2 * off; i < chunk.size(); i += nx){
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
             DEBUG("Signchange deteceted!")
-            if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-4) {
+            if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-3) {
                 std::copy( it + i, it + i + nx, temp.begin());
                 results.push_back( temp);
                 // @TODO energy output
                 std::cout << "Energy level found" << std::endl;
             }
             else {
-                if(chunk[i-nx]<1e-4) {
+                if(chunk[i-nx]<1e-3) {
                     std::copy(it + i, it + i + nx, temp.begin());
                     results.push_back(temp);
                     std::cout << "Energy level found" << std::endl;
