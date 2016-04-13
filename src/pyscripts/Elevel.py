@@ -39,6 +39,7 @@ def norm(a,dx):
 def R10(x):
     br = 5.29e-10
     return x*2*np.exp(-x)
+
 R20= lambda r:r*np.sqrt(2)*(-r + 2)*np.sqrt(1**3)*np.exp(-r/2)/4
 R30= lambda r:r*2*np.sqrt(3)*(2*r**2/9 - 2*1*r + 3)*np.sqrt(1**3)*np.exp(-1*r/3)/27
 

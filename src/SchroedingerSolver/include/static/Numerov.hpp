@@ -5,15 +5,18 @@
 #include <cmath>
 #include <list>
 #include <iterator>
+#include <complex.h>
 #include "hdf5.h"
 #include "hdf5_hl.h"
+#include "StaticSolver1D.hpp"
+#include "../params/Params1D.hpp"
 
 using namespace std;
 
 
 #define CHUNKSIZE 1000
 __host__ __device__  double V(double x, double t,double z) {
-  return 2*z/sqrt(1+x*x);
+  return 1*z/sqrt(1+x*x);
 };
 //NumerovKernel to iterate from right to left!
 __global__ void iter2(double* psi,
@@ -90,7 +93,7 @@ public:
     Numerov();
     ~Numerov();
 
-protected:
+private:
     vector<double> chunk;
     vector<double> cache;
     list<vector<double>> results;
@@ -105,7 +108,6 @@ protected:
     const double xmax,xmin;
     Params1D *param;
 
-    
 };
 
 #endif 

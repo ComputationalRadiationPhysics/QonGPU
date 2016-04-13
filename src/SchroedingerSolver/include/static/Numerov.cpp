@@ -1,7 +1,7 @@
 #include <vector>
+#include <iostream>
 #include "Numerov.hpp"
-
-
+#include "Numerov1D.hpp"
 
 
 Numerov::Numerov():nx(0),ne(0),xmax(0),xmin(0){}
@@ -20,7 +20,6 @@ Numerov::Numerov(Params1D *pa,complex<double>* ps): param(pa),
         *(it) = 0;
         *(it+1) = -1e-10;
     }
-    DEBUG("Maximum Value for location: "<<xmax)
     //get the minimal energy E_n is in [V(0,0,z),0]
     //We'll define it as positive
     //Kernel code then uses negaive values!
@@ -39,7 +38,6 @@ void Numerov::solve(){
     int index = 0;
     double dE = V(0,0,z)/ (double)ne;
     // This will be the starting energy for each chunk calculation
-    DEBUG("Minimal Energy is " << V(0,0,z))
     double En = 0;
     while( index < ne) {
         //copy initals on device
