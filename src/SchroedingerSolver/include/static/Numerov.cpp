@@ -1,7 +1,7 @@
 #include <vector>
 #include <iostream>
 #include "Numerov.hpp"
-#include "Numerov1D.hpp"
+
 
 
 Numerov::Numerov():nx(0),ne(0),xmax(0),xmin(0){}
@@ -67,9 +67,12 @@ void Numerov::savelevels(){
     vector<double> buffer3(nx);
     // Save the results into buffer1 vector
     DEBUG(results.size())
+    results.pop_front();
     for(auto i = 0; i < results.size();i+=nx){
         // Write the first list elements into a vector
-        buffer3 = results.back();
+        for(auto i = 0; i < nx; i++) {
+            buffer3[i] = results.front()[i];
+        }
         // Now we write the data into another vector
         // I know this is stupid, but since list has no direct data access
         // I see no other choice.
