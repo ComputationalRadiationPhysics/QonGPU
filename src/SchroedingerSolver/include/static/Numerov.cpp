@@ -31,6 +31,7 @@ Numerov::~Numerov(){}
 void Numerov::solve(){
     // Create the Device Pointer calculating the chunks
     double* dev_ptr;
+
     int dev_ne = 0;
     // Next let's allocate the required chunk memory on the device side
     cudaMalloc((void**)&dev_ptr,sizeof(double)*nx*CHUNKSIZE);
@@ -65,7 +66,9 @@ void Numerov::savelevels(){
 
     DEBUG(results.size())
     int k = results.size();
-    vector<double> buffer1(results.size()*nx);
+
+    hid_t file_id;
+    vector<double> buffer1(results.size());
     vector<double> buffer2(eval.size());
     vector<double> buffer3(nx);
     // Save the results into buffer1 vector
@@ -78,9 +81,13 @@ void Numerov::savelevels(){
         eval.pop_back();
     }
     // Create a new HDF5 file
+
     hid_t file_id;
     file_id = H5Fcreate("static_results.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+
     hsize_t dims = res.size();
+
+    hsize_t dims = buffer1.size();
     // Create a HDF5 Data set and write buffer1
     H5LTmake_dataset(file_id, "/numres", 1, &dims, H5T_NATIVE_DOUBLE, res.data());
     // Analog for buffer2
@@ -97,6 +104,7 @@ void Numerov::savelevels(){
     H5Fclose(file_id);
     DEBUG("CALL END")
 }
+
 
 bool Numerov::sign(double s){
     return std::signbit(s);
@@ -142,9 +150,14 @@ void Numerov::bisect(int j) {
                 }
 
             }
+
+        }
+        else {
+            DEBUG("No sign change detected")
         }
     }
 }
+
 void Numerov::tempprint(){
     hid_t fileid;
     hsize_t dim=7;
