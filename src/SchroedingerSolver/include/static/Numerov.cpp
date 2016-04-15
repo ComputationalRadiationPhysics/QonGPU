@@ -53,7 +53,7 @@ void Numerov::solve(){
         ENDSTATUS
         STATUS("Running bisection")
         std::cout<<" "<<std::endl;
-		bisect(j);
+		//bisect(j);
 		ENDSTATUS
     }
     cudaFree(dev_ptr);
@@ -66,6 +66,7 @@ void Numerov::solve(){
 void Numerov::savelevels(){
     // Function to provide saving functionality of the energy Levels
     // First Allocate an appropiate vector
+    hid_t file_id;
     vector<double> buffer1(results.size());
     vector<double> buffer2(eval.size());
     vector<double> buffer3(nx);
@@ -89,9 +90,9 @@ void Numerov::savelevels(){
         eval.pop_back();
     }
     // Create a new HDF5 file
-    hid_t file_id;
+
     DEBUG("CALL 1")
-    file_id = H5Fcreate("static_results.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+    file_id = H5Fcreate("res.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
     DEBUG("CALL 2")
     hsize_t dims = buffer1.size();
     // Create a HDF5 Data set and write buffer1
@@ -110,7 +111,8 @@ void Numerov::savelevels(){
     H5LTmake_dataset( file_id, "/params", 1, &dims, H5T_NATIVE_DOUBLE, p.data());
     // close the file
     H5Fclose(file_id);
-}
+
+ }
 
 bool Numerov::sign(double s){
     return std::signbit(s);
@@ -120,43 +122,44 @@ bool Numerov::sign(double s){
 
 void Numerov::bisect(int j) {
     // Iterate through chunk data
-	int d;
-    for(auto it = chunk.begin() + nx; it != chunk.end(); it += nx){
-     //   DEBUG("Current Psi: " <<  *(it+nx-1))
+    int d;
+    for (auto it = chunk.begin() + nx; it != chunk.end(); it += nx) {
+        //   DEBUG("Current Psi: " <<  *(it+nx-1))
 
-        if(sign( *( it)) != sign( *( it - nx -1))) {
-        DEBUG("Signchange detected!")
-		if(fabs( *(it)) < fabs( *(it - nx -1))&&
-                ( fabs( *( it)) < 1e-3)) {
+        if (sign(*(it)) != sign(*(it - nx - 1))) {
+            DEBUG("Signchange detected!")
+            if (fabs(*(it)) < fabs(*(it - nx - 1)) &&
+                (fabs(*(it)) < 1e-3)) {
                 DEBUG("Psi0 = " << *(it))
-                DEBUG("Psi1 = "<< *(it - nx - 1) )
-                d = std::distance(chunk.begin(),it)/nx;
-                vector<double> v( it,( it + nx - 1));
+                DEBUG("Psi1 = " << *(it - nx - 1))
+                d = std::distance(chunk.begin(), it) / nx;
+                vector<double> v(it, (it + nx - 1));
                 results.push_back(v);
-                DEBUG("First element: "<<results.back()[100])
-                eval.push_back((double)d*E/(double)ne);
-                DEBUG("Energy level found at index = "<< d)
-		}
-        else {
-            if (fabs(*(it - nx - 1)) < 1e-3) {
-
-                d = std::distance(chunk.begin(),it - nx - 1)/nx;
-                DEBUG("SEGFAULT ?")
-                vector<double> v(it - 2 * nx - 1, it - nx - 1);
-                results.push_back(v);
-                eval.push_back((double) ( d - 1) * E / (double) ne);
-                DEBUG("Psi0 = " << *(it))
-                DEBUG("Psi1 = "<< *(it - nx - 1) )
+                DEBUG("First element: " << results.back()[100])
+                eval.push_back((double) d * E / (double) ne);
                 DEBUG("Energy level found at index = " << d)
-
             }
+            /*else {
+                if (fabs(*(it - nx - 1)) < 1e-3) {
+
+                    d = std::distance(chunk.begin(),it - nx - 1)/nx;
+                    DEBUG("SEGFAULT ?")
+                    vector<double> v(it - 2 * nx - 1, it - nx - 1);
+                    results.push_back(v);
+                    eval.push_back((double) ( d - 1) * E / (double) ne);
+                    DEBUG("Psi0 = " << *(it))
+                    DEBUG("Psi1 = "<< *(it - nx - 1) )
+                    DEBUG("Energy level found at index = " << d)
+
+                }*/
+
         }
-	}
-	else{
-	    //DEBUG("No sign change detected")
-	    }
+        else {
+            DEBUG("No sign change detected")
+        }
     }
 }
+
 void Numerov::tempprint(){
     hid_t fileid;
     hsize_t dim=7;
