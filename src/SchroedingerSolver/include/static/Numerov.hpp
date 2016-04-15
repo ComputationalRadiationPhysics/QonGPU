@@ -10,7 +10,7 @@
 #include "hdf5_hl.h"
 #include "StaticSolver1D.hpp"
 #include "../params/Params1D.hpp"
-
+#include <array>
 using namespace std;
 
 
@@ -98,6 +98,7 @@ private:
     vector<double> cache;
     list<vector<double>> results;
     list<double> eval;
+	vector<double> res;
     void savelevels();
     bool sign(double s);
     void bisect(int j);

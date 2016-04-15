@@ -62,26 +62,15 @@ void Numerov::solve(){
 void Numerov::savelevels(){
     // Function to provide saving functionality of the energy Levels
     // First Allocate an appropiate vector
+
+    DEBUG(results.size())
+    int k = results.size();
     vector<double> buffer1(results.size()*nx);
     vector<double> buffer2(eval.size());
     vector<double> buffer3(nx);
     // Save the results into buffer1 vector
-    DEBUG(results.size())
-    results.pop_front();
-    for(auto i = 0; i < results.size();i+=nx){
-        // Write the first list elements into a vector
-        for(auto i = 0; i < nx; i++) {
-            buffer3[i] = results.front()[i];
-        }
-        // Now we write the data into another vector
-        // I know this is stupid, but since list has no direct data access
-        // I see no other choice.
-        for(auto j = 0; j < nx; j++) {
-            buffer1[i+j] = buffer3[j];
-        }
-        // Now pop the first element from the list
-        results.pop_back();
-    }
+
+
     for(auto it = 0; it < eval.size(); it++) {
         // We do the analog thing for the enegy
         // It's a lot simpler!
@@ -91,9 +80,9 @@ void Numerov::savelevels(){
     // Create a new HDF5 file
     hid_t file_id;
     file_id = H5Fcreate("static_results.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
-    hsize_t dims = buffer1.size();
+    hsize_t dims = res.size();
     // Create a HDF5 Data set and write buffer1
-    H5LTmake_dataset(file_id, "/numres", 1, &dims, H5T_NATIVE_DOUBLE, buffer1.data());
+    H5LTmake_dataset(file_id, "/numres", 1, &dims, H5T_NATIVE_DOUBLE, res.data());
     // Analog for buffer2
     dims = buffer2.size();
     H5LTmake_dataset(file_id, "/evals", 1, &dims, H5T_NATIVE_DOUBLE, buffer2.data());
@@ -106,6 +95,7 @@ void Numerov::savelevels(){
     H5LTmake_dataset( file_id, "/params", 1, &dims, H5T_NATIVE_DOUBLE, p.data());
     // close the file
     H5Fclose(file_id);
+    DEBUG("CALL END")
 }
 
 bool Numerov::sign(double s){
@@ -122,6 +112,8 @@ void Numerov::bisect(int j) {
     const int off = nx - 1;
     auto it = chunk.begin();
     vector<double> temp( nx);
+    double dE = -V(0,0,z)/ne;
+    double En = 0;
     for( auto i = 2 * off; i < chunk.size(); i += nx){
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
             DEBUG("Signchange deteceted!")
@@ -130,12 +122,23 @@ void Numerov::bisect(int j) {
                 results.push_back( temp);
                 // @TODO energy output
                 std::cout << "Energy level found" << std::endl;
+                res.resize(res.size()+nx);
+                auto iter = res.end()-nx;
+                std::copy(it+i,it+i+nx,iter);
+                En = (j+i)*dE;
+                eval.push_back(En);
             }
             else {
                 if(chunk[i-nx]<1e-3) {
                     std::copy(it + i, it + i + nx, temp.begin());
                     results.push_back(temp);
+                    results.pop_back();
+                    res.resize(res.size()+nx);
+                    auto iter = res.end()-nx;
+                    std::copy(it+i,it+i+nx,iter);
                     std::cout << "Energy level found" << std::endl;
+                    En = (j+i-1)*dE;
+                    eval.push_back(En);
                 }
 
             }
