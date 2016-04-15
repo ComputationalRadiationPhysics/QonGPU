@@ -29,10 +29,11 @@ Numerov::Numerov(Params1D *pa,complex<double>* ps): param(pa),
 Numerov::~Numerov(){}
 
 void Numerov::solve(){
-    // Create the Device Pointer calculating the chunks
-    for(auto j = 0; j < 150; j++) {
+    // This Loop is used to create
+    for(auto j = 0; j < 1; j++) {
         z = j;
         DEBUG("Solving for Z ="<<z)
+
         double *dev_ptr;
 
         int dev_ne = 0;
@@ -60,8 +61,9 @@ void Numerov::solve(){
             bisect(index);
             index += CHUNKSIZE;
         }
-        savelevels();
     }
+    // After all the calculations done we can save our energy levels!
+    savelevels();
 }
 
 void Numerov::savelevels(){
@@ -86,12 +88,10 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    hid_t file_id;
     file_id = H5Fcreate("static_results.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
 
     hsize_t dims = res.size();
 
-    hsize_t dims = buffer1.size();
     // Create a HDF5 Data set and write buffer1
     H5LTmake_dataset(file_id, "/numres", 1, &dims, H5T_NATIVE_DOUBLE, res.data());
     // Analog for buffer2
@@ -137,7 +137,7 @@ void Numerov::bisect(int j) {
                 res.resize(res.size()+nx);
                 auto iter = res.end()-nx;
                 std::copy(it+i,it+i+nx,iter);
-                En = (j+i)*dE;2
+                En = (j+i)*dE;
                 eval.push_back(En);
             }
             else {
@@ -155,9 +155,6 @@ void Numerov::bisect(int j) {
 
             }
 
-        }
-        else {
-            DEBUG("No sign change detected")
         }
     }
 }
