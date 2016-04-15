@@ -30,34 +30,38 @@ Numerov::~Numerov(){}
 
 void Numerov::solve(){
     // Create the Device Pointer calculating the chunks
-    double* dev_ptr;
+    for(auto j = 0; j < 150; j++) {
+        z = j;
+        DEBUG("Solving for Z ="<<z)
+        double *dev_ptr;
 
-    int dev_ne = 0;
-    // Next let's allocate the required chunk memory on the device side
-    cudaMalloc((void**)&dev_ptr,sizeof(double)*nx*CHUNKSIZE);
-    // Make use of some local variables
-    int index = 0;
-    double dE = V(0,0,z)/ (double)ne;
-    // This will be the starting energy for each chunk calculation
-    double En = 0;
-    while( index < ne) {
-        //copy initals on device
-        dev_ne = CHUNKSIZE;
-        if( index + CHUNKSIZE > ne){
-            dev_ne = ne - index;
-            cudaFree(dev_ptr);
-            cudaMalloc((void**) &dev_ptr, sizeof(double) * nx * dev_ne);
+        int dev_ne = 0;
+        // Next let's allocate the required chunk memory on the device side
+        cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * CHUNKSIZE);
+        // Make use of some local variables
+        int index = 0;
+        double dE = V(0, 0, z) / (double) ne;
+        // This will be the starting energy for each chunk calculation
+        double En = 0;
+        while (index < ne) {
+            //copy initals on device
+            dev_ne = CHUNKSIZE;
+            if (index + CHUNKSIZE > ne) {
+                dev_ne = ne - index;
+                cudaFree(dev_ptr);
+                cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne);
+            }
+            DEBUG("Calculating chunk: " << index / CHUNKSIZE)
+            cudaMemcpy(dev_ptr, cache.data(), sizeof(double) * nx * dev_ne, cudaMemcpyHostToDevice);
+            En = dE * (double) index;
+            DEBUG("Calculating with starting energy: " << En)
+            iter1 << < dev_ne, 1 >> > (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
+            cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost);
+            bisect(index);
+            index += CHUNKSIZE;
         }
-        DEBUG("Calculating chunk: "<< index/CHUNKSIZE)
-        cudaMemcpy( dev_ptr, cache.data(), sizeof(double)*nx*dev_ne, cudaMemcpyHostToDevice);
-        En = dE * (double) index;
-        DEBUG("Calculating with starting energy: " << En)
-        iter1<<< dev_ne, 1>>>( dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
-        cudaMemcpy( chunk.data(), dev_ptr, sizeof(double)*nx*dev_ne, cudaMemcpyDeviceToHost);
-        bisect(index);
-        index += CHUNKSIZE;
+        savelevels();
     }
-    savelevels();
 }
 
 void Numerov::savelevels(){
@@ -133,7 +137,7 @@ void Numerov::bisect(int j) {
                 res.resize(res.size()+nx);
                 auto iter = res.end()-nx;
                 std::copy(it+i,it+i+nx,iter);
-                En = (j+i)*dE;
+                En = (j+i)*dE;2
                 eval.push_back(En);
             }
             else {
