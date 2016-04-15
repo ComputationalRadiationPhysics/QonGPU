@@ -5,17 +5,18 @@
 #include <cmath>
 #include <list>
 #include <iterator>
+#include <complex.h>
 #include "hdf5.h"
 #include "hdf5_hl.h"
+#include "StaticSolver1D.hpp"
+#include "../params/Params1D.hpp"
 
-#define DEBUG(x) std::cout<<x<<std::endl;
-#define STATUS(x) std::cout<<x<<"...";
-#define ENDSTATUS std::cout<<"DONE!"<<std::endl;
-
-#define CHUNKSIZE 100
 using namespace std;
+
+
+#define CHUNKSIZE 500
 __host__ __device__  double V(double x, double t,double z) {
-  return 2*z/sqrt(1+x*x);
+  return 1*z/sqrt(1+x*x);
 };
 //NumerovKernel to iterate from right to left!
 __global__ void iter2(double* psi,
@@ -34,7 +35,9 @@ __global__ void iter2(double* psi,
     double heff = dx * dx / 12.0;
     while(tid < nx * ne) {;
         E = dE * (double) tid / (double) nx;
+        ;
         for(auto i = nx-1; i>1;i--) {
+
             //refine the first pre-factor for psi_(n-1)
             f1 = 1.0 + heff * (E + V(xmax - (i-2) * dx, 0, z));
             //redefine the next prefactor for psi_n
@@ -71,15 +74,14 @@ __global__ void iter1(double* psi,
 	while( tid < ne * nx) {
 
 		E += tid * dE / (double)(nx);
-		//This loop implements the numerov method
-		for(auto i = 2; i < nx ;i++){
+		for(auto i = 2; i < nx ; i++){
 
 			f1 = 1.0 / (1.0 + dx * dx  / 12.0 *  (heff * ( V( ( i + 1) * dx + xmin, 0 , z) - E)));
 			f2 = ( 1.0 - 5.0 * dx * dx / 12.0 * ( heff *( V( i * dx + xmin, 0, z) - E)));
 			f3 = ( 1.0 + dx * dx / 12.0 * ( heff *( V( ( i - 1) * dx + xmin, 0, z) - E)));
 			psi[ i + 1 + tid] = f1 * ( 2.0 * psi[ i + tid] * f2 - psi[ i - 1 + tid] * f3);
 		};
-		tid+=offset;
+		tid += offset;
 	};
 };
 
@@ -91,7 +93,7 @@ public:
     Numerov();
     ~Numerov();
 
-protected:
+private:
     vector<double> chunk;
     vector<double> cache;
     list<vector<double>> results;
@@ -106,7 +108,6 @@ protected:
     const double xmax,xmin;
     Params1D *param;
 
-    
 };
 
 #endif 

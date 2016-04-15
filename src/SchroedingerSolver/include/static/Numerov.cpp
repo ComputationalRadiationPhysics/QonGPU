@@ -1,5 +1,8 @@
-
+#include <vector>
+#include <iostream>
 #include "Numerov.hpp"
+
+
 
 Numerov::Numerov():nx(0),ne(0),xmax(0),xmin(0){}
 
@@ -8,7 +11,7 @@ Numerov::Numerov(Params1D *pa,complex<double>* ps): param(pa),
                                                     nx(pa->getnx()),
                                                     ne(pa->getne()),
                                                     z(pa->getz()),
-                                                    xmax(pa->gettmax()),
+                                                    xmax(pa->getxmax()),
                                                     xmin(pa->getxmin()) {
     // initialize the cache, with the inital values
     for(auto it = cache.begin(); it != cache.end(); it += nx) {
@@ -26,8 +29,9 @@ Numerov::Numerov(Params1D *pa,complex<double>* ps): param(pa),
 Numerov::~Numerov(){}
 
 void Numerov::solve(){
-    //create a double device ponter
+    // Create the Device Pointer calculating the chunks
     double* dev_ptr;
+<<<<<<< HEAD
     //now we enter a loop
     //which computes a "chunk" of Solutions
     //which gets analyzed and the overwritten
@@ -55,25 +59,55 @@ void Numerov::solve(){
         std::cout<<" "<<std::endl;
 		//bisect(j);
 		ENDSTATUS
+=======
+    int dev_ne = 0;
+    // Next let's allocate the required chunk memory on the device side
+    cudaMalloc((void**)&dev_ptr,sizeof(double)*nx*CHUNKSIZE);
+    // Make use of some local variables
+    int index = 0;
+    double dE = V(0,0,z)/ (double)ne;
+    // This will be the starting energy for each chunk calculation
+    double En = 0;
+    while( index < ne) {
+        //copy initals on device
+        dev_ne = CHUNKSIZE;
+        if( index + CHUNKSIZE > ne){
+            dev_ne = ne - index;
+            cudaFree(dev_ptr);
+            cudaMalloc((void**) &dev_ptr, sizeof(double) * nx * dev_ne);
+        }
+        DEBUG("Calculating chunk: "<< index/CHUNKSIZE)
+        cudaMemcpy( dev_ptr, cache.data(), sizeof(double)*nx*dev_ne, cudaMemcpyHostToDevice);
+        En = dE * (double) index;
+        DEBUG("Calculating with starting energy: " << En)
+        iter1<<< dev_ne, 1>>>( dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
+        cudaMemcpy( chunk.data(), dev_ptr, sizeof(double)*nx*dev_ne, cudaMemcpyDeviceToHost);
+        bisect(index);
+        index += CHUNKSIZE;
+>>>>>>> c4e3a00533cd1287db6b3cd1de60612715f64170
     }
-    cudaFree(dev_ptr);
-    STATUS("Saving Energy Levels")
     savelevels();
-    //tempprint();
-    ENDSTATUS
 }
 
 void Numerov::savelevels(){
     // Function to provide saving functionality of the energy Levels
     // First Allocate an appropiate vector
+<<<<<<< HEAD
     hid_t file_id;
     vector<double> buffer1(results.size());
+=======
+    vector<double> buffer1(results.size()*nx);
+>>>>>>> c4e3a00533cd1287db6b3cd1de60612715f64170
     vector<double> buffer2(eval.size());
     vector<double> buffer3(nx);
     // Save the results into buffer1 vector
+    DEBUG(results.size())
+    results.pop_front();
     for(auto i = 0; i < results.size();i+=nx){
         // Write the first list elements into a vector
-        buffer3 = results.back();
+        for(auto i = 0; i < nx; i++) {
+            buffer3[i] = results.front()[i];
+        }
         // Now we write the data into another vector
         // I know this is stupid, but since list has no direct data access
         // I see no other choice.
@@ -91,23 +125,21 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    DEBUG("CALL 1")
-    file_id = H5Fcreate("res.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
-    DEBUG("CALL 2")
+    hid_t file_id;
+    file_id = H5Fcreate("static_results.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+
     hsize_t dims = buffer1.size();
     // Create a HDF5 Data set and write buffer1
-    DEBUG("CALL 3")
     H5LTmake_dataset(file_id, "/numres", 1, &dims, H5T_NATIVE_DOUBLE, buffer1.data());
     // Analog for buffer2
-    DEBUG("CALL 4")
     dims = buffer2.size();
-    DEBUG("CALL 5")
     H5LTmake_dataset(file_id, "/evals", 1, &dims, H5T_NATIVE_DOUBLE, buffer2.data());
     //Save some necessary parameters
-    vector<double> p(2);
+    vector<double> p(3);
     p[0] = nx;
     p[1] = ne;
-    dims = 2;
+    p[2] = xmax;
+    dims = 3 ;
     H5LTmake_dataset( file_id, "/params", 1, &dims, H5T_NATIVE_DOUBLE, p.data());
     // close the file
     H5Fclose(file_id);
@@ -122,36 +154,29 @@ bool Numerov::sign(double s){
 
 void Numerov::bisect(int j) {
     // Iterate through chunk data
-    int d;
-    for (auto it = chunk.begin() + nx; it != chunk.end(); it += nx) {
-        //   DEBUG("Current Psi: " <<  *(it+nx-1))
-
-        if (sign(*(it)) != sign(*(it - nx - 1))) {
-            DEBUG("Signchange detected!")
-            if (fabs(*(it)) < fabs(*(it - nx - 1)) &&
-                (fabs(*(it)) < 1e-3)) {
-                DEBUG("Psi0 = " << *(it))
-                DEBUG("Psi1 = " << *(it - nx - 1))
-                d = std::distance(chunk.begin(), it) / nx;
-                vector<double> v(it, (it + nx - 1));
-                results.push_back(v);
-                DEBUG("First element: " << results.back()[100])
-                eval.push_back((double) d * E / (double) ne);
-                DEBUG("Energy level found at index = " << d)
+    // create local variable for the offset
+    // off is the index of the last Element
+    DEBUG("Bisecting")
+    const int off = nx - 1;
+    auto it = chunk.begin();
+    vector<double> temp( nx);
+    for( auto i = 2 * off; i < chunk.size(); i += nx){
+        if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
+            DEBUG("Signchange deteceted!")
+            if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-3) {
+                std::copy( it + i, it + i + nx, temp.begin());
+                results.push_back( temp);
+                // @TODO energy output
+                std::cout << "Energy level found" << std::endl;
             }
-            /*else {
-                if (fabs(*(it - nx - 1)) < 1e-3) {
+            else {
+                if(chunk[i-nx]<1e-3) {
+                    std::copy(it + i, it + i + nx, temp.begin());
+                    results.push_back(temp);
+                    std::cout << "Energy level found" << std::endl;
+                }
 
-                    d = std::distance(chunk.begin(),it - nx - 1)/nx;
-                    DEBUG("SEGFAULT ?")
-                    vector<double> v(it - 2 * nx - 1, it - nx - 1);
-                    results.push_back(v);
-                    eval.push_back((double) ( d - 1) * E / (double) ne);
-                    DEBUG("Psi0 = " << *(it))
-                    DEBUG("Psi1 = "<< *(it - nx - 1) )
-                    DEBUG("Energy level found at index = " << d)
-
-                }*/
+            }
 
         }
         else {
@@ -178,7 +203,7 @@ void Numerov::tempprint(){
     H5LTmake_dataset(fileid,"/params1d",1,&dim, H5T_NATIVE_DOUBLE,tempdata);
     free(tempdata);
     //rewrite dims
-    dim = (param->getnx())*(param->getne());
+    dim = (param->getnx())*(CHUNKSIZE);
     //print the simulation results in the HDF5 file
     H5LTmake_dataset(fileid, "/numres", 1, &dim, H5T_NATIVE_DOUBLE,chunk.data());
     //now write the energy indices to the file

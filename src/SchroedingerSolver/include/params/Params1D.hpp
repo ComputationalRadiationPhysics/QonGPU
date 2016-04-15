@@ -25,7 +25,9 @@ private:
     complex<double> z;
 };
 
-double Params1D::getxmax(){return xmax.real();}
+double Params1D::getxmax(){
+	return xmax.real();
+}
 double Params1D::getxmin(){return xmin.real();}
 double Params1D::gettmax(){return tmax.real();}
 double Params1D::gettmin(){return tmin.real();}

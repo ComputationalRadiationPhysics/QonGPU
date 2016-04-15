@@ -6,8 +6,8 @@ import numpy as np
 import functools
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt
-from sympy.physics.hydrogen import R_nl
-from sympy import var
+#from sympy.physics.hydrogen import R_nl
+#from sympy import var
 import gc
 
 
@@ -39,6 +39,7 @@ def norm(a,dx):
 def R10(x):
     br = 5.29e-10
     return x*2*np.exp(-x)
+
 R20= lambda r:r*np.sqrt(2)*(-r + 2)*np.sqrt(1**3)*np.exp(-r/2)/4
 R30= lambda r:r*2*np.sqrt(3)*(2*r**2/9 - 2*1*r + 3)*np.sqrt(1**3)*np.exp(-1*r/3)/27
 
@@ -47,7 +48,7 @@ for i in range(0,len(ind)):
     ax.plot(x,a[int(ind[i])*nx+1:int(ind[i])*nx+nx]**2,label="$E_{"+str(i)+"}$")
 #    ax.plot(x,a[i*nx+1:(i+1)*nx])
 
-ax.plot(x,R20(x)**2,label="$2s$-Orbital")
+#ax.plot(x,R20(x)**2,label="$2s$-Orbital")
 #ax.plot(x,R30(x)**2,label="$3s$-Orbital")
 ax.set_xlabel("$x$ $(a_0)$",size=20)
 ax.set_ylabel("$|\Psi_n|^2$",size=20)
