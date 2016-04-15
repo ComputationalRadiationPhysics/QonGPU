@@ -14,7 +14,7 @@
 using namespace std;
 
 
-#define CHUNKSIZE 500
+#define CHUNKSIZE 100
 __host__ __device__  double V(double x, double t,double z) {
   return 1*z/sqrt(1+x*x);
 };
@@ -101,7 +101,7 @@ private:
 	vector<double> res;
     void savelevels();
     bool sign(double s);
-    void bisect(int j);
+    void bisect(double j);
     void tempprint();
     const int nx,ne;
     int z;
