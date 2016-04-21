@@ -42,7 +42,7 @@ private:
     void initdset();
     void closefile();
     void savechunk();
-    
+
 };
 
 

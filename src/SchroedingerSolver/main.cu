@@ -17,6 +17,7 @@ int main(int argc, char** argv) {
        // SimDef<Numerov, TimeOperator1D, IOHandle, Core1D, Params1D, 1> s(&p);
      // s.staticsolve();
       return EXIT_SUCCESS;
+
 }
 
 
