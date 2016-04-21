@@ -1,0 +1,17 @@
+#!/bin/bash
+#PBS -q k20
+#PBS -l walltime=20:00:00
+#PBS -l nodes=1:ppn=4
+#PBS -d .
+#PBS -o stdout_1
+#PBS -e stderr_1
+
+
+. /opt/modules-3.2.6/Modules/3.2.6/init/bash
+module purge
+source ~/module_setup
+echo "Start..."
+
+./configure.sh
+
+echo "End..."
