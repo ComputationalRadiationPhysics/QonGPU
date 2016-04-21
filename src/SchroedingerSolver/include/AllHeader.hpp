@@ -28,7 +28,8 @@
 #include "potentials/Core1D.hpp"
 
 #include "output/IOHandle.hpp"
-#include "output/IOHandle1D.hpp"
+#include "output/IOHandle1D.h"
+#include "output/IOHandle1D.cpp"
 //#include "static/Numerov1D.hpp"
 #include "static/Numerov.cpp"
 
