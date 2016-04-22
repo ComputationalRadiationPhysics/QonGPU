@@ -7,7 +7,7 @@
 __host__ __device__ double Pot(double x,double t){
     return 2 / sqrt(1 + x * x);
 }
-__global__ void PrepRHS(double* v) {
+__global__ void PrepRHS(double* vecr) {
     // This function preperates the Right hand side of the CN algorithm
 
 }
@@ -30,7 +30,17 @@ CrankNicholson1D::CrankNicholson1D(Params1D& p):
 }
 
 CrankNicholson1D::~CrankNicholson1D() { }
-void CrankNicholson1D::preprt() {
+
+void CrankNicholson1D::preprt(double* vecr_dev,
+                              double* opl1_dev, double* opl2_dev, double* opl3_dev) {
+    // The preperation routine is here to
+    // Call the preperation Kernels!
+    preprt<<<nx,4>>>(vecr_dev);
+    5
+
+}
+
+void CrankNichsolson1D::memrt(){
 
 }
 
@@ -74,6 +84,6 @@ void CrankNicholson1D::genframes(const vector<complex<double>>& v) {
     cudaMalloc((void**) &opl1_dev, sizeof(cuDoubleComplex) * nx);
     cudaMalloc((void**) &opl2_dev, sizeof(cuDoubleComplex) * nx);
     cudaMalloc((void**) &opl3_dev, sizeof(cuDoubleComplex) * nx);
-    
+
 
 }
