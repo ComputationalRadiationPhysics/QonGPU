@@ -14,13 +14,8 @@ int main(int argc, char** argv) {
     std::complex<double> tma = 10.0;
     Params1D p(xma, xmi, tma, tmi, 1e4, 2, 1e7,1);
     IOHandle1D handle(&p);
-    SimDef<Numerov, CrankNicholson1D, IOHandle, Core1D, Params1D, 1> s(&p);
-
-
-
-
-
-    // s.staticsolve();
+    SimDef<Numerov, TimeOperator1D, IOHandle, Core1D, Params1D, 1> s(&p);
+    //s.staticsolve();
     return EXIT_SUCCESS;
 
 }

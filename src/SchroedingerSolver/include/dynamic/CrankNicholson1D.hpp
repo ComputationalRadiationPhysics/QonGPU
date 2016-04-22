@@ -15,30 +15,6 @@
 
 #define TCHUNK 100
 
-#define CLEANUP(s)                                   \
-do {                                                 \
-    printf ("%s\n", s);                              \
-    if (yHostPtr)           free(yHostPtr);          \
-    if (zHostPtr)           free(zHostPtr);          \
-    if (xIndHostPtr)        free(xIndHostPtr);       \
-    if (xValHostPtr)        free(xValHostPtr);       \
-    if (cooRowIndexHostPtr) free(cooRowIndexHostPtr);\
-    if (cooColIndexHostPtr) free(cooColIndexHostPtr);\
-    if (cooValHostPtr)      free(cooValHostPtr);     \
-    if (y)                  cudaFree(y);             \
-    if (z)                  cudaFree(z);             \
-    if (xInd)               cudaFree(xInd);          \
-    if (xVal)               cudaFree(xVal);          \
-    if (csrRowPtr)          cudaFree(csrRowPtr);     \
-    if (cooRowIndex)        cudaFree(cooRowIndex);   \
-    if (cooColIndex)        cudaFree(cooColIndex);   \
-    if (cooVal)             cudaFree(cooVal);        \
-    if (descr)              cusparseDestroyMatDescr(descr);\
-    if (handle)             cusparseDestroy(handle); \
-    cudaDeviceReset();          \
-    fflush (stdout);                                 \
-} while (0)
-
 
 
 
@@ -66,7 +42,7 @@ private:
     vector<complex<double>> frames;
     void saveChunk();
     // Defines a preperation routine, memory routine, solve rountine
-    void preprt();
+    void preprt(cuDoubleComplex* vecr_dev, cuDoubleComplex* opl1_dev, cuDoubleComplex* opl2_dev, cuDoubleComplex* opl3_dev);
     void memrt();
     void solvert();
 };
