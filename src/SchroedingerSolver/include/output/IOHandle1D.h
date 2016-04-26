@@ -5,13 +5,16 @@
 #ifndef IOHANDLE1D_H
 #define IOHANDLE1D_H
 
-#define FILENAME "simdata.h5"
-#define DATASETNAME "Psi"
-
+#include <vector>
 #include "hdf5.h"
 #include "hdf5_hl.h"
 // We'll use  a struct of arrays to
 // handle complex numbers in HDF5
+
+#define FILENAME "simdata.h5"
+#define DATASETNAME "Psi"
+#define RANK 1
+#define TCHUNK 1000
 typedef struct comp{
     double *r;
     double *i;
@@ -20,8 +23,8 @@ typedef struct comp{
     ~comp();
 } comp;
 comp::comp(hsize_t nx) {
-    r = (double*) malloc(sizeof(double)*nx);
-    i = (double*) malloc(sizeof(double)*nx);
+    r = (double*) malloc(sizeof(double)*nx*TCHUNK);
+    i = (double*) malloc(sizeof(double)*nx*TCHUNK);
 }
 comp::~comp(){
     free(r);
@@ -34,15 +37,25 @@ public:
     IOHandle1D(Params1D *p);
     ~IOHandle1D();
 private:
+
     comp chunk;
-    hid_t file;
     const size_t  nx,ne,nt;
     Params1D *param;
     void initfile();
-    void initdset();
     void closefile();
-    void savechunk();
+    void savechunk(const std::vector<std::complex<double>>& c);
+    void copychunk(const std::vector<std::complex<double>>& c);
 
+    // Some necessary HDF5 Variables
+    hid_t file;
+    hid_t dataset;
+    hid_t memspace;
+    hid_t filespace;
+    hid_t prop;
+
+    const hsize_t maxdims = H5F_UNLIMITED;
+    hsize_t dset_dims = nx*ne;
+    hsize_t chunk_dims = nx*TCHUNK;
 };
 
 

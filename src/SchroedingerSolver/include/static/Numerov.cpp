@@ -3,10 +3,9 @@
 #include "Numerov.hpp"
 
 
-
 Numerov::Numerov():nx(0),ne(0),xmax(0),xmin(0){}
 
-Numerov::Numerov(Params1D *pa,complex<double>* ps): param(pa),
+Numerov::Numerov(Params1D *pa,std::complex<double>* ps): param(pa),
                                                     chunk(pa->getnx()*CHUNKSIZE),cache(pa->getnx()*CHUNKSIZE),
                                                     nx(pa->getnx()),
                                                     ne(pa->getne()),
@@ -116,7 +115,6 @@ void Numerov::bisect(double j) {
     // Iterate through chunk data
     // create local variable for the offset
     // off is the index of the last Element
-    DEBUG("Bisecting")
     const int off = nx - 1;
     auto it = chunk.begin();
     vector<double> temp( nx);
@@ -124,7 +122,6 @@ void Numerov::bisect(double j) {
     double En = 0;
     for( auto i = 2 * off; i < chunk.size(); i += nx){
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
-            DEBUG("Signchange deteceted!")
             if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-3) {
                 std::copy( it + i, it + i + nx, temp.begin());
                 results.push_back( temp);
@@ -153,31 +150,3 @@ void Numerov::bisect(double j) {
         }
     }
 }
-
-void Numerov::tempprint(){
-    hid_t fileid;
-    hsize_t dim=7;
-    //Create temporal array for parameter location:
-    double* tempdata = (double*) malloc(sizeof(double)*7);
-    tempdata[0]=param->getxmax();
-    tempdata[1]=param->getxmin();
-    tempdata[2]=param->gettmax();
-    tempdata[3]=param->gettmin();
-    tempdata[4]=(double) param->getnx();
-    tempdata[5]=(double) param->getnt();
-    tempdata[6]=(double) param->getne();
-    //create the hdf5 file:
-    fileid = H5Fcreate("res_temp.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
-    //Print the parameters in the file
-    H5LTmake_dataset(fileid,"/params1d",1,&dim, H5T_NATIVE_DOUBLE,tempdata);
-    free(tempdata);
-    //rewrite dims
-    dim = (param->getnx())*(CHUNKSIZE);
-    //print the simulation results in the HDF5 file
-    H5LTmake_dataset(fileid, "/numres", 1, &dim, H5T_NATIVE_DOUBLE,chunk.data());
-    //now write the energy indices to the file
-    //close the file
-    H5Fclose(fileid);
-    //free memory
-    DEBUG("Finished saving!")
-};

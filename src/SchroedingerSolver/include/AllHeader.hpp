@@ -16,6 +16,7 @@
 #include "dynamic/TimeOperator2D.hpp"
 #include "dynamic/TimeOperator3D.hpp"
 #include "dynamic/CrankNicholson1D.cpp"
+#include "dynamic/ComplexOperators.h"
 
 #include "static/StaticSolver.hpp"
 #include "static/StaticSolver1D.hpp"
