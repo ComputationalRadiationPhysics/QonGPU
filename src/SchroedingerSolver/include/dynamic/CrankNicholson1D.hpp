@@ -26,43 +26,40 @@ class CrankNicholson1D : TimeOperator1D {
     /** This class implements the Crank Nicholson
      *  algorithm for the 1Dim Schroedinger Equation
      *  in Cuda C. The idea is that each Timestep
-     *  calculation is done by using the cusparest
-     *  Triangular solver Algorithm(which is hopefully
-     *  fast enough for our applications.
+     *  calculation is done by using the cusparse
+     *  Tridiagonal solver Algorithm(which is hopefully
+     *  fast/accurate enough for our application)
      */
 public:
     CrankNicholson1D();
     CrankNicholson1D(Params1D *_p, vector<cuDoubleComplex> _v);
     ~CrankNicholson1D();
-    void time_ev();
+    void time_solve();
 private:
     Params1D* param;
     const size_t nx,nt;
     const double E;
-    double tmax, xmax;
-    double tmin, xmin;
     const double tau = ( tmax - tmin) / ( double) nt;
     const size_t csize = 100;
+    double tmax, xmax;
+    double tmin, xmin;
     host_vector<cuDoubleComplex> chunk_h;
     // lefthand side chunk on Device
     device_vector<cuDoubleComplex>  chunkl_d;
     // righthand side chunk on Device
     device_vector<cuDoubleComplex> chunkr_d;
+    // Diagonals of the triangular matrix
+    device_vector<cuDoubleComplex> d, dl, du;
     void rhs_rt( double x, double t);
     void lhs_rt( double x, double t,
                  cuDoubleComplex* d,
-                 cuDoubleComplex* ud,
-                 cuDoubleComplex* du);
+                 cuDoubleComplex* du,
+                 cuDoubleComplex* dl);
     void prp_rt();
-    void save_chunch();
+    void update_diag(double x, double xmin, double tau, double c);
+    void save_chunk();
 };
 
 
-device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a, device_vector<cuDoubleComplex> b) {
-    for(auto i = 0; i < a.size(); ++i) {
-        a[i] += b[i];
-    }
-    return a;
-}
 
 #endif
