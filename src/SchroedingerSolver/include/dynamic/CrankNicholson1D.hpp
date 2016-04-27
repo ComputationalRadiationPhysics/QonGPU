@@ -39,11 +39,20 @@ private:
     Params1D* param;
     const size_t nx,nt;
     const double E;
+    double tmax, xmax;
+    double tmin, xmin;
+    const double tau = ( tmax - tmin) / ( double) nt;
     const size_t csize = 100;
     host_vector<cuDoubleComplex> chunk_h;
-    device_vector<cuDoubleComplex>  chunk_d;
-    void rhs_rt();
-    void lhs_rt();
+    // lefthand side chunk on Device
+    device_vector<cuDoubleComplex>  chunkl_d;
+    // righthand side chunk on Device
+    device_vector<cuDoubleComplex> chunkr_d;
+    void rhs_rt( double x, double t);
+    void lhs_rt( double x, double t,
+                 cuDoubleComplex* d,
+                 cuDoubleComplex* ud,
+                 cuDoubleComplex* du);
     void prp_rt();
     void save_chunch();
 };
