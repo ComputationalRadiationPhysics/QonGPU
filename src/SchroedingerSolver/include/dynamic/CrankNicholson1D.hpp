@@ -50,13 +50,23 @@ private:
     device_vector<cuDoubleComplex> chunkr_d;
     // Diagonals of the triangular matrix
     device_vector<cuDoubleComplex> d, dl, du;
-    void rhs_rt( double x, double t);
+
+    // Define necessary members
+    cusparseStatus_t status, status2;
+    cusparseHandle_t handle = 0;
+    // Define cusparse member functions
+    // @TODO export this stuff into an interface
+    void cusparse_init();
+    void cusparse_destr();
+    void cusparse_sv();
+
+    // Define necessary member functions
+    void rhs_rt();
     void lhs_rt( double x, double t,
                  cuDoubleComplex* d,
                  cuDoubleComplex* du,
                  cuDoubleComplex* dl);
     void prp_rt();
-    void update_diag(double x, double xmin, double tau, double c);
     void save_chunk();
 };
 

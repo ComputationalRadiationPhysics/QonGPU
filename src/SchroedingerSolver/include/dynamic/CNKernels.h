@@ -16,7 +16,7 @@ __device__ __host__ cuDoubleComplex inline pot(double x){
     return make_cuDoubleComplex(1/sqrt(x*x+1),0);
 }
 
-__device__ __host__ inline void rhs_rt(
+__device__ __host__ inline void mult_rhs(
         cuDoubleComplex* in1,
         cuDoubleComplex* in2,
         cuDoubleComplex* in3,
@@ -25,8 +25,8 @@ __device__ __host__ inline void rhs_rt(
         cuDoubleComplex* s2,
         const cuDoubleComplex& h1,
         const cuDoubleComplex& h2,
-        double x
-) {
+        double x) {
+
     *s1 = h1 * ( *in2 + *(in3)  - make_cuDoubleComplex( 2.0, 0) * *in1);
     *s2 = pot(x) * *in1;
     *s1 = *s1 + *s2;
@@ -35,7 +35,7 @@ __device__ __host__ inline void rhs_rt(
 }
 
 
-__global__ void transform_rhs(cuDoubleComplex* in, cuDoubleComplex* out,size_t nx,double xmax,double x0,double tau) {
+__global__ void transform_rhs(cuDoubleComplex* in, cuDoubleComplex* out,size_t nx, double xmax, double x0, double tau) {
 
     int ind = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
@@ -47,7 +47,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, cuDoubleComplex* out,size_t n
 
     while(ind < nx) {
         x = x0 + h*ind;
-        rhs_rt( &in[ind], &in[ind-1], &in[ind+1], &out[ind], &s1, &s2, h1, h2, x);
+        mult_rhs( &in[ind], &in[ind-1], &in[ind+1], &out[ind], &s1, &s2, h1, h2, x);
         ind += oset;
     }
 }
