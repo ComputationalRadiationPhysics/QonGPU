@@ -90,7 +90,7 @@ void CrankNicholson1D::time_solve() {
         if(status2 != CUSPARSE_STATUS_SUCCESS) {
             std::cout << status2 << std::endl;
         }
-        thrust::copy( chunkl_d.begin(), chunkl_d.end(), chunkr_d.begin())Q;
+        thrust::copy( chunkl_d.begin(), chunkl_d.end(), chunkr_d.begin());
     }
     cusparse_destr();
 
