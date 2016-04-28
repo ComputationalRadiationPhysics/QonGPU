@@ -29,6 +29,7 @@ echo "Finished"
 
 echo "Running qsolve"
 loc=$(find -name qsolve)
+
 mv ${loc}  ./build/
 build/qsolve
 
