@@ -43,8 +43,8 @@ private:
     Params1D *param;
     void initfile();
     void closefile();
-    void savechunk(const std::vector<std::complex<double>>& c);
-    void copychunk(const std::vector<std::complex<double>>& c);
+    void savechunk(const std::vector<std::complex<double> >& c);
+    void copychunk(const std::vector<std::complex<double> >& c);
 
     // Some necessary HDF5 Variables
     hid_t file;

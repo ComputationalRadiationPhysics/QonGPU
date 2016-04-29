@@ -30,7 +30,7 @@ __device__ __host__ inline void mult_rhs(
     *s1 = h1 * ( *in2 + *(in3)  - make_cuDoubleComplex( 2.0, 0) * *in1);
     *s2 = pot(x) * *in1;
     *s1 = *s1 + *s2;
-    *s1 = make_cuDoubleComplex( -s1->y, s2->x);
+    *s1 = make_cuDoubleComplex( -s1->y, s1->x);
     *out = *s1 + *in1;
 }
 

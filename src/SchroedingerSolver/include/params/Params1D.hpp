@@ -1,5 +1,6 @@
 #ifndef PARAMS1D_H
 #define PARAMS1D_H
+#include "Params.hpp"
 using namespace std;
 
 class Params1D: Params{

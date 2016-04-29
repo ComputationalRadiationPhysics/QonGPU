@@ -49,23 +49,30 @@ BOOST_AUTO_TEST_CASE(constructor) {
 
 BOOST_AUTO_TEST_CASE(devicefunctions) {
     cuDoubleComplex c0 = make_cuDoubleComplex(1.0,0);
-    BOOST_CHECK_EQUAL(pot(0).x,c1.x);
-    BOOST_CHECK_EQUAL(pot(0).y,c1.y);
-
+    BOOST_CHECK_EQUAL(pot(0).x,c0.x);
+    BOOST_CHECK_EQUAL(pot(0).y,c0.y);
+    const double con1 = 2.0;
+    const double con2 = 3.0;
+    const double con3 = 4.0;
+    const double con4 = 0.0;
+    const double con5 = 6.0;
+    const double con6 = 0.0;
+    cuDoubleComplex c1 = make_cuDoubleComplex(2.0, 2.0);
+    cuDoubleComplex c2 = make_cuDoubleComplex(3.0, 3.0);
+    cuDoubleComplex c3 = make_cuDoubleComplex(4.0, 4.0);
+    cuDoubleComplex c4 = make_cuDoubleComplex(con4, con4);
+    cuDoubleComplex c5 = make_cuDoubleComplex(con5, con5);
+    cuDoubleComplex c6 = make_cuDoubleComplex(con6, con5);
+    cuDoubleComplex h1 = make_cuDoubleComplex(1.0 ,0);
+    cuDoubleComplex h2 = make_cuDoubleComplex(1.0, 0);
+    mult_rhs( &c3, &c2, &c1, &c5, &c4, &c6, h1, h2 ,0);
+    BOOST_CHECK_EQUAL(c5.x,3.0);
+    BOOST_CHECK_EQUAL(c5.y,5.0);
 }
 
 
 void dummy(){
-    const double con1 = 2.0;
-    const double con2 = 3.0;
-    const double con3 = 4.0;
-    const double con4 = 5.0;
-    const double con5 = 6.0;
-    const double con6 = 7.0;
-    cuDoubleComplex c1 = make_cuDoubleComplex(con1, con1);
-    cuDoubleComplex c2 = make_cuDoubleComplex(con2, con2);
-    cuDoubleComplex c3 = make_cuDoubleComplex(con3, con3);
-    cuDoubleComplex c4 = make_cuDoubleComplex(con4, con4);
+
 
 }
 
