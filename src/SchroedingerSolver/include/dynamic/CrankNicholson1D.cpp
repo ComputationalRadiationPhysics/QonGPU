@@ -67,7 +67,7 @@ void CrankNicholson1D::time_solve() {
     const double hbar_m = 1.0;
     const double h = (xmax - xmin) / (double) nx;
     const double tau = (tmin - tmax) / (double) nt;
-    const double c =  tau / 2 / ( h * h) * hbar_m;
+    const double c =  1 / ( h * h) * hbar_m;
 
 
     double t = 0;
