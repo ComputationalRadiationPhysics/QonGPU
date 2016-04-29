@@ -48,7 +48,7 @@ project(qsolve)
 #Set Compiler Flags
 #####
 
-set(CMAKE_CXX_FLAGS "--std=c++11")
+set(CMAKE_CXX_FLAGS "-std=c++11")
 
 ######
 #Find Packages
@@ -72,9 +72,10 @@ include_directories(${HDF5_INCLUDE_DIRS})
 set(LIBS ${LIBS} ${HDF5_LIBRARIES})
 
 #find Package Boost
-find_package(Boost REQUIRED)
-set(LIBS ${LIBS} ${BOOST_LIBRARIES})
+find_package(Boost COMPONENTS unit_test_framework )
 include_directories(${BOOST_INCLUDE_DIR})
+set(LIBS ${LIBS} ${BOOST_LIBRARIES})
+
 
 if(${CUDA_FOUND})
   message("-- Using CUDA")
@@ -92,4 +93,31 @@ elseif(NOT ${CUDA_FOUND})
  endif(${CUDA_FOUND})
 
 
+#################
+#  Enale Testing
+#################
+enable_testing()
+
+
+file(GLOB TEST_SRCS_DYN ${CMAKE_CURRENT_SOURCE_DIR}/include/dynamic/tests/*.cu)
+
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+set(LIBS ${LIBS} ${GTEST_INCLUDE_DIRS})
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_MWAITXINTRIN_H_INCLUDED")
+set(CMAKE_CXX_FLAGS)
+# for each test file set an Test
+foreach(testSrc ${TEST_SRCS_DYN})
+    get_filename_component(testName ${testSrc} NAME_WE)
+    cuda_add_executable( ${testName} ${testSrc})
+    target_link_libraries(${testName} ${LIBS})
+
+    set_target_properties(${testName} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/testBin)
+
+    add_test(NAME ${testName}
+                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/testBin
+                 COMMAND ${CMAKE_CURRENT_BINARY_DIR}/testBin/${testName} )
+
+endforeach(testSrc)
 
