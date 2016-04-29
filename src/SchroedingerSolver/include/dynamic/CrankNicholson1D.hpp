@@ -35,6 +35,14 @@ public:
     CrankNicholson1D(Params1D *_p, vector<cuDoubleComplex> _v);
     ~CrankNicholson1D();
     void time_solve();
+    size_t getnx(){ return nx;};
+    size_t getnt(){ return nt;}
+    double gettmax(){ return tmax;};
+    double gettmin(){return tmin;};
+    double getxmax() {return xmax;};
+    double getxmin() {return xmin;};
+    void cusparse_init();
+    void cusparse_destr();
 private:
     Params1D* param;
     const size_t nx,nt;
@@ -56,8 +64,7 @@ private:
     cusparseHandle_t handle = 0;
     // Define cusparse member functions
     // @TODO export this stuff into an interface
-    void cusparse_init();
-    void cusparse_destr();
+
     void cusparse_sv();
 
     // Define necessary member functions
@@ -68,6 +75,7 @@ private:
                  cuDoubleComplex* dl);
     void prp_rt();
     void save_chunk();
+
 };
 
 

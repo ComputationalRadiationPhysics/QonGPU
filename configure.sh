@@ -24,7 +24,6 @@ echo "Found number of Cores: ${cores}. Use $(expr ${cores} + 1) jobs for paralle
 echo "Running make"
 
 make -j$((cores+1)) --no-print-directory || exit 1
-make test || exit 1
 
 echo "Finished"
 
@@ -32,7 +31,8 @@ echo "Running qsolve"
 loc=$(find -name qsolve)
 
 mv ${loc}  ./build/
-build/qsolve
+testBin/test1
+#build/qsolve
 
 #if [ "$1"=="-py" ]; then
 #        echo "Use Python graphics script"
