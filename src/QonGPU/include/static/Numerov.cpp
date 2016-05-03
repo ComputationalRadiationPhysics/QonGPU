@@ -155,7 +155,6 @@ double Numerov::trapez(int first, int last) {
 
     double h = (xmax - xmin) / (double) nx;
     auto temp = 0.0;
-    DEBUG("CALL TRAP")
     for(auto i = first; i < last; ++i){
         temp += res[i]*res[i] * 2.0;
     }
@@ -166,7 +165,6 @@ double Numerov::trapez(int first, int last) {
 
 void Numerov::mult_const(int first, int last, double c) {
 
-    DEBUG("CALL MULT")
     for( auto i = first; i < last; ++i) {
         res[i] *= c;
     }
@@ -177,10 +175,20 @@ void Numerov::prepstates() {
     // static Solutions of the Numerov solution and
     // Writes them to the
 
-
     double c_temp = 0;
     for(auto i = 0; i < res.size(); i += nx+1) {
         c_temp = trapez(i, i+nx);
         mult_const( i, i+nx, c_temp);
     }
+}
+
+void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>* v) {
+
+    int o = nx*ind;
+    thrust::host_vector<cuDoubleComplex> c_temp(nx);
+    for(auto i = 0; i < nx; ++i) {
+        c_temp[i] = make_cuDoubleComplex(res[i+o],0);
+    }
+    thrust::copy(v->begin(),v->end(),c_temp.begin());
+
 }

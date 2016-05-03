@@ -95,3 +95,8 @@ void CrankNicholson1D::time_solve() {
     cusparse_destr();
 
 }
+
+void CrankNicholson1D::setstate(const thrust::host_vector <cuDoubleComplex>& v) {
+    // copy initial state into memory!
+    thrust::copy()
+}
