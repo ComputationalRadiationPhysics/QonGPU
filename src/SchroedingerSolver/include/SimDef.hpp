@@ -1,6 +1,4 @@
-#ifndef SRC_SCHROEDINGERSOLVER_INCLUDE_SIMDEF_HPP_
-#define SRC_SCHROEDINGERSOLVER_INCLUDE_SIMDEF_HPP_
-
+#pragma  once
 #include <cuda_runtime.h>
 
 #include <cublas_v2.h>
@@ -22,16 +20,14 @@ template <class StatSolver, class TimeOp, class IO, class Pot,
 class SimDef{
   
  public:
-  explicit SimDef(Params1D *p):da(p), s(p, psi0) {
-    DEBUG("CALL CONSTRUCTOR")
-        }
-  explicit SimDef(Params2D *p):da(p) {
-  }
-  explicit SimDef(Params3D *p):da(p) {
-  }
+  explicit SimDef(Params1D *p):da(p), s(p) {}
+  explicit SimDef(Params2D *p):da(p) {}
+  explicit SimDef(Params3D *p):da(p) {}
   void staticsolve() {
     s.solve();
-        }
+    //s.copystate(0, &psi0);
+    //t.setstatic(&psi0);
+    }
   void timerev() {
   }
   void printres() {
@@ -44,10 +40,5 @@ class SimDef{
   IO io;
   Pot p;
   Para *da;
-  std::complex<double>* psi0;
-  std::complex<double>* psi;
-  double* npsi;
+  thrust::host_vector<cuDoubleComplex> psi0;
 };
-
-
-#endif

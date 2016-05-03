@@ -5,7 +5,7 @@
 
 Numerov::Numerov():nx(0),ne(0),xmax(0),xmin(0){}
 
-Numerov::Numerov(Params1D *pa,std::complex<double>* ps): param(pa),
+Numerov::Numerov(Params1D *pa): param(pa),
                                                     chunk(pa->getnx()*CHUNKSIZE),cache(pa->getnx()*CHUNKSIZE),
                                                     nx(pa->getnx()),
                                                     ne(pa->getne()),
@@ -29,7 +29,7 @@ Numerov::~Numerov(){}
 
 void Numerov::solve(){
     // This Loop is used to create
-    for(auto j = 1; j < 252; j++) {
+    for(auto j = 1; j < 2; j++) {
         z = j;
         DEBUG("Solving for Z ="<<z)
 
@@ -57,11 +57,13 @@ void Numerov::solve(){
             DEBUG("Calculating with starting energy: " << En)
             iter1 << < dev_ne, 1 >> > (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
             cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost);
-            bisect(En);
+            if(bisect(En)) index = ne;
             index += CHUNKSIZE;
+
         }
     }
     // After all the calculations done we can save our energy levels!
+    prepstates();
     savelevels();
 }
 
@@ -111,7 +113,7 @@ bool Numerov::sign(double s){
 
 
 
-void Numerov::bisect(double j) {
+int Numerov::bisect(double j) {
     // Iterate through chunk data
     // create local variable for the offset
     // off is the index of the last Element
@@ -123,30 +125,62 @@ void Numerov::bisect(double j) {
     for( auto i = 2 * off; i < chunk.size(); i += nx){
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
             if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-3) {
-                std::copy( it + i, it + i + nx, temp.begin());
-                results.push_back( temp);
-                std::cout << "Energy level found" << std::endl;
-                std::cout << "Detected energy level: "<< En << std::endl;
                 res.resize(res.size()+nx);
                 auto iter = res.end()-nx;
                 std::copy(it+i,it+i+nx,iter);
                 En = ( -j + i/nx * dE);
+                std::cout << "Energy level found" << std::endl;
+                std::cout << "Detected energy level: "<< En << std::endl;
                 eval.push_back(En);
+                return 1;
             }
             else {
                 if(chunk[i-nx]<1e-3) {
-                    std::copy(it + i, it + i + nx, temp.begin());
-                    results.push_back(temp);
-                    results.pop_back();
                     res.resize(res.size()+nx);
                     auto iter = res.end()-nx;
                     std::copy(it+i,it+i+nx,iter);
+                    En = (-j + (i/nx - 1) * dE);
                     std::cout << "Energy level found" << std::endl;
                     std::cout << "Detected energy level: "<< En << std::endl;
-                    En = (-j + (i/nx - 1) * dE);
                     eval.push_back(En);
+                    return 1;
                 }
             }
         }
+    }
+    return 0;
+}
+
+double Numerov::trapez(int first, int last) {
+
+    double h = (xmax - xmin) / (double) nx;
+    auto temp = 0.0;
+    DEBUG("CALL TRAP")
+    for(auto i = first; i < last; ++i){
+        temp += res[i]*res[i] * 2.0;
+    }
+    temp -= (res[first]*res[first] + res[last]*res[last]);
+    temp *= h/2;
+    return 1/sqrt(temp);
+}
+
+void Numerov::mult_const(int first, int last, double c) {
+
+    DEBUG("CALL MULT")
+    for( auto i = first; i < last; ++i) {
+        res[i] *= c;
+    }
+}
+
+void Numerov::prepstates() {
+    // This function normalizes the
+    // static Solutions of the Numerov solution and
+    // Writes them to the
+
+
+    double c_temp = 0;
+    for(auto i = 0; i < res.size(); i += nx+1) {
+        c_temp = trapez(i, i+nx);
+        mult_const( i, i+nx, c_temp);
     }
 }

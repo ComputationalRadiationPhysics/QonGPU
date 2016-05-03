@@ -3,7 +3,7 @@
 
 class StaticSolver{
  public:
-  StaticSolver(Params* p, double*  psi0) {}
+  StaticSolver(Params* p) {}
   StaticSolver() {}
   void solve();
 };

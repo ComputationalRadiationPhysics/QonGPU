@@ -87,8 +87,9 @@ public:
     void solve();
     void bisect();
     void bisect2();
-    Numerov1D(Params1D* pa,std::complex<double>* ps) : param(pa), p(ps)
-    , pot(), eindex(100), out(pa) {
+    Numerov1D(Params1D* pa) : param(pa)
+    , pot(), eindex(100), out(pa)
+    {
 	nx = (param->getnx());
 	ne =  (param->getne());
 	psi=(double*) malloc(sizeof(double)*nx*ne);

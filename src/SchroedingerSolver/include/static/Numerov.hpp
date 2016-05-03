@@ -1,6 +1,4 @@
-#ifndef NUMEROV_H_
-#define NUMEROV_H_
-
+#pragma  once
 #include <assert.h>
 #include <cmath>
 #include <list>
@@ -14,9 +12,9 @@
 using namespace std;
 
 
-#define CHUNKSIZE 100
+#define CHUNKSIZE 500
 __host__ __device__  double V(double x, double t,double z) {
-  return 1*z/sqrt(1+x*x);
+  return 2*z/sqrt(1+x*x);
 };
 //NumerovKernel to iterate from right to left!
 __global__ void iter2(double* psi,
@@ -89,26 +87,32 @@ class Numerov: protected StaticSolver1D {
 
 public:
     void solve();
-    Numerov(Params1D *pa, std::complex<double> *ps);
+    Numerov(Params1D *pa);
     Numerov();
     ~Numerov();
 
 private:
+    // Necessary private members
     vector<double> chunk;
     vector<double> cache;
     list<vector<double>> results;
     list<double> eval;
 	vector<double> res;
-    void savelevels();
-    bool sign(double s);
-    void bisect(double j);
-    void tempprint();
     const int nx,ne;
     int z;
     double E;
     const double xmax,xmin;
     Params1D *param;
 
+    void prepstates();
+    void savelevels();
+    bool sign(double s);
+    int bisect(double j);
+    void copystate(int ind, thrust::host_vector<cuDoubleComplex>* v);
+    void tempprint();
+    void mult_const(int first, int last, double c);
+    double trapez(int first, int last);
+
 };
 
-#endif 
+

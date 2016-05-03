@@ -3,9 +3,7 @@
 //
 
 
-#ifndef PROJECT_CRANKNICHOLSON1D_HPP
-#define PROJECT_CRANKNICHOLSON1D_HPP
-
+#pragma once
 
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
@@ -65,6 +63,8 @@ private:
     // Define cusparse member functions
     // @TODO export this stuff into an interface
 
+    // get a function to copy the initial state!
+    void setstate(thrust::host_vector<cuDoubleComplex> v);
     void cusparse_sv();
 
     // Define necessary member functions
@@ -76,8 +76,8 @@ private:
     void prp_rt();
     void save_chunk();
 
+
 };
 
 
 
-#endif
