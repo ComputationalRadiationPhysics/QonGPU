@@ -49,6 +49,7 @@ private:
     const size_t csize = 100;
     double tmax, xmax;
     double tmin, xmin;
+    host_vector<cuDoubleComplex> inital;
     host_vector<cuDoubleComplex> chunk_h;
     // lefthand side chunk on Device
     device_vector<cuDoubleComplex>  chunkl_d;
@@ -64,7 +65,7 @@ private:
     // @TODO export this stuff into an interface
 
     // get a function to copy the initial state!
-    void setstate(thrust::host_vector<cuDoubleComplex> v);
+    void setstate(const thrust::host_vector<cuDoubleComplex>& v);
     void cusparse_sv();
 
     // Define necessary member functions

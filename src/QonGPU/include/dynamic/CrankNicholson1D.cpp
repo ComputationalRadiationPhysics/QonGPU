@@ -20,7 +20,8 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p, vector <cuDoubleComplex> _v): p
                                                                                xmin( _p->getxmin()),
                                                                                d(nx),
                                                                                du(nx),
-                                                                               dl(nx)
+                                                                               dl(nx),
+                                                                               inital(nx)
 {
     thrust::copy( chunk_h.begin(), chunk_h.end(), chunkr_d.begin());
 }
@@ -98,5 +99,6 @@ void CrankNicholson1D::time_solve() {
 
 void CrankNicholson1D::setstate(const thrust::host_vector <cuDoubleComplex>& v) {
     // copy initial state into memory!
-    thrust::copy()
+    thrust::copy(v.begin(), v.end(), inital.begin());
+    chunkl_d = inital;
 }
