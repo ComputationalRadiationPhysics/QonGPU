@@ -19,10 +19,8 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   du(_p->getnx()),
                                                   dl(_p->getnx()),
                                                   inital(_p->getnx())
-{
-
-}
-CrankNicholson1D::~CrankNicholson1D() { }
+{}
+CrankNicholson1D::~CrankNicholson1D() {}
 
 void CrankNicholson1D::rhs_rt() {
 
@@ -30,11 +28,10 @@ void CrankNicholson1D::rhs_rt() {
 }
 
 void CrankNicholson1D::lhs_rt(double x, double t,
+
                               cuDoubleComplex* d,
                               cuDoubleComplex* du,
-                              cuDoubleComplex* dl) {
-
-}
+                              cuDoubleComplex* dl) { }
 
 void CrankNicholson1D::cusparse_init() {
     status = cusparseCreate( &handle);
