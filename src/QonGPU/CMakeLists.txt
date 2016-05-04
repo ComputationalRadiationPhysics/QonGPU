@@ -34,8 +34,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wunused-variable")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wvolatile-register-var")
 
-
-
+#####
+#Set testing options
+####
+option(TOTEST "Enable test build!" ON)
 
 ######
 #Specify Project Name
@@ -49,6 +51,7 @@ project(qsolve)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
+
 ######
 #Find Packages
 #####
@@ -58,7 +61,7 @@ find_package(CUDA REQUIRED)
 set(LIBS ${LIBS} ${CUDA_LIBRARIES})
 set(LIBS ${LIBS} ${CUDA_CUBLAS_LIBRARIES})
 set(LIBS ${LIBS} ${CUDA_cusparse_LIBRARY})
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_20 ")
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_20 -Xcompiler -fopenmp")
 
 #Find MPI
 #find_package(MPI REQUIRED)
@@ -75,6 +78,10 @@ find_package(Boost COMPONENTS unit_test_framework )
 include_directories(${BOOST_INCLUDE_DIR})
 set(LIBS ${LIBS} ${BOOST_LIBRARIES})
 
+#find openMP
+find_package(OpenMP REQUIRED)
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 
 if(${CUDA_FOUND})
   message("-- Using CUDA")
@@ -91,10 +98,10 @@ elseif(NOT ${CUDA_FOUND})
 
  endif(${CUDA_FOUND})
 
-
 #################
 #  Enale Testing
 #################
+if(TOTEST)
 enable_testing()
 
 
@@ -118,4 +125,4 @@ foreach(testSrc ${TEST_SRCS_DYN})
                  COMMAND ${CMAKE_CURRENT_BINARY_DIR}/testBin/${testName} )
 
 endforeach(testSrc)
-
+endif()

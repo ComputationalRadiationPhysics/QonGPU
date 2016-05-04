@@ -41,6 +41,9 @@ public:
     double getxmin() {return xmin;};
     void cusparse_init();
     void cusparse_destr();
+    // get a function to copy the initial state!
+    void setstate(const thrust::host_vector<cuDoubleComplex>& v);
+
 private:
     Params1D* param;
     const size_t nx,nt;
@@ -64,8 +67,6 @@ private:
     // Define cusparse member functions
     // @TODO export this stuff into an interface
 
-    // get a function to copy the initial state!
-    void setstate(const thrust::host_vector<cuDoubleComplex>& v);
     void cusparse_sv();
 
     // Define necessary member functions

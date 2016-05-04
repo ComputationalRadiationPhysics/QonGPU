@@ -5,10 +5,6 @@
 
 #include "cuComplex.h"
 
-#include "boost/static_assert.hpp"
-
-#include "boost/type_traits/is_base_of.hpp"
-
 #include "thrust/complex.h"
 
 #include "AllHeader.hpp"
@@ -25,8 +21,8 @@ class SimDef{
   explicit SimDef(Params3D *p):da(p) {}
   void staticsolve() {
     s.solve();
-    //s.copystate(0, &psi0);
-    //t.setstatic(&psi0);
+    s.copystate( 0,&psi0);
+    t.setstate(psi0);
     }
   void timerev() {
   }

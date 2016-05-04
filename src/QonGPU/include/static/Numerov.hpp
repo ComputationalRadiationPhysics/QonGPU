@@ -90,6 +90,7 @@ public:
     Numerov(Params1D *pa);
     Numerov();
     ~Numerov();
+	void copystate(int ind, thrust::host_vector<cuDoubleComplex>* v);
 
 private:
     // Necessary private members
@@ -108,7 +109,6 @@ private:
     void savelevels();
     bool sign(double s);
     int bisect(double j);
-    void copystate(int ind, thrust::host_vector<cuDoubleComplex>* v);
     void tempprint();
     void mult_const(int first, int last, double c);
     double trapez(int first, int last);

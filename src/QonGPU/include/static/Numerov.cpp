@@ -1,17 +1,20 @@
 #include <vector>
 #include <iostream>
+#include <omp.h>
 #include "Numerov.hpp"
 
 
 Numerov::Numerov():nx(0),ne(0),xmax(0),xmin(0){}
 
 Numerov::Numerov(Params1D *pa): param(pa),
-                                                    chunk(pa->getnx()*CHUNKSIZE),cache(pa->getnx()*CHUNKSIZE),
-                                                    nx(pa->getnx()),
-                                                    ne(pa->getne()),
-                                                    z(pa->getz()),
-                                                    xmax(pa->getxmax()),
-                                                    xmin(pa->getxmin()) {
+                                chunk(pa->getnx()*CHUNKSIZE),
+                                cache(pa->getnx()*CHUNKSIZE),
+                                nx(pa->getnx()),
+                                ne(pa->getne()),
+                                z(pa->getz()),
+                                xmax(pa->getxmax()),
+                                xmin(pa->getxmin()) {
+
     // initialize the cache, with the inital values
     for(auto it = cache.begin(); it != cache.end(); it += nx) {
         // the first entry always has to be zero, the second
@@ -76,7 +79,6 @@ void Numerov::savelevels(){
     hid_t file_id;
     vector<double> buffer2(eval.size());
 
-
     for(auto it = 0; it < eval.size(); it++) {
         // We do the analog thing for the enegy
         // It's a lot simpler!
@@ -103,7 +105,6 @@ void Numerov::savelevels(){
     H5LTmake_dataset( file_id, "/params", 1, &dims, H5T_NATIVE_DOUBLE, p.data());
     // close the file
     H5Fclose(file_id);
-    DEBUG("CALL END")
 }
 
 
@@ -122,6 +123,7 @@ int Numerov::bisect(double j) {
     vector<double> temp( nx);
     double dE = -V(0,0,z)/ne;
     double En = 0;
+//#pragma omp parallel for
     for( auto i = 2 * off; i < chunk.size(); i += nx){
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
             if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-3) {
