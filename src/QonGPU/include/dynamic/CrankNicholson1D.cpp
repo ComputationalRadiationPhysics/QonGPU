@@ -1,7 +1,3 @@
-//
-// Created by max on 22/04/16.
-//
-
 #include "CrankNicholson1D.hpp"
 #include "CNKernels.h"
 
@@ -65,8 +61,8 @@ void CrankNicholson1D::cusparse_destr() {
 
 
 void CrankNicholson1D::time_solve() {
-    // This routine is now slightly longer
 
+    // This routine is now slightly longer
     const double hbar_m = 1.0;
     const double h = (xmax - xmin) / (double) nx;
     const double tau = (tmin - tmax) / (double) nt;
@@ -91,11 +87,11 @@ void CrankNicholson1D::time_solve() {
         thrust::copy( chunkl_d.begin(), chunkl_d.end(), chunkr_d.begin());
     }
     cusparse_destr();
-
 }
 
 void CrankNicholson1D::setstate(const thrust::host_vector <cuDoubleComplex>& v) {
     // copy initial state into memory!
     thrust::copy(v.begin(), v.end(), inital.begin());
     chunkl_d = inital;
+    chunkr_d = inital;
 }

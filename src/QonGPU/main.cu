@@ -12,11 +12,8 @@ int main(int argc, char** argv) {
     std::complex<double> xmi = 0.0;
     std::complex<double> tmi = 0.0;
     std::complex<double> tma = 10.0;
-    Params1D p(xma, xmi, tma, tmi, 1e2, 5, 1e6,1);
-    IOHandle1D handle(&p);
-    DEBUG2("Calling Simdef constr.");
-    SimDef<Numerov, CrankNicholson1D, IOHandle, Core1D, Params1D, 1> s(&p);
-    DEBUG2("Calliong static solve");
+    Params1D p(xma, xmi, tma, tmi, 1e2, 2, 1e6,1);
+    SimDef<Numerov, CrankNicholson1D, Core1D, Params1D, 1> s(&p);
     s.staticsolve();
     s.timerev();
     return EXIT_SUCCESS;

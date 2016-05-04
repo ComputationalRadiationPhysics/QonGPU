@@ -1,8 +1,3 @@
-//
-// Created by max on 20/04/16.
-//
-
-
 #pragma once
 
 #include <thrust/host_vector.h>
@@ -10,14 +5,9 @@
 #include <cuda_runtime.h>
 #include <cusparse_v2.h>
 
+#include "../output/IOHandle1D.cpp"
 #include "TimeOperator1D.hpp"
 #include "ComplexOperators.h"
-
-
-
-
-
-
 
 using namespace thrust;
 class CrankNicholson1D : TimeOperator1D {
@@ -36,9 +26,9 @@ public:
     size_t getnx(){ return nx;};
     size_t getnt(){ return nt;}
     double gettmax(){ return tmax;};
-    double gettmin(){return tmin;};
-    double getxmax() {return xmax;};
-    double getxmin() {return xmin;};
+    double gettmin(){ return tmin;};
+    double getxmax(){ return xmax;};
+    double getxmin(){ return xmin;};
     void cusparse_init();
     void cusparse_destr();
     // get a function to copy the initial state!
@@ -46,6 +36,7 @@ public:
 
 private:
     Params1D* param;
+    IOHandle1D io;
     const size_t nx,nt;
     const double E;
     const double tau = ( tmax - tmin) / ( double) nt;
@@ -77,7 +68,7 @@ private:
                  cuDoubleComplex* dl);
     void prp_rt();
     void save_chunk();
-
+    void printinitial();
 
 };
 

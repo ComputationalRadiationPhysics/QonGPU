@@ -10,12 +10,12 @@
 #include "AllHeader.hpp"
 
 
-
-template <class StatSolver, class TimeOp, class IO, class Pot,
+template <class StatSolver, class TimeOp, class Pot,
           class Para, int dim>
 class SimDef{
   
 public:
+
     explicit SimDef(Params1D *p):da(p), s(p),t(p){
 
     }
@@ -31,12 +31,10 @@ public:
     }
     void printres() {
     }
-
-
 private:
+
     StatSolver s;
     TimeOp t;
-    IO io;
     Pot p;
     Para *da;
     thrust::host_vector<cuDoubleComplex> psi0;

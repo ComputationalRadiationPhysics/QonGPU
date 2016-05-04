@@ -1,62 +1,38 @@
 //
 // Created by zaph0d on 21/04/16.
 //
+#pragma once
 
-#ifndef IOHANDLE1D_H
-#define IOHANDLE1D_H
-
-#include <vector>
 #include "hdf5.h"
 #include "hdf5_hl.h"
-// We'll use  a struct of arrays to
-// handle complex numbers in HDF5
-
-#define FILENAME "simdata.h5"
-#define DATASETNAME "Psi"
-#define RANK 1
-#define TCHUNK 1000
-typedef struct comp{
-    double *r;
-    double *i;
-    comp(hsize_t nx);
-    comp(){};
-    ~comp();
-} comp;
-comp::comp(hsize_t nx) {
-    r = (double*) malloc(sizeof(double)*nx*TCHUNK);
-    i = (double*) malloc(sizeof(double)*nx*TCHUNK);
-}
-comp::~comp(){
-    free(r);
-    free(i);
-}
+#include <thrust/host_vector.h>
 
 class IOHandle1D {
+
 public:
-    IOHandle1D();
-    IOHandle1D(Params1D *p);
+
+    IOHandle1D(Params1D* _p);
     ~IOHandle1D();
+    cache_flush( const thrust::host_vector<cuDoubleComplex>& v);
 private:
 
-    comp chunk;
-    const size_t  nx,ne,nt;
-    Params1D *param;
-    void initfile();
-    void closefile();
-    void savechunk(const std::vector<std::complex<double> >& c);
-    void copychunk(const std::vector<std::complex<double> >& c);
-
-    // Some necessary HDF5 Variables
+    char* filename = "framedata.h5";
+    const size_t c_size = 100;
+    thrust::host_vector<double> real_cache;
+    thrust::host_vector<double> img_cache;
+    // Require all the nececarry handles
     hid_t file;
-    hid_t dataset;
-    hid_t memspace;
-    hid_t filespace;
+    hid_t dataspace, dataset;
+    hid_t filespace, memspace;
     hid_t prop;
+    // Also size information will be
+    // necessary
+    hsize_t size;
+    hsize_t offset;
+    hsize_t dim1;
 
-    const hsize_t maxdims = H5F_UNLIMITED;
-    hsize_t dset_dims = nx*ne;
-    hsize_t chunk_dims = nx*TCHUNK;
+
+    void overwrite( const thrust::host_vector<cuDoubleComplex>& v);
+    void savechunkt();
+    void initfile();
 };
-
-
-#endif
