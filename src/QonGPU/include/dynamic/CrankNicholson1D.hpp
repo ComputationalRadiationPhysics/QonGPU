@@ -30,7 +30,7 @@ class CrankNicholson1D : TimeOperator1D {
      */
 public:
     CrankNicholson1D();
-    CrankNicholson1D(Params1D *_p, vector<cuDoubleComplex> _v);
+    CrankNicholson1D(Params1D *_p);
     ~CrankNicholson1D();
     void time_solve();
     size_t getnx(){ return nx;};

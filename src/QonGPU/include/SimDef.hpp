@@ -15,26 +15,29 @@ template <class StatSolver, class TimeOp, class IO, class Pot,
           class Para, int dim>
 class SimDef{
   
- public:
-  explicit SimDef(Params1D *p):da(p), s(p) {}
-  explicit SimDef(Params2D *p):da(p) {}
-  explicit SimDef(Params3D *p):da(p) {}
-  void staticsolve() {
-    s.solve();
-    s.copystate( 0,&psi0);
-    t.setstate(psi0);
-    }
-  void timerev() {
-  }
-  void printres() {
-  }
+public:
+    explicit SimDef(Params1D *p):da(p), s(p),t(p){
 
-	
- private:
-  StatSolver s;
-  TimeOp t;
-  IO io;
-  Pot p;
-  Para *da;
-  thrust::host_vector<cuDoubleComplex> psi0;
+    }
+    explicit SimDef(Params2D *p):da(p) {}
+    explicit SimDef(Params3D *p):da(p) {}
+    void staticsolve() {
+        s.solve();
+        s.copystate( 0,&psi0);
+        t.setstate(psi0);
+    }
+    void timerev() {
+        t.time_solve();
+    }
+    void printres() {
+    }
+
+
+private:
+    StatSolver s;
+    TimeOp t;
+    IO io;
+    Pot p;
+    Para *da;
+    thrust::host_vector<cuDoubleComplex> psi0;
 };
