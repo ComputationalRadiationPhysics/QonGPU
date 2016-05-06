@@ -1,0 +1,3 @@
+[submodule "libs/libsplash"]
+	path = libs/libsplash
+	url = git@github.com:ComputationalRadiationPhysics/libSplash.git
