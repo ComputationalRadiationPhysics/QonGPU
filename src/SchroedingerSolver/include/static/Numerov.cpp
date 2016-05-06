@@ -30,7 +30,7 @@ Numerov::~Numerov(){}
 
 void Numerov::solve(){
     // This Loop is used to create
-    for(auto j = 1; j < 12; j++) {
+    for(auto j = 1; j < 2; j++) {
         z = j;
         DEBUG("Solving for Z ="<<z)
 
@@ -52,7 +52,7 @@ void Numerov::solve(){
                 cudaFree(dev_ptr);
                 cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne);
             }
-            //DEBUG("Calculating chunk: " << index / CHUNKSIZE)
+            DEBUG("Calculating chunk: " << index / CHUNKSIZE)
             cudaMemcpy(dev_ptr, cache.data(), sizeof(double) * nx * dev_ne, cudaMemcpyHostToDevice);
             En = dE * (double) index;
             //DEBUG("Calculating with starting energy: " << En)
@@ -84,7 +84,7 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    file_id = H5Fcreate("sim1.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+    file_id = H5Fcreate("simz1_1e8.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
 
     hsize_t dims = res.size();
 
@@ -115,7 +115,7 @@ bool Numerov::sign(double s){
 void Numerov::bisect(double j) {
     // Iterate through chunk data
     // create local variable for the offset
-    // off is the index of the last Element
+// off is the index of the last Element
     //DEBUG("Bisecting")
     const int off = nx - 1;
     auto it = chunk.begin();
