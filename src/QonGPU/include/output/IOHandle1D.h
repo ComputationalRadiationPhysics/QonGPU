@@ -6,17 +6,18 @@
 #include "hdf5.h"
 #include "hdf5_hl.h"
 #include <thrust/host_vector.h>
+#include <string>
 
 class IOHandle1D {
 
 public:
     IOHandle1D(){};
     IOHandle1D(Params1D* _p);
-    ~IOHandle1D();
+    ~IOHandle1D(){};
     void cache_flush( const thrust::host_vector<cuDoubleComplex>& v);
 private:
 
-    char* filename = "framedata.h5";
+    string filename = "framedata.h5";
     const size_t c_size = 100;
     thrust::host_vector<double> real_cache;
     thrust::host_vector<double> img_cache;

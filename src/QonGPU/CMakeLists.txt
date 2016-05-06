@@ -78,10 +78,20 @@ find_package(Boost COMPONENTS unit_test_framework )
 include_directories(${BOOST_INCLUDE_DIR})
 set(LIBS ${LIBS} ${BOOST_LIBRARIES})
 
-#find openMP
+# find openMP
 find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+
+# libsplash needs openmpi for communication therefore
+find_package(MPI)
+include_directories(${MPI_INCLUDE_PATH})
+INCLUDE_DIRECTORIES(${MPI_C_INCLUDE_PATH} ${MPI_CXX_INCLUDE_PATH})
+SET(LIBS  ${LIBS} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES} ${MPI_INCLUDE_PATH})
+
+
+#use libsplash
+include_directories("./libs/libsplash/src/include/")
 
 if(${CUDA_FOUND})
   message("-- Using CUDA")

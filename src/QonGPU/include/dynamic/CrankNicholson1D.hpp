@@ -4,7 +4,9 @@
 #include <thrust/device_vector.h>
 #include <cuda_runtime.h>
 #include <cusparse_v2.h>
+#include <mpi.h>
 
+#include "splash/splash_serial.h"
 #include "../output/IOHandle1D.cpp"
 #include "TimeOperator1D.hpp"
 #include "ComplexOperators.h"
