@@ -10,10 +10,10 @@
 class IOHandle1D {
 
 public:
-
+    IOHandle1D(){};
     IOHandle1D(Params1D* _p);
     ~IOHandle1D();
-    cache_flush( const thrust::host_vector<cuDoubleComplex>& v);
+    void cache_flush( const thrust::host_vector<cuDoubleComplex>& v);
 private:
 
     char* filename = "framedata.h5";

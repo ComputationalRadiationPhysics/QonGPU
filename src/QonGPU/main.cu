@@ -5,6 +5,7 @@
 #define ENDSTATUS std::cout<<"DONE!"<<std::endl;
 
 #include "include/SimDef.hpp"
+#include "splash_serial.h"
 
 int main(int argc, char** argv) {
 
