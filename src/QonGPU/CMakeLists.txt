@@ -37,7 +37,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 #####
 #Set testing options
 ####
-option(TOTEST "Enable test build!" ON)
+option(TOTEST "Enable test build!" OFF)
 
 ######
 #Specify Project Name
@@ -85,9 +85,18 @@ set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 
 # libsplash needs openmpi for communication therefore
 find_package(MPI)
-include_directories(${MPI_INCLUDE_PATH})
-INCLUDE_DIRECTORIES(${MPI_C_INCLUDE_PATH} ${MPI_CXX_INCLUDE_PATH})
-SET(LIBS  ${LIBS} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES} ${MPI_INCLUDE_PATH})
+INCLUDE_DIRECTORIES(${MPI_CXX_INCLUDE_PATH})
+SET(LIBS  ${LIBS} ${MPI_CXX_LIBRARIES})
+
+# Use libsplash as HDF5 output!
+set(Splash_USE_STATIC_LIBS ON)
+find_package(Splash)
+
+if(Splash_FOUND)
+    include_directories(${Splash_INCLUDE_DIRS})
+    #add_definitions(${Splash_DEFINITIONS})
+    set(LIBS ${LIBS} ${Splash_LIBRARIES})
+endif(Splash_FOUND)
 
 
 
