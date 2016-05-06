@@ -90,9 +90,8 @@ INCLUDE_DIRECTORIES(${MPI_C_INCLUDE_PATH} ${MPI_CXX_INCLUDE_PATH})
 SET(LIBS  ${LIBS} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES} ${MPI_INCLUDE_PATH})
 
 
-#use libsplash
-include_directories("./libs/libsplash/src/include/")
 
+ADD_DEFINITIONS(-D__STRICT_ANSI__)
 if(${CUDA_FOUND})
   message("-- Using CUDA")
   include_directories("${PROJECT_SOURCE_DIR}/include/")

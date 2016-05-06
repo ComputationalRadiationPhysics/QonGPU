@@ -2,6 +2,7 @@
 #include "CNKernels.h"
 
 
+
 #define DEBUG2(x) std::cout<<x<<std::endl
 CrankNicholson1D::CrankNicholson1D(): nx(0),nt(0), E(0) { }
 
@@ -61,9 +62,7 @@ void CrankNicholson1D::cusparse_destr() {
 void CrankNicholson1D::time_solve() {
 
     // This routine is now slightly longer
-
-    MPI_Init(NULL,NULL);
-
+    
     const double hbar_m = 1.0;
     const double h = (xmax - xmin) / (double) nx;
     const double tau = (tmin - tmax) / (double) nt;
