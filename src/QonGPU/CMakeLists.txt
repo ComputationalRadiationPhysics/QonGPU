@@ -94,7 +94,6 @@ find_package(Splash)
 
 if(Splash_FOUND)
     include_directories(${Splash_INCLUDE_DIRS})
-    #add_definitions(${Splash_DEFINITIONS})
     set(LIBS ${LIBS} ${Splash_LIBRARIES})
 endif(Splash_FOUND)
 

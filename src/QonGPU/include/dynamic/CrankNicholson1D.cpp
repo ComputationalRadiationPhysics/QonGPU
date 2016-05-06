@@ -20,7 +20,9 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   d(_p->getnx()),
                                                   du(_p->getnx()),
                                                   dl(_p->getnx()),
-                                                  inital(_p->getnx())
+                                                  inital(_p->getnx()),
+                                                  HDFile(1),
+                                                  filename(_p->getname())
 {}
 CrankNicholson1D::~CrankNicholson1D() {}
 
@@ -58,16 +60,24 @@ void CrankNicholson1D::cusparse_destr() {
     }
 }
 
+void CrankNicholson1D::initfile() {
+    splash::DataCollector::initFileCreationAttr(fAttr);
+    fAttr.fileAccType = splash::DataCollector::FAT_CREATE;
+    HDFile.open(filename.c_str(), fAttr);
+}
 
 void CrankNicholson1D::time_solve() {
 
     // This routine is now slightly longer
-    MPI_Init(NULL,NULL);
+
     const double hbar_m = 1.0;
     const double h = (xmax - xmin) / (double) nx;
     const double tau = (tmin - tmax) / (double) nt;
     const double c =  1 / ( h * h) * hbar_m;
-    double t = 0;
+    double t = param->gettmin();
+
+    initfile();
+
     cuDoubleComplex* dev_d = raw_pointer_cast(d.data());
     cuDoubleComplex* dev_du = raw_pointer_cast(du.data());
     cuDoubleComplex* dev_dl = raw_pointer_cast(dl.data());
@@ -87,7 +97,7 @@ void CrankNicholson1D::time_solve() {
         thrust::copy( chunkl_d.begin(), chunkl_d.end(), chunkr_d.begin());
     }
     cusparse_destr();
-    MPI_Finalize();
+    HDFile.close();
 }
 
 void CrankNicholson1D::setstate(const thrust::host_vector <cuDoubleComplex>& v) {

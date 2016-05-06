@@ -54,6 +54,10 @@ private:
     // Diagonals of the triangular matrix
     device_vector<cuDoubleComplex> d, dl, du;
 
+    splash::SerialDataCollector HDFile;
+    splash::DataCollector::FileCreationAttr fAttr;
+    std::string filename;
+
     // Define necessary members
     cusparseStatus_t status, status2;
     cusparseHandle_t handle = 0;
@@ -71,6 +75,8 @@ private:
     void prp_rt();
     void save_chunk();
     void printinitial();
+    void initfile();
+    void savechunk();
 
 };
 
