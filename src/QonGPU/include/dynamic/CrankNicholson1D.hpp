@@ -56,6 +56,7 @@ private:
 
     splash::SerialDataCollector HDFile;
     splash::DataCollector::FileCreationAttr fAttr;
+
     std::string filename;
 
     // Define necessary members

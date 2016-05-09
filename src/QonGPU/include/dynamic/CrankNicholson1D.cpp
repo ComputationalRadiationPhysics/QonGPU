@@ -62,9 +62,23 @@ void CrankNicholson1D::cusparse_destr() {
 
 void CrankNicholson1D::initfile() {
     splash::DataCollector::initFileCreationAttr(fAttr);
+
     fAttr.fileAccType = splash::DataCollector::FAT_CREATE;
     HDFile.open(filename.c_str(), fAttr);
+    splash::ColTypeDouble ctDouble;
+
+    std::vector<double> p_sav(7);
+    p_sav[0] = param->getxmax();
+    p_sav[1] = param->getxmin();
+    p_sav[2] = param->gettmax();
+    p_sav[3] = param->getxmin();
+    p_sav[4] = param->getnx();
+    p_sav[5] = param->getnt();
+    p_sav[6] = param->getz();
+    
+
 }
+
 
 void CrankNicholson1D::time_solve() {
 
