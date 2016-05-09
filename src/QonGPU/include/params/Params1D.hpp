@@ -35,10 +35,10 @@ public:
  	std::string getname() {return filename;};
 private:
 	std::string filename;
-    complex<double> xmax;
-    complex<double> xmin;
-    complex<double> tmax;
-    complex<double> tmin;
+    std::complex<double> xmax;
+    std::complex<double> xmin;
+    std::complex<double> tmax;
+    std::complex<double> tmin;
     size_t nx,nt,ne;
     int x1,y1,z1;
     complex<double> z;

@@ -5,7 +5,6 @@
 
 #include "cuComplex.h"
 
-#include "thrust/complex.h"
 
 #include "AllHeader.hpp"
 

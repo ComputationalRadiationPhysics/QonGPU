@@ -1,9 +1,8 @@
 #pragma  once
+
 #include <assert.h>
-#include <cmath>
 #include <list>
 #include <iterator>
-#include <complex.h>
 #include "hdf5.h"
 #include "hdf5_hl.h"
 #include "StaticSolver1D.hpp"

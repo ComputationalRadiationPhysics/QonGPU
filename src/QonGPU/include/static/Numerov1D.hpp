@@ -6,7 +6,6 @@
 
 #include "math.h"
 
-#include <cmath>
 
 #include "hdf5.h"
 
