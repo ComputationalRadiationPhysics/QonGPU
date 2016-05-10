@@ -15,14 +15,14 @@ class SimDef{
   
 public:
 
-    explicit SimDef(Params1D *p):da(p), s(p),t(p){
+    explicit SimDef(Params1D *p):da(p), s(p),t(p), psi0(p->getnx()){
 
     }
     explicit SimDef(Params2D *p):da(p) {}
     explicit SimDef(Params3D *p):da(p) {}
     void staticsolve() {
         s.solve();
-        s.copystate( 0,&psi0);
+        s.copystate(0, psi0);
         t.setstate(psi0);
     }
     void timerev() {

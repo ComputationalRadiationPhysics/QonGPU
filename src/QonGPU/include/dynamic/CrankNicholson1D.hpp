@@ -78,6 +78,8 @@ private:
     void initfile(splash::DataCollector::FileCreationAttr& fa);
     void savechunk(int step);
     void closefile();
+    void save_vector(int step, const thrust::device_vector<cuDoubleComplex>& v);
+    void save_vectorh(int step, const thrust::host_vector<cuDoubleComplex>& v);
 
 };
 

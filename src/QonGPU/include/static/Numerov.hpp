@@ -89,12 +89,13 @@ public:
     Numerov(Params1D *pa);
     Numerov();
     ~Numerov();
-	void copystate(int ind, thrust::host_vector<cuDoubleComplex>* v);
+	void copystate(int level, thrust::host_vector<cuDoubleComplex>& v);
 
 private:
     // Necessary private members
     vector<double> chunk;
     vector<double> cache;
+	vector<int> eindex;
     list<vector<double>> results;
     list<double> eval;
 	vector<double> res;
