@@ -76,11 +76,14 @@ void CrankNicholson1D::initfile() {
     p_sav[5] = param->getnt();
     p_sav[6] = param->getz();
     splash::ColTypeDouble ctdouble;
-    splash::Dimensions local(1,0,0);
+    splash::Dimensions local(7,1,1);
     splash::Selection sel(local);
     HDFile.write(1,
-    ctdouble,
-                 1, sel,"param_data",p_sav.data());
+                 ctdouble,
+                 1,
+                 sel,
+                 "param_data",
+                 p_sav.data());
 
     
 }
