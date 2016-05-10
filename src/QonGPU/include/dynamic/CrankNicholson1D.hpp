@@ -55,7 +55,6 @@ private:
     device_vector<cuDoubleComplex> d, dl, du;
 
     splash::SerialDataCollector HDFile;
-    splash::DataCollector::FileCreationAttr fAttr;
 
     std::string filename;
 

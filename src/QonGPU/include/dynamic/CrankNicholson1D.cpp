@@ -61,10 +61,10 @@ void CrankNicholson1D::cusparse_destr() {
 }
 
 void CrankNicholson1D::initfile() {
-    splash::DataCollector::initFileCreationAttr(fAttr);
-
-    fAttr.fileAccType = splash::DataCollector::FAT_CREATE;
-    HDFile.open(filename.c_str(), fAttr);
+    splash::DataCollector::FileCreationAttr fa;
+    splash::DataCollector::initFileCreationAttr(fa);
+    fa.fileAccType = splash::DataCollector::FAT_CREATE;
+    HDFile.open(filename.c_str(), fa);
     splash::ColTypeDouble ctDouble;
 
     std::vector<double> p_sav(7);
@@ -75,8 +75,14 @@ void CrankNicholson1D::initfile() {
     p_sav[4] = param->getnx();
     p_sav[5] = param->getnt();
     p_sav[6] = param->getz();
-    
+    splash::ColTypeDouble ctdouble;
+    splash::Dimensions local(1,0,0);
+    splash::Selection sel(local);
+    HDFile.write(1,
+    ctdouble,
+                 1, sel,"param_data",p_sav.data());
 
+    
 }
 
 
