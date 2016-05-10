@@ -4,7 +4,7 @@
 
 
 #define DEBUG2(x) std::cout<<x<<std::endl
-CrankNicholson1D::CrankNicholson1D(): nx(0),nt(0), E(0) { }
+CrankNicholson1D::CrankNicholson1D(): nx(0),nt(0), E(0),HDFile(1) { }
 
 CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   nx( _p->getnx()),
@@ -60,9 +60,9 @@ void CrankNicholson1D::cusparse_destr() {
     }
 }
 
-void CrankNicholson1D::initfile() {
-    splash::DataCollector::FileCreationAttr fa;
-    splash::DataCollector::initFileCreationAttr(fa);
+void CrankNicholson1D::initfile(splash::DataCollector::FileCreationAttr& fa) {
+
+
     fa.fileAccType = splash::DataCollector::FAT_CREATE;
     HDFile.open(filename.c_str(), fa);
     splash::ColTypeDouble ctDouble;
@@ -76,7 +76,8 @@ void CrankNicholson1D::initfile() {
     p_sav[5] = param->getnt();
     p_sav[6] = param->getz();
     splash::ColTypeDouble ctdouble;
-    splash::Dimensions local(7,1,1);
+    splash::Dimensions local(7, 1, 1);
+    DEBUG2("Pass!");
     splash::Selection sel(local);
     HDFile.write(1,
                  ctdouble,
@@ -85,7 +86,6 @@ void CrankNicholson1D::initfile() {
                  "param_data",
                  p_sav.data());
 
-    
 }
 
 
@@ -99,7 +99,11 @@ void CrankNicholson1D::time_solve() {
     const double c =  1 / ( h * h) * hbar_m;
     double t = param->gettmin();
 
-    initfile();
+    splash::DataCollector::FileCreationAttr fa;
+    splash::DataCollector::initFileCreationAttr(fa);
+
+    // Initialize the file and saves the paramerters
+    initfile(fa);
 
     cuDoubleComplex* dev_d = raw_pointer_cast(d.data());
     cuDoubleComplex* dev_du = raw_pointer_cast(du.data());
@@ -116,16 +120,46 @@ void CrankNicholson1D::time_solve() {
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunk
         status2 = cusparseZgtsv( handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
+
         std::cout << status2 << std::endl;
         thrust::copy( chunkl_d.begin(), chunkl_d.end(), chunkr_d.begin());
+
+        savechunk(i);
     }
+
     cusparse_destr();
+
+}
+
+void CrankNicholson1D::closefile() {
     HDFile.close();
 }
+
 
 void CrankNicholson1D::setstate(const thrust::host_vector <cuDoubleComplex>& v) {
     // copy initial state into memory!
     thrust::copy(v.begin(), v.end(), inital.begin());
     chunkl_d = inital;
     chunkr_d = inital;
+}
+
+void CrankNicholson1D::savechunk(int step) {
+
+    thrust::host_vector<cuDoubleComplex> vec_h;
+    // copy from Device to Host
+    vec_h = chunkr_d;
+    std::vector<double> real(chunkr_d.size());
+    std::vector<double> imag(chunkl_d.size());
+
+    for(auto i = 0; i < chunkr_d.size(); ++i){
+        real[i] = vec_h[i].x;
+        imag[i] = vec_h[i].y;
+
+    }
+
+    splash::ColTypeDouble type;
+    splash::Dimensions dim(chunkr_d.size(),1,1);
+    splash::Selection sel(dim);
+    HDFile.write(step, type, 1, sel, "data_reals", real.data());
+    HDFile.write(step, type, 1, sel, "data_img", imag.data());
 }

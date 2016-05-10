@@ -53,8 +53,9 @@ private:
     device_vector<cuDoubleComplex> chunkr_d;
     // Diagonals of the triangular matrix
     device_vector<cuDoubleComplex> d, dl, du;
-
     splash::SerialDataCollector HDFile;
+
+
 
     std::string filename;
 
@@ -73,10 +74,10 @@ private:
                  cuDoubleComplex* du,
                  cuDoubleComplex* dl);
     void prp_rt();
-    void save_chunk();
     void printinitial();
-    void initfile();
-    void savechunk();
+    void initfile(splash::DataCollector::FileCreationAttr& fa);
+    void savechunk(int step);
+    void closefile();
 
 };
 
