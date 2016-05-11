@@ -29,8 +29,10 @@ echo "Finished"
 
 echo "Running qsolve"
 loc=$(find -name qsolve)
+
 mv ${loc}  ./build/
-build/qsolve
+testBin/test1
+build/qsolve test1
 
 #if [ "$1"=="-py" ]; then
 #        echo "Use Python graphics script"
