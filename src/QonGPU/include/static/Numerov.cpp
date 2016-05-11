@@ -13,7 +13,7 @@ Numerov::Numerov(Params1D *pa): param(pa),
                                 ne(pa->getne()),
                                 z(pa->getz()),
                                 xmax(pa->getxmax()),
-                                xmin(pa->getxmin()), eindex(0){
+                                xmin(pa->getxmin()) {
 
     // initialize the cache, with the inital values
     for(auto it = cache.begin(); it != cache.end(); it += nx) {
@@ -134,10 +134,8 @@ int Numerov::bisect(double j) {
                 std::cout << "Energy level found" << std::endl;
                 std::cout << "Detected energy level: "<< En << std::endl;
                 eval.push_back(En);
-                eindex.push_back(i/nx);
                 DEBUG2("Index is: "<<i);
                 DEBUG2("Value: "<< chunk[ i]);
-                DEBUG2("MemDebug"<<eindex[0]);
                 return 1;
             }
             else {
@@ -150,9 +148,8 @@ int Numerov::bisect(double j) {
                     std::cout << "Detected energy level: "<< En << std::endl;
                     eval.push_back(En);
                     DEBUG2("Index is: "<<i-nx);
-                    eindex.push_back(i/nx-1);
                     DEBUG2("Value: "<< chunk[ i - nx]);
-                    DEBUG2("MemDebug: "<<eindex[0]);
+
                     return 1;
                 }
             }
@@ -194,10 +191,8 @@ void Numerov::prepstates() {
 
 void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 
-    int o = nx*eindex[0];
-    DEBUG2("Index: "<<o);
+    int o = nx*ind;
     for(auto i = 0; i < nx; ++i) {
-        v[i] = make_cuDoubleComplex(res[i+o],0);
+        v[i] = make_cuDoubleComplex(res[i + o], 0);
     }
-
 }

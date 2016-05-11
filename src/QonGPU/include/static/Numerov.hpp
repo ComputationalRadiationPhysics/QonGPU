@@ -95,8 +95,7 @@ private:
     // Necessary private members
     vector<double> chunk;
     vector<double> cache;
-	vector<int> eindex;
-    list<vector<double>> results;
+	list<vector<double>> results;
     list<double> eval;
 	vector<double> res;
     const int nx,ne;
