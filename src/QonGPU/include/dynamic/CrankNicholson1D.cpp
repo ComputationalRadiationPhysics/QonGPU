@@ -4,14 +4,12 @@
 
 
 #define DEBUG2(x) std::cout<<x<<std::endl
-CrankNicholson1D::CrankNicholson1D(): nx(0),nt(0), E(0),HDFile(1) { }
 
 CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   nx( _p->getnx()),
                                                   nt( _p->getnt()),
                                                   E( 0.0),
                                                   chunk_h(_p->getnx()),
-                                                  chunkl_d( _p->getnx()),
                                                   chunkr_d( _p->getnx()),
                                                   tmax( _p->gettmax()),
                                                   tmin( _p->gettmin()),
@@ -22,13 +20,13 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   dl(_p->getnx()),
                                                   inital(_p->getnx()),
                                                   HDFile(1),
-                                                  filename(_p->getname())
-{}
+                                                  filename(_p->getname()) {}
 
 CrankNicholson1D::~CrankNicholson1D() {}
 
 void CrankNicholson1D::rhs_rt() {
-
+    // Prepare the rhs by using a triangular
+    // matrix multiplication on rhs_rt
     transform_rhs<<<nx,1>>>(raw_pointer_cast(chunkl_d.data()),
             raw_pointer_cast(chunkr_d.data()),
             nx, param->getxmax(),

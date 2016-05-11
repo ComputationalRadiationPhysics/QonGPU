@@ -21,7 +21,6 @@ class CrankNicholson1D : TimeOperator1D {
      *  fast/accurate enough for our application)
      */
 public:
-    CrankNicholson1D();
     CrankNicholson1D(Params1D *_p);
     ~CrankNicholson1D();
     void time_solve();

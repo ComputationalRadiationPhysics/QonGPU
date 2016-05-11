@@ -1,10 +1,11 @@
 //
 // Created by zaph0d on 27/04/16.
 //
-
 #pragma once
+
 device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a,
                                          device_vector<cuDoubleComplex> b) {
+
     for(auto i = 0; i < a.size(); ++i) {
         a[i] += b[i];
     }
@@ -12,6 +13,7 @@ device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a,
 }
 
 __device__ __host__ cuDoubleComplex inline pot(double x){
+
     return make_cuDoubleComplex(2/sqrt(x*x+1),0);
 }
 
@@ -38,19 +40,22 @@ __global__ void transform_rhs(cuDoubleComplex* in,
                               cuDoubleComplex* out,
                               size_t nx,
                               double xmax,
-                              double x0,
+                              double xmin,
                               double tau) {
-
+    // This function multiplies the psi(t)
+    // with the Crank Nicholson time
+    // Time evolution operator
     int ind = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
     cuDoubleComplex s1,s2;
-    const double h = ( xmax - x0) / ( double) nx;
+    const double h = ( xmax - xmin) / ( double) nx;
     const cuDoubleComplex h1 = make_cuDoubleComplex( -1.0/(h*h), 0);
     const cuDoubleComplex h2 = make_cuDoubleComplex( tau/2,0);
     double x = 0;
 
     while(ind < nx) {
-        x = x0 + h*ind;
+
+        x = xmin + h * ind;
         mult_rhs( &in[ind], &in[ind-1], &in[ind+1], &out[ind], &s1, &s2, h1, h2, x);
         ind += oset;
     }
