@@ -11,7 +11,8 @@
 using namespace std;
 
 
-#define CHUNKSIZE 500
+#define CHUNKSIZE 1000
+
 __host__ __device__  double V(double x, double t,double z) {
   return 2*z/sqrt(1+x*x);
 };

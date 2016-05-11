@@ -32,7 +32,7 @@ Numerov::~Numerov(){}
 
 void Numerov::solve(){
     // This Loop is used to create
-    for(auto j = 1; j < 2; j++) {
+    for(auto j = 1; j < 12; j++) {
         z = j;
         DEBUG("Solving for Z ="<<z)
 
@@ -54,10 +54,10 @@ void Numerov::solve(){
                 cudaFree(dev_ptr);
                 cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne);
             }
-            DEBUG("Calculating chunk: " << index / CHUNKSIZE)
+            //DEBUG("Calculating chunk: " << index / CHUNKSIZE)
             cudaMemcpy(dev_ptr, cache.data(), sizeof(double) * nx * dev_ne, cudaMemcpyHostToDevice);
             En = dE * (double) index;
-            DEBUG("Calculating with starting energy: " << En)
+            //DEBUG("Calculating with starting energy: " << En)
             iter1 << < dev_ne, 1 >> > (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
             cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost);
             if(bisect(En)) index = ne;
@@ -87,7 +87,7 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    file_id = H5Fcreate("static_results.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+    file_id = H5Fcreate("sim1.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
 
     hsize_t dims = res.size();
 
