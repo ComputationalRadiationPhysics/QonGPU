@@ -27,7 +27,7 @@ __device__ __host__ inline void mult_rhs(
         const cuDoubleComplex& h1,
         const cuDoubleComplex& h2,
         double x) {
-
+    // This function is tested and did its job!
     *s1 = h1 * ( *in2 + *(in3)  - make_cuDoubleComplex( 2.0, 0) * *in1);
     *s2 = pot(x) * *in1;
     *s1 = *s1 + *s2;
@@ -36,12 +36,13 @@ __device__ __host__ inline void mult_rhs(
 }
 
 
-__global__ void transform_rhs(cuDoubleComplex* in,
-                              cuDoubleComplex* out,
+__global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an temporary array to
+                              cuDoubleComplex* out,// ensure threat safety!
                               size_t nx,
                               double xmax,
                               double xmin,
                               double tau) {
+
     // This function multiplies the psi(t)
     // with the Crank Nicholson time
     // Time evolution operator
@@ -65,7 +66,6 @@ __global__ void create_const_diag(cuDoubleComplex* dl,
                                   cuDoubleComplex* du,
                                   double c,
                                   size_t nx) {
-    // ensure that first element is not overwritten
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
     cuDoubleComplex cc = make_cuDoubleComplex(0,c);
@@ -74,12 +74,18 @@ __global__ void create_const_diag(cuDoubleComplex* dl,
         dl[tid] = cc;
         tid += oset;
     }
+    // make appropriate format for cuSparse
     du[nx] = make_cuDoubleComplex(0,0);
     dl[0] = make_cuDoubleComplex(0,0);
 
 }
 
-__device__ __host__ inline void transform_diag( cuDoubleComplex *d, cuDoubleComplex* s1, cuDoubleComplex* s2,const double c, const double x, const cuDoubleComplex t1) {
+__device__ __host__ inline void transform_diag( cuDoubleComplex *d,
+                                                cuDoubleComplex* s1,
+                                                cuDoubleComplex* s2,
+                                                const double c,
+                                                const double x,
+                                                const cuDoubleComplex t1) {
 
     *s2 = make_cuDoubleComplex( -2 * c, 0) + pot(x);
     *s2 = *(s2) * t1;
@@ -88,7 +94,13 @@ __device__ __host__ inline void transform_diag( cuDoubleComplex *d, cuDoubleComp
 
 }
 
-__global__ void update_diagl( cuDoubleComplex* d, const double tau, const double h, const double c,const double xmin, const size_t nx, double t){
+__global__ void update_diagl( cuDoubleComplex* d,
+                              const double tau,
+                              const double h,
+                              const double c,
+                              const double xmin,
+                              const size_t nx,
+                              double t){
 
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;

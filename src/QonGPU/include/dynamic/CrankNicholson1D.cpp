@@ -111,9 +111,9 @@ void CrankNicholson1D::time_solve() {
     cuDoubleComplex* dev_dl = raw_pointer_cast(dl.data());
     cuDoubleComplex* dev_rhs = raw_pointer_cast(chunkr_d.data());
 
-    create_const_diag<<<nx ,1>>>( raw_pointer_cast(dl.data()),
-            raw_pointer_cast(du.data()),
-            c * tau/2,
+    create_const_diag<<<nx ,1>>>(raw_pointer_cast(dl.data()),
+                                 raw_pointer_cast(du.data()),
+                                 c * tau/2,
             nx);
 
     cusparse_init();
@@ -129,6 +129,7 @@ void CrankNicholson1D::time_solve() {
         status2 = cusparseZgtsv( handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
 
         std::cout << status2 << std::endl;
+        // Write in order to keep threat safety when using transform rhs
         thrust::copy( chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
 
         savechunk(i+1);
