@@ -64,7 +64,6 @@ __global__ void create_const_diag(cuDoubleComplex* dl,
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
     cuDoubleComplex cc = make_cuDoubleComplex(0,c);
-    printf("C equals %lf \n", c);
     while( tid < nx) {
         du[tid] = cc;
         dl[tid] = cc;
@@ -95,7 +94,6 @@ __global__ void update_diagl( cuDoubleComplex* d, const double tau, const double
     while( tid < nx) {
         x = xmin + h * (double) tid;
         transform_diag( &d[tid], &s1, &s2, c, x, t1);
-        printf("Current imag value: %lf \n", d[tid].y);
         tid += oset;
     }
 
