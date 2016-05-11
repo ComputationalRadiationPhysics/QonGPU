@@ -80,6 +80,8 @@ private:
     void closefile();
     void save_vector(int step, const thrust::device_vector<cuDoubleComplex>& v);
     void save_vectorh(int step, const thrust::host_vector<cuDoubleComplex>& v);
+    void save_diag(int step, const thrust::device_vector<cuDoubleComplex>& v);
+
 
 };
 

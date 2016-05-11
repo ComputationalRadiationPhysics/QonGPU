@@ -29,7 +29,10 @@ CrankNicholson1D::~CrankNicholson1D() {}
 
 void CrankNicholson1D::rhs_rt() {
 
-    transform_rhs<<<nx,1>>>(raw_pointer_cast(chunkl_d.data()), raw_pointer_cast(chunkr_d.data()), nx, param->getxmax(), param->getxmin(),tau);
+    transform_rhs<<<nx,1>>>(raw_pointer_cast(chunkl_d.data()),
+            raw_pointer_cast(chunkr_d.data()),
+            nx, param->getxmax(),
+            param->getxmin(),tau);
 }
 
 void CrankNicholson1D::lhs_rt(double x, double t,
@@ -93,33 +96,37 @@ void CrankNicholson1D::time_solve() {
 
     // This routine is now slightly longer
 
-    const double hbar_m = 1.0;
+    const double hbar_m = - 1.0;
     const double h = (xmax - xmin) / (double) nx;
-    const double tau = (tmin - tmax) / (double) nt;
-    const double c =  1 / ( h * h) * hbar_m;
+    const double tau = (tmax - tmin) / (double) nt;
+    const double c =  1 / (2 * h * h) * hbar_m ;
     double t = param->gettmin();
 
     splash::DataCollector::FileCreationAttr fa;
     splash::DataCollector::initFileCreationAttr(fa);
 
     // Initialize the file and saves the paramerters
-    //initfile(fa);
+    initfile(fa);
 
     cuDoubleComplex* dev_d = raw_pointer_cast(d.data());
     cuDoubleComplex* dev_du = raw_pointer_cast(du.data());
     cuDoubleComplex* dev_dl = raw_pointer_cast(dl.data());
     cuDoubleComplex* dev_rhs = raw_pointer_cast(chunkr_d.data());
-    create_const_diag<<<nx ,1>>>( raw_pointer_cast(dl.data()), raw_pointer_cast(du.data()), c, nx);
 
-    //save_vector(1, chunkl_d);
-    //save_vector(2, chunkr_d);
+    create_const_diag<<<nx ,1>>>( raw_pointer_cast(dl.data()),
+            raw_pointer_cast(du.data()),
+            c * tau/2,
+            nx);
+    
     cusparse_init();
     for( auto i = 0; i < nt; ++i) {
+
         t += tau * (double) i;
         rhs_rt();
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
         update_diagl<<<nx,1>>>(raw_pointer_cast(d.data()), tau, h, c, xmin, nx, t);
+        save_diag(2+i, d);
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunk
         status2 = cusparseZgtsv( handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
@@ -127,10 +134,10 @@ void CrankNicholson1D::time_solve() {
         std::cout << status2 << std::endl;
         thrust::copy( chunkl_d.begin(), chunkl_d.end(), chunkr_d.begin());
 
-        //savechunk(i);
+        savechunk(i);
     }
     cusparse_destr();
-
+    closefile();
 }
 
 void CrankNicholson1D::closefile() {
@@ -139,43 +146,35 @@ void CrankNicholson1D::closefile() {
 
 
 void CrankNicholson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
-    DEBUG2("Memory is copied!");
-    // copy initial state into memory!
     thrust::copy(v.begin(), v.end(), inital.begin());
     chunkl_d = inital;
     chunkr_d = inital;
-
-    splash::DataCollector::FileCreationAttr fa;
-    splash::DataCollector::initFileCreationAttr(fa);
-
-    // Initialize the file and saves the paramerters
-    initfile(fa);
-    save_vectorh(1,v);
 
 }
 
 void CrankNicholson1D::savechunk(int step) {
 
-    thrust::host_vector<cuDoubleComplex> vec_h;
+    thrust::host_vector<cuDoubleComplex> vec_h(nx);
     // copy from Device to Host
-    vec_h = chunkr_d;
+    thrust::copy(chunkr_d.begin(), chunkr_d.end(), vec_h.begin());
+    // Use STL Vectors to avoid raw pointer casts!
     std::vector<double> real(chunkr_d.size());
-    std::vector<double> imag(chunkl_d.size());
+    std::vector<double> imag(chunkr_d.size());
 
     for(auto i = 0; i < chunkr_d.size(); ++i) {
         real[i] = vec_h[i].x;
         imag[i] = vec_h[i].y;
-
     }
 
     splash::ColTypeDouble type;
     splash::Dimensions dim(chunkr_d.size(),1,1);
     splash::Selection sel(dim);
-    HDFile.write(step, type, 1, sel, "data_reals", real.data());
-    HDFile.write(step, type, 1, sel, "data_img", imag.data());
+    HDFile.write(step, type, 1, sel, "chunk_reals", real.data());
+    HDFile.write(step, type, 1, sel, "chunk_img", imag.data());
 }
 
-void CrankNicholson1D::save_vector(int step, const thrust::device_vector<cuDoubleComplex>& v){
+void CrankNicholson1D::save_vector(int step,
+                                   const thrust::device_vector<cuDoubleComplex>& v){
     thrust::host_vector<cuDoubleComplex> vec_h;
     // copy from Device to Host
     vec_h = v;
@@ -210,4 +209,24 @@ void CrankNicholson1D::save_vectorh(int step, const thrust::host_vector<cuDouble
     splash::Selection sel(dim);
     HDFile.write(step, type, 1, sel, "host_debug_reals",real.data());
     HDFile.write(step, type, 1, sel, "host_debug_img", imag.data());
+}
+
+void CrankNicholson1D::save_diag(int step, const thrust::device_vector<cuDoubleComplex>& v){
+    thrust::host_vector<cuDoubleComplex> vec_h;
+    // copy from Device to Host
+    vec_h = v;
+    std::vector<double> real(v.size());
+    std::vector<double> imag(v.size());
+
+    for(auto i = 0; i < v.size(); ++i) {
+        real[i] = vec_h[i].x;
+        imag[i] = vec_h[i].y;
+
+    }
+
+    splash::ColTypeDouble type;
+    splash::Dimensions dim(v.size(),1,1);
+    splash::Selection sel(dim);
+    HDFile.write(step, type, 1, sel, "diag_reals",real.data());
+    HDFile.write(step, type, 1, sel, "diag_img", imag.data());
 }

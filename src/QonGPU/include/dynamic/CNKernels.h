@@ -2,10 +2,9 @@
 // Created by zaph0d on 27/04/16.
 //
 
-#ifndef GIT_CNKERNELS_H
-#define GIT_CNKERNELS_H
-
-device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a, device_vector<cuDoubleComplex> b) {
+#pragma once
+device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a,
+                                         device_vector<cuDoubleComplex> b) {
     for(auto i = 0; i < a.size(); ++i) {
         a[i] += b[i];
     }
@@ -13,7 +12,7 @@ device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a, devic
 }
 
 __device__ __host__ cuDoubleComplex inline pot(double x){
-    return make_cuDoubleComplex(1/sqrt(x*x+1),0);
+    return make_cuDoubleComplex(2/sqrt(x*x+1),0);
 }
 
 __device__ __host__ inline void mult_rhs(
@@ -35,7 +34,12 @@ __device__ __host__ inline void mult_rhs(
 }
 
 
-__global__ void transform_rhs(cuDoubleComplex* in, cuDoubleComplex* out,size_t nx, double xmax, double x0, double tau) {
+__global__ void transform_rhs(cuDoubleComplex* in,
+                              cuDoubleComplex* out,
+                              size_t nx,
+                              double xmax,
+                              double x0,
+                              double tau) {
 
     int ind = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
@@ -52,18 +56,23 @@ __global__ void transform_rhs(cuDoubleComplex* in, cuDoubleComplex* out,size_t n
     }
 }
 
-__global__ void create_const_diag(cuDoubleComplex* dl, cuDoubleComplex* du, double c, size_t nx) {
+__global__ void create_const_diag(cuDoubleComplex* dl,
+                                  cuDoubleComplex* du,
+                                  double c,
+                                  size_t nx) {
     // ensure that first element is not overwritten
-    int tid = 1 +  threadIdx.x + blockDim.x * blockIdx.x;
+    int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
-    du[nx] = make_cuDoubleComplex(0,0);
-    dl[nx] = make_cuDoubleComplex(0,0);
     cuDoubleComplex cc = make_cuDoubleComplex(0,c);
-    while( tid < nx-1) {
+    printf("C equals %lf \n", c);
+    while( tid < nx) {
         du[tid] = cc;
         dl[tid] = cc;
         tid += oset;
     }
+    du[nx] = make_cuDoubleComplex(0,0);
+    dl[0] = make_cuDoubleComplex(0,0);
+
 }
 
 __device__ __host__ inline void transform_diag( cuDoubleComplex *d, cuDoubleComplex* s1, cuDoubleComplex* s2,const double c, const double x, const cuDoubleComplex t1) {
@@ -84,11 +93,10 @@ __global__ void update_diagl( cuDoubleComplex* d, const double tau, const double
     cuDoubleComplex s1 = make_cuDoubleComplex(1.0 , 0);
     cuDoubleComplex s2;
     while( tid < nx) {
-        x = xmin + h * (double) nx;
+        x = xmin + h * (double) tid;
         transform_diag( &d[tid], &s1, &s2, c, x, t1);
+        printf("Current imag value: %lf \n", d[tid].y);
         tid += oset;
     }
 
 }
-
-#endif
