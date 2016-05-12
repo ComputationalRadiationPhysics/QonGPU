@@ -108,11 +108,11 @@ void CrankNicholson1D::time_solve() {
     cuDoubleComplex* dev_du = raw_pointer_cast(du.data());
     cuDoubleComplex* dev_dl = raw_pointer_cast(dl.data());
     cuDoubleComplex* dev_rhs = raw_pointer_cast(chunkr_d.data());
+
     // Check
     create_const_diag<<<nx ,1>>>( raw_pointer_cast(dl.data()),
             raw_pointer_cast(du.data()),
-            c ,
-            nx);
+            c , nx);
 
     cusparse_init();
     save_diag(0, dl);

@@ -33,11 +33,12 @@ __device__ __host__ inline void mult_rhs(
     *s1 = (*s1) + (*s2);
     *s1 = make_cuDoubleComplex( s1->y*(-1), s1->x);
     *out =  (*in1) + (*s1) ;
+
 }
 
 
-__global__ void transform_rhs(cuDoubleComplex* in,
-                              cuDoubleComplex* out,
+__global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an temporary array to
+                              cuDoubleComplex* out,// ensure threat safety!
                               size_t nx,
                               double xmax,
                               double xmin,
@@ -67,6 +68,7 @@ __global__ void create_const_diag(cuDoubleComplex* dl,
                                   double c,
                                   size_t nx) {
     // Tested and works!
+
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
     cuDoubleComplex cc = make_cuDoubleComplex(0,c);
@@ -80,7 +82,12 @@ __global__ void create_const_diag(cuDoubleComplex* dl,
 
 }
 
-__device__ __host__ inline void transform_diag( cuDoubleComplex *d, cuDoubleComplex* s1, cuDoubleComplex* s2,const double c, const double x, const cuDoubleComplex t1) {
+__device__ __host__ inline void transform_diag( cuDoubleComplex *d,
+                                                cuDoubleComplex* s1,
+                                                cuDoubleComplex* s2,
+                                                const double c,
+                                                const double x,
+                                                const cuDoubleComplex t1) {
 
     *s2 = make_cuDoubleComplex( -2 * c, 0) + pot(x);
     *s2 = *(s2) * t1;
@@ -89,7 +96,13 @@ __device__ __host__ inline void transform_diag( cuDoubleComplex *d, cuDoubleComp
 
 }
 
-__global__ void update_diagl( cuDoubleComplex* d, const double tau, const double h, const double c,const double xmin, const size_t nx, double t){
+__global__ void update_diagl( cuDoubleComplex* d,
+                              const double tau,
+                              const double h,
+                              const double c,
+                              const double xmin,
+                              const size_t nx,
+                              double t){
 
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
