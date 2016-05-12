@@ -69,8 +69,10 @@ set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_20 -Xcompiler -fopenmp")
 #set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS})
 
 #Find HDF5 Package for file IO
-FIND_PACKAGE(HDF5 COMPONENTS HL)
+FIND_PACKAGE(HDF5 COMPONENTS HL )
 include_directories(${HDF5_INCLUDE_DIRS})
+include_directories(${HDF5_HL_LIBRARIES})
+include_directories(${HDF_CXX_LIBRARIES})
 set(LIBS ${LIBS} ${HDF5_LIBRARIES})
 
 #find Package Boost

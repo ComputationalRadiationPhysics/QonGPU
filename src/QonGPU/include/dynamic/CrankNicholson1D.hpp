@@ -40,7 +40,7 @@ private:
     IOHandle1D io;
     const size_t nx,nt;
     const double E;
-    const double tau = ( tmax - tmin) / ( double) nt;
+    const double tau;
     const size_t csize = 100;
     double tmax, xmax;
     double tmin, xmin;
@@ -67,7 +67,7 @@ private:
     void cusparse_sv();
 
     // Define necessary member functions
-    void rhs_rt();
+    void rhs_rt( const double c);
     void lhs_rt( double x, double t,
                  cuDoubleComplex* d,
                  cuDoubleComplex* du,
