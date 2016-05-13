@@ -57,7 +57,8 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
     while(ind < nx) {
 
         x = xmin + h * ind;
-        mult_rhs( &in[ind], &in[ind-1], &in[ind+1], &out[ind], &s1, &s2, h1,h2,x);
+        mult_rhs( &in[ind], &in[ind-1], &in[ind+1], &out[ind],
+                  &s1, &s2, h1, h2, x);
         ind += oset;
     }
 }
@@ -82,37 +83,38 @@ __global__ void create_const_diag(cuDoubleComplex* dl,
 
 }
 
-__device__ __host__ inline void transform_diag( cuDoubleComplex *d,
-                                                cuDoubleComplex* s1,
-                                                cuDoubleComplex* s2,
+__device__ __host__ inline void transform_diag( cuDoubleComplex& d,
+                                                cuDoubleComplex& s1,
+                                                cuDoubleComplex& s2,
                                                 const double c,
                                                 const double x,
-                                                const cuDoubleComplex t1) {
+                                                const cuDoubleComplex& t1) {
 
-    *s2 = make_cuDoubleComplex( -2 * c, 0) + pot(x);
-    *s2 = *(s2) * t1;
-    *s2 = make_cuDoubleComplex( -s2->y, s2->x);
-    *d = *s1 + *s2;
+    s2 = make_cuDoubleComplex( c , 0) + pot(x);
+    s2 = s2 * t1;
+    s2 = make_cuDoubleComplex( s2.y * (-1.0), s2.x);
+    d = s1 + s2;
 
 }
 
 __global__ void update_diagl( cuDoubleComplex* d,
                               const double tau,
                               const double h,
-                              const double c,
                               const double xmin,
-                              const size_t nx,
-                              double t){
+                              const size_t nx){
 
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
-    auto t1 = make_cuDoubleComplex(tau/2 ,0);
-    double x;
+    auto t1 = make_cuDoubleComplex( tau/2 ,0);
+    auto c = 1 / ( h * h);
+    double x = xmin;
     cuDoubleComplex s1 = make_cuDoubleComplex(1.0 , 0);
     cuDoubleComplex s2;
     while( tid < nx) {
-        x = xmin + h * (double) tid;
-        transform_diag( &d[tid], &s1, &s2, c, x, t1);
+
+        x += h * (double) tid;
+        //printf("Currently  at x=%lf \n", x);
+        transform_diag( d[tid], s1, s2, c, x, t1);
         tid += oset;
     }
 

@@ -1,9 +1,11 @@
+
+#define DEBUG2(x) std::cout<<x<<std::endl
+
 #include "CrankNicholson1D.hpp"
 #include "CNKernels.h"
 
 
 
-#define DEBUG2(x) std::cout<<x<<std::endl
 
 CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   nx( _p->getnx()),
@@ -21,8 +23,10 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   inital(_p->getnx()),
                                                   HDFile(1),
                                                   filename(_p->getname()),
-                                                  tau((_p->gettmax()-_p->gettmin())/_p->getnx() )
-{}
+                                                  tau((_p->gettmax()-_p->gettmin())/_p->getnt() )
+{
+
+}
 
 CrankNicholson1D::~CrankNicholson1D() {}
 
@@ -88,13 +92,15 @@ void CrankNicholson1D::initfile(splash::DataCollector::FileCreationAttr& fa) {
 
 void CrankNicholson1D::time_solve() {
 
+
     // This routine is now slightly longer
 
     const double h = (xmax - xmin) / (double) nx;
     // constants of the diagonal
-    const double c =  - tau / 4.0 * 1.0 / ( h * h);
+    const double c =  - tau / (4.0 * pow(h,2.0));
     DEBUG2("h equals " << h);
-    DEBUG2("Tau Equals " <<tau);
+    DEBUG2("pow(h,2) = "<< )
+    DEBUG2("Tau Equals " << tau);
     DEBUG2("C = "<< c);
     double t = param->gettmin();
 
@@ -115,16 +121,14 @@ void CrankNicholson1D::time_solve() {
             c , nx);
 
     cusparse_init();
-    save_diag(0, dl);
-    save_diag(1, du);
     for( auto i = 0; i < nt; ++i) {
 
-
         t += tau * (double) i;
+        // check
         rhs_rt(c);
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
-        update_diagl<<<nx,1>>>(raw_pointer_cast(d.data()), tau, h, c, xmin, nx, t);
+        update_diagl<<< nx, 1>>>( dev_d, tau, h, xmin, nx);
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunk
         status2 = cusparseZgtsv( handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
@@ -152,7 +156,7 @@ void CrankNicholson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
 
     // Initialize the file and saves the paramerters
     initfile(fa);
-   // save_vectorh(0, v);
+    save_vectorh(0, v);
 }
 
 void CrankNicholson1D::savechunk(int step) {

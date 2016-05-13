@@ -23,6 +23,7 @@ public:
     void staticsolve() {
         s.solve();
         s.copystate(0, psi0);
+
         t.setstate(psi0);
     }
     void timerev() {
