@@ -34,7 +34,7 @@ void Numerov::solve(){
     // This Loop is used to create
     for(auto j = 1; j < 2; j++) {
         z = j;
-        DEBUG("Solving for Z ="<<z)
+        DEBUG2("Solving for Z ="<<z);
 
         double *dev_ptr;
 
@@ -56,7 +56,7 @@ void Numerov::solve(){
             }
             DEBUG2("Calculating chunk: " << index / CHUNKSIZE);
             cudaMemcpy(dev_ptr, cache.data(), sizeof(double) * nx * dev_ne, cudaMemcpyHostToDevice);
-            En = dE * (double) index ;
+            En = dE * (double) index;
             DEBUG2("Calculating with starting energy: " << -En);
             iter1 <<< dev_ne, 1 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
             cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost);
@@ -74,7 +74,7 @@ void Numerov::savelevels(){
     // Function to provide saving functionality of the energy Levels
     // First Allocate an appropiate vector
 
-    DEBUG(res.size()/nx)
+    DEBUG2(res.size()/nx);
 
     hid_t file_id;
     vector<double> buffer2(eval.size());
@@ -134,7 +134,7 @@ int Numerov::bisect(double j) {
                 std::cout << "Energy level found" << std::endl;
                 std::cout << "Detected energy level: "<< En << std::endl;
                 eval.push_back(En);
-                //return 1;
+                return 1;
             }
             else {
                 if(chunk[i-nx]<1e-3) {
@@ -146,7 +146,7 @@ int Numerov::bisect(double j) {
                     std::cout << "Detected energy level: "<< En << std::endl;
                     eval.push_back(En);
 
-                  //  return 1;
+                    return 1;
                 }
             }
         }

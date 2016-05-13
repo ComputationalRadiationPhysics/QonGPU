@@ -32,7 +32,7 @@ loc=$(find -name qsolve)
 
 mv ${loc}  ./build/
 testBin/test1
-build/qsolve test1
+build/qsolve res
 
 #if [ "$1"=="-py" ]; then
 #        echo "Use Python graphics script"

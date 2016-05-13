@@ -17,13 +17,13 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   tmin( _p->gettmin()),
                                                   xmax( _p->getxmax()),
                                                   xmin( _p->getxmin()),
-                                                  d(_p->getnx()),
-                                                  du(_p->getnx()),
-                                                  dl(_p->getnx()),
-                                                  inital(_p->getnx()),
-                                                  HDFile(1),
-                                                  filename(_p->getname()),
-                                                  tau((_p->gettmax()-_p->gettmin())/_p->getnt() )
+                                                  d( _p->getnx()),
+                                                  du( _p->getnx()),
+                                                  dl( _p->getnx()),
+                                                  inital( _p->getnx()),
+                                                  HDFile( 1),
+                                                  filename( _p->getname()),
+                                                  tau(( _p->gettmax()- _p->gettmin()) /_p->getnt())
 {
 
 }
@@ -99,7 +99,7 @@ void CrankNicholson1D::time_solve() {
     // constants of the diagonal
     const double c =  - tau / (4.0 * pow(h,2.0));
     DEBUG2("h equals " << h);
-    DEBUG2("pow(h,2) = "<< )
+    DEBUG2("pow(h,2) = "<< pow(h,2.0));
     DEBUG2("Tau Equals " << tau);
     DEBUG2("C = "<< c);
     double t = param->gettmin();
