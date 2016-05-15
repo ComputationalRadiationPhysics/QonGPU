@@ -58,10 +58,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 #Find Cuda
 find_package(CUDA REQUIRED)
-set(LIBS ${LIBS} ${CUDA_LIBRARIES})
-set(LIBS ${LIBS} ${CUDA_CUBLAS_LIBRARIES})
+#set(LIBS ${LIBS} ${CUDA_LIBRARIES})
+#set(LIBS ${LIBS} ${CUDA_CUBLAS_LIBRARIES})
 set(LIBS ${LIBS} ${CUDA_cusparse_LIBRARY})
 message("${CUDA_cusparse_LIBRARY}")
+#message("${CUDA_LIBRARIES}")
 #Find MPI
 #find_package(MPI REQUIRED)
 #set(LIBS "${LIBS} ${MPI_LIBRARIES}")
