@@ -61,7 +61,6 @@ find_package(CUDA REQUIRED)
 set(LIBS ${LIBS} ${CUDA_LIBRARIES})
 set(LIBS ${LIBS} ${CUDA_CUBLAS_LIBRARIES})
 set(LIBS ${LIBS} ${CUDA_cusparse_LIBRARY})
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_20 -Xcompiler -fopenmp")
 
 #Find MPI
 #find_package(MPI REQUIRED)
