@@ -61,7 +61,7 @@ find_package(CUDA REQUIRED)
 set(LIBS ${LIBS} ${CUDA_LIBRARIES})
 set(LIBS ${LIBS} ${CUDA_CUBLAS_LIBRARIES})
 set(LIBS ${LIBS} ${CUDA_cusparse_LIBRARY})
-
+message("${CUDA_cusparse_LIBRARY}")
 #Find MPI
 #find_package(MPI REQUIRED)
 #set(LIBS "${LIBS} ${MPI_LIBRARIES}")
