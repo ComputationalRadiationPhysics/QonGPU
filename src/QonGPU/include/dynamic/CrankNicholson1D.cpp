@@ -206,7 +206,7 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
 void CrankNicholson1D::time_solve() {
 
 
-    hid_t fl = H5Fcreate("temp.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    //hid_t fl = H5Fcreate("temp.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 
 
@@ -253,10 +253,10 @@ void CrankNicholson1D::time_solve() {
         DEBUG2("Currently calculation the "<<i<<"-th frame");
         chunkl_d = chunkr_d;
 
-        //savechunk(i+1);
-        saveblank(chunkr_d, &fl, i);
+        savechunk(i+1);
+        //saveblank(chunkr_d, &fl, i);
     }
     cusparse_destr();
     closefile();
-    H5Fclose(fl);
+    //H5Fclose(fl);
 }
