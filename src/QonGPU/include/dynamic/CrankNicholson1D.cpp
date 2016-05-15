@@ -33,10 +33,14 @@ CrankNicholson1D::~CrankNicholson1D() {}
 void CrankNicholson1D::rhs_rt( const double c) {
     // Prepare the rhs by using a triangular
     // matrix multiplication on rhs_rt
+    // note that chunkl_d = chunkr_d since
+    // only given chunkr_d to the routine would make
+    // a temporal allocated field necessary!
+
     transform_rhs<<<nx,1>>>(raw_pointer_cast(chunkl_d.data()),
             raw_pointer_cast(chunkr_d.data()),
-            nx, param->getxmax(),
-            param->getxmin(),tau,c);
+            nx, xmax,
+            xmin,tau,c);
 }
 
 void CrankNicholson1D::cusparse_init() {
@@ -90,67 +94,15 @@ void CrankNicholson1D::initfile(splash::DataCollector::FileCreationAttr& fa) {
 }
 
 
-void CrankNicholson1D::time_solve() {
-
-
-    // This routine is now slightly longer
-
-    const double h = (xmax - xmin) / (double) nx;
-    // constants of the diagonal
-    const double c =  - tau / (4.0 * pow(h,2.0));
-    DEBUG2("h equals " << h);
-    DEBUG2("pow(h,2) = "<< pow(h,2.0));
-    DEBUG2("Tau Equals " << tau);
-    DEBUG2("C = "<< c);
-    double t = param->gettmin();
-
-    //splash::DataCollector::FileCreationAttr fa;
-    //splash::DataCollector::initFileCreationAttr(fa);
-
-    // Initialize the file and saves the paramerters
-    //initfile(fa);
-
-    cuDoubleComplex* dev_d = raw_pointer_cast(d.data());
-    cuDoubleComplex* dev_du = raw_pointer_cast(du.data());
-    cuDoubleComplex* dev_dl = raw_pointer_cast(dl.data());
-    cuDoubleComplex* dev_rhs = raw_pointer_cast(chunkr_d.data());
-
-    // Check
-    create_const_diag<<<nx ,1>>>( raw_pointer_cast(dl.data()),
-            raw_pointer_cast(du.data()),
-            c , nx);
-
-    cusparse_init();
-    for( auto i = 0; i < nt; ++i) {
-
-        t += tau * (double) i;
-        // check
-        rhs_rt(c);
-        // first perform the RHS Matrix multiplication!
-        // Then update the non-constant main-diagonal!
-        update_diagl<<< nx, 1>>>( dev_d, tau, h, xmin, nx);
-        // right after that, we can call the cusparse Library
-        // to write the Solution to the LHS chunk
-        status2 = cusparseZgtsv( handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
-
-        DEBUG2("Currently calculation the "<<i<<"-th frame");
-        thrust::copy( chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
-
-        savechunk(i+1);
-    }
-    cusparse_destr();
-    closefile();
-}
-
 void CrankNicholson1D::closefile() {
     HDFile.close();
 }
 
 
 void CrankNicholson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
-    thrust::copy(v.begin(), v.end(), inital.begin());
-    chunkl_d = inital;
-    chunkr_d = inital;
+
+    chunkl_d = v;
+    chunkr_d = v;
     splash::DataCollector::FileCreationAttr fa;
     splash::DataCollector::initFileCreationAttr(fa);
 
@@ -208,7 +160,6 @@ void CrankNicholson1D::save_vectorh(int step, const thrust::host_vector<cuDouble
     for(auto i = 0; i < v.size(); ++i) {
         real[i] = v[i].x;
         imag[i] = v[i].y;
-
     }
 
     splash::ColTypeDouble type;
@@ -236,4 +187,56 @@ void CrankNicholson1D::save_diag(int step, const thrust::device_vector<cuDoubleC
     splash::Selection sel(dim);
     HDFile.write(step, type, 1, sel, "diag_reals",real.data());
     HDFile.write(step, type, 1, sel, "diag_img", imag.data());
+}
+
+void CrankNicholson1D::time_solve() {
+
+
+    // This routine is now slightly longer
+
+    const double h = (xmax - xmin) / (double) nx;
+    // constants of the diagonal
+    const double c =  - tau / (4.0 * pow(h,2.0));
+    DEBUG2("h equals " << h);
+    DEBUG2("pow(h,2) = "<< pow(h,2.0));
+    DEBUG2("Tau Equals " << tau);
+    DEBUG2("C = "<< c);
+    double t = param->gettmin();
+
+    //splash::DataCollector::FileCreationAttr fa;
+    //splash::DataCollector::initFileCreationAttr(fa);
+
+    // Initialize the file and saves the paramerters
+    //initfile(fa);
+
+    cuDoubleComplex* dev_d = raw_pointer_cast(d.data());
+    cuDoubleComplex* dev_du = raw_pointer_cast(du.data());
+    cuDoubleComplex* dev_dl = raw_pointer_cast(dl.data());
+    cuDoubleComplex* dev_rhs = raw_pointer_cast(chunkr_d.data());
+
+    // Check
+    create_const_diag<<<nx ,1>>>( raw_pointer_cast(dl.data()),
+            raw_pointer_cast(du.data()),
+            c , nx);
+
+    cusparse_init();
+    for( auto i = 0; i < nt; ++i) {
+
+        t += tau * (double) i;
+        // check
+        rhs_rt(c);
+        // first perform the RHS Matrix multiplication!
+        // Then update the non-constant main-diagonal!
+        update_diagl<<< nx, 1>>>( dev_d, tau, h, xmin, nx);
+        // right after that, we can call the cusparse Library
+        // to write the Solution to the LHS chunk
+        status2 = cusparseZgtsv( handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
+
+        DEBUG2("Currently calculation the "<<i<<"-th frame");
+        thrust::copy( chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
+
+        savechunk(i+1);
+    }
+    cusparse_destr();
+    closefile();
 }
