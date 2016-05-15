@@ -3,7 +3,8 @@
 
 #include "CrankNicholson1D.hpp"
 #include "CNKernels.h"
-
+#include "hdf5.h"
+#include "hdf5_hl.h"
 
 
 
@@ -188,8 +189,25 @@ void CrankNicholson1D::save_diag(int step, const thrust::device_vector<cuDoubleC
     HDFile.write(step, type, 1, sel, "diag_reals",real.data());
     HDFile.write(step, type, 1, sel, "diag_img", imag.data());
 }
+void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
+               hid_t *fl, int it){
 
+    thrust::host_vector<cuDoubleComplex> h = v;
+    std::vector<double> cs_rl(h.size());
+    for(auto i = 0; i < v.size(); ++i){
+        cs_rl[i] = h[i].x;
+    }
+    std::string name = "/dset" + std::to_string(it);
+    hsize_t rank = 1;
+    hsize_t dim = cs_rl.size();
+    H5LTmake_dataset(*fl, name.c_str(),rank, &dim,H5T_NATIVE_DOUBLE, cs_rl.data());
+
+}
 void CrankNicholson1D::time_solve() {
+
+
+    hid_t fl = H5Fcreate("temp.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
 
 
     // This routine is now slightly longer
@@ -233,10 +251,12 @@ void CrankNicholson1D::time_solve() {
         status2 = cusparseZgtsv( handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
 
         DEBUG2("Currently calculation the "<<i<<"-th frame");
-        thrust::copy( chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
+        chunkl_d = chunkr_d;
 
-        savechunk(i+1);
+        //savechunk(i+1);
+        saveblank(chunkr_d, &fl, i);
     }
     cusparse_destr();
     closefile();
+    H5Fclose(fl);
 }
