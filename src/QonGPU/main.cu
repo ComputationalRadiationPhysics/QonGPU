@@ -14,11 +14,11 @@ int main(int argc, char** argv) {
         return -1;
     }
     std::string str = argv[1];
-    std::complex<double> xma = 8.0;
+    std::complex<double> xma = 20.0;
     std::complex<double> xmi = 0.0;
     std::complex<double> tmi = 0.0;
-    std::complex<double> tma = 5.0;
-    Params1D p(xma, xmi, tma, tmi, 1024, 1024, 1e6,1,str);
+    std::complex<double> tma = 8.0;
+    Params1D p(xma, xmi, tma, tmi, 1e3, 1e3, 1e6,1,str);
     SimDef<Numerov, CrankNicholson1D, Core1D, Params1D, 1> s(&p);
     s.staticsolve();
     s.timerev();

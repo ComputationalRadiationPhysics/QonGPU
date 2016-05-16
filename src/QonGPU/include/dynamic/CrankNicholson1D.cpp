@@ -197,16 +197,21 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
     for(auto i = 0; i < v.size(); ++i){
         cs_rl[i] = h[i].x;
     }
-    std::string name = "/dset" + std::to_string(it);
+    std::string name = "/dset" + std::to_string(it) +"real";
     hsize_t rank = 1;
     hsize_t dim = cs_rl.size();
+    H5LTmake_dataset(*fl, name.c_str(),rank, &dim,H5T_NATIVE_DOUBLE, cs_rl.data());
+    for(auto i = 0; i < v.size(); ++i){
+        cs_rl[i] = h[i].y;
+    }
+   name = "/dset" + std::to_string(it) +"img";
     H5LTmake_dataset(*fl, name.c_str(),rank, &dim,H5T_NATIVE_DOUBLE, cs_rl.data());
 
 }
 void CrankNicholson1D::time_solve() {
 
 
-    //hid_t fl = H5Fcreate("temp.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t fl = H5Fcreate("temp.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 
 
@@ -232,12 +237,13 @@ void CrankNicholson1D::time_solve() {
     cuDoubleComplex* dev_dl = raw_pointer_cast(dl.data());
     cuDoubleComplex* dev_rhs = raw_pointer_cast(chunkr_d.data());
 
+
     // Check
     create_const_diag<<<nx ,1>>>( raw_pointer_cast(dl.data()),
             raw_pointer_cast(du.data()),
             c , nx);
-
     cusparse_init();
+    //saveblank(chunkl_d, &fl, 0);
     for( auto i = 0; i < nt; ++i) {
 
         t += tau * (double) i;
@@ -251,9 +257,9 @@ void CrankNicholson1D::time_solve() {
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
 
         chunkl_d = chunkr_d;
-
         savechunk(i+1);
-        //saveblank(chunkr_d, &fl, i);
+       //ddddd saveblank(chunkl_d, &fl, i);
+
     }
     cusparse_destr();
     closefile();
