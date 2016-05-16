@@ -7,7 +7,6 @@
 #include <mpi.h>
 
 
-#include "splash/splash.h"
 #include "../output/IOHandle1D.cpp"
 #include "TimeOperator1D.hpp"
 #include "ComplexOperators.h"
@@ -32,8 +31,7 @@ public:
     double gettmin(){ return tmin;};
     double getxmax(){ return xmax;};
     double getxmin(){ return xmin;};
-    void cusparse_init();
-    void cusparse_destr();
+
     // get a function to copy the initial state!
     void setstate(const thrust::host_vector<cuDoubleComplex>& v);
 
@@ -54,7 +52,6 @@ private:
     device_vector<cuDoubleComplex> chunkr_d;
     // Diagonals of the triangular matrix
     device_vector<cuDoubleComplex> d, dl, du;
-    splash::SerialDataCollector HDFile;
 
 
 
@@ -76,9 +73,8 @@ private:
                  cuDoubleComplex* dl);
     void prp_rt();
     void printinitial();
-    void initfile(splash::DataCollector::FileCreationAttr& fa);
+    void write_p(hid_t *f);
     void savechunk(int step);
-    void closefile();
     void save_vector(int step, const thrust::device_vector<cuDoubleComplex>& v);
     void save_vectorh(int step, const thrust::host_vector<cuDoubleComplex>& v);
     void save_diag(int step, const thrust::device_vector<cuDoubleComplex>& v);

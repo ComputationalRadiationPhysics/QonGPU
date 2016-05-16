@@ -90,14 +90,6 @@ find_package(MPI)
 INCLUDE_DIRECTORIES(${MPI_CXX_INCLUDE_PATH})
 SET(LIBS  ${LIBS} ${MPI_CXX_LIBRARIES})
 
-# Use libsplash as HDF5 output!
-set(Splash_USE_STATIC_LIBS ON)
-find_package(Splash)
-
-if(Splash_FOUND)
-    include_directories(${Splash_INCLUDE_DIRS})
-    set(LIBS ${LIBS} ${Splash_LIBRARIES})
-endif(Splash_FOUND)
 
 
 
