@@ -4,7 +4,6 @@
 #include <thrust/device_vector.h>
 #include <cuda_runtime.h>
 #include <cusparse_v2.h>
-#include <mpi.h>
 
 
 #include "../output/IOHandle1D.cpp"

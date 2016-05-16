@@ -88,7 +88,7 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
 void CrankNicholson1D::time_solve() {
 
 
-    hid_t fl = H5Fcreate("temp.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t fl = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 
 

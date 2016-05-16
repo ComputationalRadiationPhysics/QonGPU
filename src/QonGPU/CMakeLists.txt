@@ -71,8 +71,7 @@ message("${CUDA_cusparse_LIBRARY}")
 #Find HDF5 Package for file IO
 FIND_PACKAGE(HDF5 COMPONENTS HL )
 include_directories(${HDF5_INCLUDE_DIRS})
-include_directories(${HDF5_HL_LIBRARIES})
-include_directories(${HDF_CXX_LIBRARIES})
+
 set(LIBS ${LIBS} ${HDF5_LIBRARIES})
 
 #find Package Boost
@@ -84,14 +83,6 @@ set(LIBS ${LIBS} ${BOOST_LIBRARIES})
 #find_package(OpenMP REQUIRED)
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 #set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-
-# libsplash needs openmpi for communication therefore
-find_package(MPI)
-INCLUDE_DIRECTORIES(${MPI_CXX_INCLUDE_PATH})
-SET(LIBS  ${LIBS} ${MPI_CXX_LIBRARIES})
-
-
-
 
 ADD_DEFINITIONS(-D__STRICT_ANSI__)
 if(${CUDA_FOUND})
