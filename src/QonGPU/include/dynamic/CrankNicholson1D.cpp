@@ -247,10 +247,9 @@ void CrankNicholson1D::time_solve() {
         // Then update the non-constant main-diagonal!
         update_diagl<<< nx, 1>>>( dev_d, tau, h, xmin, nx);
         // right after that, we can call the cusparse Library
-        // to write the Solution to the LHS chunk
-        status2 = cusparseZgtsv( handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
+        // to write the Solution to the LHS chunkd
+        gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
 
-        DEBUG2("Currently calculation the "<<i<<"-th frame");
         chunkl_d = chunkr_d;
 
         savechunk(i+1);
