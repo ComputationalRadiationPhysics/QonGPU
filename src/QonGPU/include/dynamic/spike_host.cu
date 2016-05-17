@@ -99,7 +99,7 @@ void gtsv_spike_partial_diag_pivot_v1(const T* dl, const T* d, const T* du, T* b
     
     findBestGrid<T>( m, tile_marshal, &m_pad, &b_dim, &s, &stride);
    
-    printf("m=%d m_pad=%d s=%d b_dim=%d stride=%d\n", m, m_pad, s, b_dim, stride);    
+    //printf("m=%d m_pad=%d s=%d b_dim=%d stride=%d\n", m, m_pad, s, b_dim, stride);
 	    	
 	int local_reduction_share_size = 2*b_dim*3*T_size;
 	int global_share_size = 2*s*3*T_size;
@@ -204,7 +204,7 @@ void gtsv_spike_partial_diag_pivot_v_few(const T* dl, const T* d, const T* du, T
     
     findBestGrid<T>( m, tile_marshal, &m_pad, &b_dim, &s, &stride);
    
-    printf("m=%d m_pad=%d s=%d b_dim=%d stride=%d\n", m, m_pad, s, b_dim, stride);    
+    //printf("m=%d m_pad=%d s=%d b_dim=%d stride=%d\n", m, m_pad, s, b_dim, stride);
 	    	
 	int local_reduction_share_size = 2*b_dim*3*T_size;
 	int global_share_size = 2*s*3*T_size;
@@ -394,7 +394,7 @@ void dtsvb_spike_v1(const T* dl, const T* d, const T* du, T* b,const int m)
 	
     findBestGrid<T>( m, tile_marshal, &m_pad, &b_dim, &s, &stride);
    
-    printf("m=%d m_pad=%d s=%d b_dim=%d stride=%d\n", m, m_pad, s, b_dim, stride);
+    //printf("m=%d m_pad=%d s=%d b_dim=%d stride=%d\n", m, m_pad, s, b_dim, stride);
 
 	
 	int local_reduction_share_size = 2*b_dim*3*T_size;

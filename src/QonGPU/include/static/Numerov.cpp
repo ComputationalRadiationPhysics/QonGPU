@@ -134,6 +134,7 @@ int Numerov::bisect(double j) {
                 std::cout << "Energy level found" << std::endl;
                 std::cout << "Detected energy level: "<< En << std::endl;
                 eval.push_back(En);
+                DEBUG2("Checked element: "<< chunk[i]);
                 return 1;
             }
             else {
@@ -142,8 +143,10 @@ int Numerov::bisect(double j) {
                     auto iter = res.end()-nx;
                     std::copy(it+i,it+i+nx,iter);
                     En = (-j + (i/nx - 1) * dE);
+
                     std::cout << "Energy level found" << std::endl;
                     std::cout << "Detected energy level: "<< En << std::endl;
+                    DEBUG2("Checked element: "<< chunk[i-nx]);
                     eval.push_back(En);
 
                     return 1;
@@ -188,7 +191,9 @@ void Numerov::prepstates() {
 void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 
     int o = nx*ind;
-    for(auto i = 0; i < nx; ++i) {
+
+    for(auto i = 0u; i < nx; ++i) {
         v[i] = make_cuDoubleComplex(res[i + o], 0);
+        DEBUG2("Result:"<< res[i+o]);
     }
 }

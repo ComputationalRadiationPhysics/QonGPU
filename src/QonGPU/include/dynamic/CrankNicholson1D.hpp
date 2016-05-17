@@ -59,8 +59,6 @@ private:
     // Define necessary members
     cusparseStatus_t status, status2;
     cusparseHandle_t handle = 0;
-    // Define cusparse member functions
-    // @TODO export this stuff into an interface
 
     void cusparse_sv();
 

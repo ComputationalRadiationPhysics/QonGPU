@@ -6,7 +6,7 @@
 device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a,
                                          device_vector<cuDoubleComplex> b) {
 
-    for(auto i = 0; i < a.size(); ++i) {
+    for(auto i = 0u; i < a.size(); ++i) {
         a[i] += b[i];
     }
     return a;
