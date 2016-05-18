@@ -161,6 +161,7 @@ double Numerov::trapez(int first, int last) {
 
     double h = (xmax - xmin) / (double) nx;
     auto temp = 0.0;
+
     for(auto i = first; i < last; ++i){
         temp += res[i]*res[i] * 2.0;
     }
@@ -183,7 +184,7 @@ void Numerov::prepstates() {
 
     double c_temp = 0;
     for(auto i = 0; i < res.size(); i += nx+1) {
-        c_temp = trapez(i, i+nx);
+        c_temp = trapez(i, i+nx-1);
         mult_const( i, i+nx, c_temp);
     }
 }
@@ -194,6 +195,6 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 
     for(auto i = 0u; i < nx; ++i) {
         v[i] = make_cuDoubleComplex(res[i + o], 0);
-        DEBUG2("Result:"<< res[i+o]);
+        //DEBUG2("Result:"<< res[i+o]);
     }
 }
