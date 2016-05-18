@@ -49,7 +49,7 @@ void CrankNicholson1D::rhs_rt( const double c) {
 
 void CrankNicholson1D::write_p(hid_t *f) {
     
-    std::vector<double> p_sav(7);
+    std::vector<double> p_sav(8);
     p_sav[0] = param->getxmax();
     p_sav[1] = param->getxmin();
     p_sav[2] = param->gettmax();
@@ -57,6 +57,7 @@ void CrankNicholson1D::write_p(hid_t *f) {
     p_sav[4] = param->getnx();
     p_sav[5] = param->getnt();
     p_sav[6] = param->getz();
+    p_sav[7] = param->geten();
 
     hsize_t rank = 1;
     hsize_t size = p_sav.size();
@@ -89,6 +90,7 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
 
 }
 
+
 void CrankNicholson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
     hid_t fl = H5Fcreate("copytest.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
@@ -102,6 +104,7 @@ void CrankNicholson1D::time_solve() {
 
 
     hid_t fl = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t cfl = H5Fcreate("matr.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     // This routine is now slightly longer
     write_p(&fl);
     const double h = (xmax - xmin) / (double) nx;
@@ -117,24 +120,30 @@ void CrankNicholson1D::time_solve() {
     create_const_diag<<<nx ,1>>>( raw_pointer_cast(dl.data()),
             raw_pointer_cast(du.data()),
             c , nx);
+    saveblank(dl, &cfl, 0);
+    saveblank(du, &cfl, 1);
+    printf("C = %lf \n", c);
 
-    saveblank(chunkl_d, &fl, 0);
+    //saveblank(chunkl_d, &fl, 0);
     for( auto i = 0; i < nt; ++i) {
 
         t += tau * (double) i;
         // check
         rhs_rt(c);
+        saveblank(chunkr_d,  &fl, 2*i);
+
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
         update_diagl<<< nx, 1>>>( dev_d, tau, h, xmin, nx);
+        //saveblank(d, &cfl, i+2);
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
 
 
-        //saveblank(chunkr_d, &fl, i + 1);
+        saveblank(chunkr_d, &fl, 2 * i + 1);
         thrust::copy(chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
-        saveblank(chunkl_d, &fl, i + 1);
+        //saveblank(chunkl_d, &fl, i + 1);
     }
     H5Fclose(fl);
 }

@@ -11,7 +11,7 @@
 using namespace std;
 
 
-#define CHUNKSIZE 500
+#define CHUNKSIZE 10
 
 __host__ __device__  double V(double x, double t,double z) {
   return 2*z/sqrt(1+x*x);
@@ -97,7 +97,7 @@ private:
     vector<double> chunk;
     vector<double> cache;
 	list<vector<double>> results;
-    list<double> eval;
+    vector<double> eval;
 	vector<double> res;
     const int nx,ne;
     int z;

@@ -13,7 +13,8 @@ Numerov::Numerov(Params1D *pa): param(pa),
                                 ne(pa->getne()),
                                 z(pa->getz()),
                                 xmax(pa->getxmax()),
-                                xmin(pa->getxmin()) {
+                                xmin(pa->getxmin())
+                                 {
 
     // initialize the cache, with the inital values
     for(auto it = cache.begin(); it != cache.end(); it += nx) {
@@ -67,7 +68,7 @@ void Numerov::solve(){
     }
     // After all the calculations done we can save our energy levels!
     prepstates();
-    savelevels();
+    //savelevels();
 }
 
 void Numerov::savelevels(){
@@ -163,8 +164,9 @@ double Numerov::trapez(int first, int last) {
     auto temp = 0.0;
 
     for(auto i = first; i < last; ++i){
-        temp += res[i]*res[i] * 2.0;
+        temp += res[i]*res[i];
     }
+    temp  *= 2.0;
     temp -= (res[first]*res[first] + res[last]*res[last]);
     temp *= h/2;
     return 1/sqrt(temp);
@@ -183,6 +185,7 @@ void Numerov::prepstates() {
     // Writes them to the
 
     double c_temp = 0;
+
     for(auto i = 0; i < res.size(); i += nx+1) {
         c_temp = trapez(i, i+nx-1);
         mult_const( i, i+nx, c_temp);
@@ -197,4 +200,5 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
         v[i] = make_cuDoubleComplex(res[i + o], 0);
         //DEBUG2("Result:"<< res[i+o]);
     }
+    param->seten( eval[ind]);
 }
