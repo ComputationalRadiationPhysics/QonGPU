@@ -140,9 +140,11 @@ void CrankNicholson1D::time_solve() {
         // to write the Solution to the LHS chunkd
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
 
-
+        std::cout<<"Generated the "<<i<<"-th frame" <<std::endl;
         saveblank(chunkr_d, &fl, 2 * i + 1);
         thrust::copy(chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
+        if(i > 2*1e4)
+            i = 2*nt;
         //saveblank(chunkl_d, &fl, i + 1);
     }
     H5Fclose(fl);

@@ -4,6 +4,17 @@
 #include "Numerov.hpp"
 
 
+static void HandleError( cudaError_t err,
+                         const char *file,
+                         int line ) {
+    if (err != cudaSuccess) {
+        printf( "%s in %s at line %d\n", cudaGetErrorString( err ),
+                file, line );
+        exit( EXIT_FAILURE );
+    }
+}
+#define HANDLE_ERROR( err ) (HandleError( err, __FILE__, __LINE__ ))
+
 Numerov::Numerov():nx(0),ne(0),xmax(0),xmin(0){}
 
 Numerov::Numerov(Params1D *pa): param(pa),
@@ -36,12 +47,11 @@ void Numerov::solve(){
     for(auto j = 1; j < 2; j++) {
         z = j;
         DEBUG2("Solving for Z ="<<z);
-
         double *dev_ptr;
 
-        int dev_ne = 0;
+        int dev_ne = CHUNKSIZE;
         // Next let's allocate the required chunk memory on the device side
-        cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * CHUNKSIZE);
+        HANDLE_ERROR(cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne));
         // Make use of some local variables
         int index = 0;
         double dE = V(0, 0, z) / (double) ne;
@@ -51,17 +61,30 @@ void Numerov::solve(){
             //copy initals on device
             dev_ne = CHUNKSIZE;
             if (index + CHUNKSIZE > ne) {
+                DEBUG2("Changing Device memory");
                 dev_ne = ne - index;
                 cudaFree(dev_ptr);
                 cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne);
             }
             DEBUG2("Calculating chunk: " << index / CHUNKSIZE);
-            cudaMemcpy(dev_ptr, cache.data(), sizeof(double) * nx * dev_ne, cudaMemcpyHostToDevice);
+            cudaThreadSynchronize();
+            HANDLE_ERROR(cudaMemcpy(dev_ptr,
+                                    cache.data(),
+                                    sizeof(double) * nx * dev_ne,
+                                    cudaMemcpyHostToDevice));
+            cudaThreadSynchronize();
             En = dE * (double) index;
             DEBUG2("Calculating with starting energy: " << -En);
-            iter1 <<< dev_ne, 1 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
-            cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost);
+            iter1 <<< 512, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
+
+
+            cudaThreadSynchronize();
+            DEBUG2(dev_ne);
+            HANDLE_ERROR(cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost));
+            DEBUG2(chunk[nx-1]<<" "<<chunk[nx-2]);
+            cudaThreadSynchronize();
             if(bisect(En)) index = ne;
+
             index += CHUNKSIZE;
 
         }
@@ -119,13 +142,16 @@ int Numerov::bisect(double j) {
     // Iterate through chunk data
     // create local variable for the offset
     // off is the index of the last Element
-    const int off = nx - 1;
+    const int off = nx;
     auto it = chunk.begin();
     vector<double> temp( nx);
     double dE = -V(0,0,z)/ne;
     double En = 0;
 //#pragma omp parallel for
-    for( auto i = 2 * off; i < chunk.size(); i += nx){
+    for( int i = 2 * off - 1 ; i < chunk.size(); i += nx){
+        //DEBUG2("1. chunk[i] = "<< chunk[i]);
+        //DEBUG2("2. chunk[i-nx] = " << chunk[i - nx]);
+
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
             if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-3) {
                 res.resize(res.size()+nx);
