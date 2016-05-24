@@ -14,24 +14,23 @@ device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a,
 
 __device__ __host__ cuDoubleComplex inline pot(double x){
 
-    return make_cuDoubleComplex(-2.0/sqrt(x*x+1.0),0);
+    return make_cuDoubleComplex( - 2.0 /sqrt(x * x + 1.0),0);
 }
 
-__device__ __host__ inline void mult_rhs(
-        cuDoubleComplex* in1,
-        cuDoubleComplex* in2,
-        cuDoubleComplex* in3,
-        cuDoubleComplex* out,
-        cuDoubleComplex* s1,
-        cuDoubleComplex* s2,
-        const cuDoubleComplex& h1,
-        const cuDoubleComplex& h2,
-        double x) {
+__device__ __host__ inline void mult_rhs( cuDoubleComplex* in1,
+                                          cuDoubleComplex* in2,
+                                          cuDoubleComplex* in3,
+                                          cuDoubleComplex* out,
+                                          cuDoubleComplex* s1,
+                                          cuDoubleComplex* s2,
+                                          const cuDoubleComplex& h1,
+                                          const cuDoubleComplex& h2,
+                                          double x) {
 
     *s1 = h1 * h2 * ((*in2) + *(in3)  - make_cuDoubleComplex( 2.0, 0) * (*in1));
     *s2 = h2 * pot(x) * (*in1);
     *s1 = (*s1) + (*s2);
-    *s1 = make_cuDoubleComplex( s1->y*(-1), s1->x);
+    *s1 = make_cuDoubleComplex( -s1->y, s1->x);
     *out =  (*in1) + (*s1) ;
 
 }
@@ -50,7 +49,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
     int oset = blockDim.x * gridDim.x;
     cuDoubleComplex s1,s2;
     const double h = ( xmax - xmin) / ( double) nx;
-    const cuDoubleComplex h1 = make_cuDoubleComplex( -1.0/2*(h*h), 0);
+    const cuDoubleComplex h1 = make_cuDoubleComplex( -1.0/(2*(h*h)), 0);
     const cuDoubleComplex h2 = make_cuDoubleComplex( -tau/2,0);
     double x = 0;
 

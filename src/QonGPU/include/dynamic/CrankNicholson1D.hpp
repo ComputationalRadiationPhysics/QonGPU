@@ -6,10 +6,13 @@
 #include <cusparse_v2.h>
 
 
+
 #include "../output/IOHandle1D.cpp"
 #include "TimeOperator1D.hpp"
 #include "ComplexOperators.h"
 #include "spike_host.cu"
+
+
 
 using namespace thrust;
 class CrankNicholson1D : TimeOperator1D {

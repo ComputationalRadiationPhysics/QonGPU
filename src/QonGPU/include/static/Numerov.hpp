@@ -8,10 +8,11 @@
 #include "StaticSolver1D.hpp"
 #include "../params/Params1D.hpp"
 #include <array>
+
 using namespace std;
 
 
-#define CHUNKSIZE 10000
+#define CHUNKSIZE 1000
 
 __host__ __device__  double V(double x, double t,double z) {
   return 2*z/sqrt(1+x*x);
@@ -72,7 +73,7 @@ __global__ void iter1(double* psi,
 	while( tid < ne * nx) {
 
 		E += tid * dE / (double)(nx);
-		for(int i = 2; i < nx - 1  ; i++){
+		for(int i = 1; i < nx - 1  ; i++){
 
 			f1 = 1.0 / (1.0 + dx * dx  / 12.0 *  (heff * ( V( ( i + 1) * dx + xmin, 0 , z) - E)));
 			f2 = ( 1.0 - 5.0 * dx * dx / 12.0 * ( heff *( V( i * dx + xmin, 0, z) - E)));
@@ -109,7 +110,7 @@ private:
     void prepstates();
     void savelevels();
     bool sign(double s);
-    int bisect(double j);
+    int bisect(double j, int& numlvl);
     void tempprint();
     void mult_const(int first, int last, double c);
     double trapez(int first, int last);

@@ -3,11 +3,13 @@
 
 
 
+
 #include "CrankNicholson1D.hpp"
+#include <chrono>
+
 #include "CNKernels.h"
 #include "hdf5.h"
 #include "hdf5_hl.h"
-
 
 
 CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
@@ -40,7 +42,7 @@ void CrankNicholson1D::rhs_rt( const double c) {
     // only given chunkr_d to the routine would make
     // a temporal allocated field necessary!
 
-    transform_rhs<<<nx,1>>>(raw_pointer_cast(chunkl_d.data()),
+    transform_rhs<<<512,3>>>(raw_pointer_cast(chunkl_d.data()),
             raw_pointer_cast(chunkr_d.data()),
             nx, xmax,
             xmin,tau,c);
@@ -102,14 +104,17 @@ void CrankNicholson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
 }
 void CrankNicholson1D::time_solve() {
 
-
+    // Allocate necessary attributes
     hid_t fl = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     hid_t cfl = H5Fcreate("matr.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
     // This routine is now slightly longer
     write_p(&fl);
     const double h = (xmax - xmin) / (double) nx;
+
     // constants of the diagonal
     const double c =  - tau / (4.0 * pow(h,2.0));
+
     double t = param->gettmin();
     cuDoubleComplex* dev_d = raw_pointer_cast(d.data());
     cuDoubleComplex* dev_du = raw_pointer_cast(du.data());
@@ -117,35 +122,51 @@ void CrankNicholson1D::time_solve() {
     cuDoubleComplex* dev_rhs = raw_pointer_cast(chunkr_d.data());
 
     // Check
-    create_const_diag<<<nx ,1>>>( raw_pointer_cast(dl.data()),
+    create_const_diag<<<512 ,3>>>( raw_pointer_cast(dl.data()),
             raw_pointer_cast(du.data()),
             c , nx);
     saveblank(dl, &cfl, 0);
     saveblank(du, &cfl, 1);
-    printf("C = %lf \n", c);
 
+    cudaEvent_t start,stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float t_el = 0;
+    //save copy!
     //saveblank(chunkl_d, &fl, 0);
-    for( auto i = 0; i < nt; ++i) {
+    for( int i = 0; i < nt; i++) {
+
 
         t += tau * (double) i;
         // check
         rhs_rt(c);
-        saveblank(chunkr_d,  &fl, 2*i);
+        //saveblank(chunkr_d,  &fl, 2*i);
 
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
-        update_diagl<<< nx, 1>>>( dev_d, tau, h, xmin, nx);
-        //saveblank(d, &cfl, i+2);
+        update_diagl<<< 512, 3>>>( dev_d, tau, h, xmin, nx);
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
+        cudaEventRecord(start);
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
+        cudaEventRecord(stop);
 
-        std::cout<<"Generated the "<<i<<"-th frame" <<std::endl;
-        saveblank(chunkr_d, &fl, 2 * i + 1);
         thrust::copy(chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
-        if(i > 2*1e4)
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&t_el, start, stop);
+        std::cout<<"Generated the "<<i<<"-th frame" <<std::endl;
+        std::cout<<"Frame generation time: " << t_el << "ms"<< std::endl;
+        if(i % 100 == 0)
+            saveblank(chunkr_d, &fl, i + 1 );
+
+        if(i == 714281) {
+            saveblank(chunkr_d, &fl, 714281);
             i = 2*nt;
+        }
+
+
         //saveblank(chunkl_d, &fl, i + 1);
     }
+    std::cout<<"The starting Energy was: "<< param->geten()<<std::endl;
     H5Fclose(fl);
 }

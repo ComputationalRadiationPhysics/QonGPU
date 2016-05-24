@@ -57,6 +57,7 @@ void Numerov::solve(){
         double dE = V(0, 0, z) / (double) ne;
         // This will be the starting energy for each chunk calculation
         double En = 0.0;
+        int numlvl = 1;
         while (index < ne) {
             //copy initals on device
             dev_ne = CHUNKSIZE;
@@ -73,7 +74,7 @@ void Numerov::solve(){
                                     sizeof(double) * nx * dev_ne,
                                     cudaMemcpyHostToDevice));
             cudaThreadSynchronize();
-            En = dE * (double) index;
+            En = dE * (double) index + 0.53;
             DEBUG2("Calculating with starting energy: " << -En);
             iter1 <<< 512, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 
@@ -83,7 +84,7 @@ void Numerov::solve(){
             HANDLE_ERROR(cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost));
             DEBUG2(chunk[nx-1]<<" "<<chunk[nx-2]);
             cudaThreadSynchronize();
-            if(bisect(En)) index = ne;
+            if(bisect(En, numlvl)) index = ne;
 
             index += CHUNKSIZE;
 
@@ -138,7 +139,7 @@ bool Numerov::sign(double s){
 
 
 
-int Numerov::bisect(double j) {
+int Numerov::bisect(double j, int& numelvl) {
     // Iterate through chunk data
     // create local variable for the offset
     // off is the index of the last Element
@@ -151,7 +152,6 @@ int Numerov::bisect(double j) {
     for( int i = 2 * off - 1 ; i < chunk.size(); i += nx){
         //DEBUG2("1. chunk[i] = "<< chunk[i]);
         //DEBUG2("2. chunk[i-nx] = " << chunk[i - nx]);
-
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
             if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-3) {
                 res.resize(res.size()+nx);
@@ -162,7 +162,9 @@ int Numerov::bisect(double j) {
                 std::cout << "Detected energy level: "<< En << std::endl;
                 eval.push_back(En);
                 DEBUG2("Checked element: "<< chunk[i]);
-                return 1;
+                if(numelvl > 0)
+                    return 1;
+                numelvl += 1;
             }
             else {
                 if(chunk[i-nx]<1e-3) {
@@ -175,8 +177,9 @@ int Numerov::bisect(double j) {
                     std::cout << "Detected energy level: "<< En << std::endl;
                     DEBUG2("Checked element: "<< chunk[i-nx]);
                     eval.push_back(En);
-
-                    return 1;
+                    if(numelvl > 0)
+                        return 1;
+                    numelvl += 1;
                 }
             }
         }
