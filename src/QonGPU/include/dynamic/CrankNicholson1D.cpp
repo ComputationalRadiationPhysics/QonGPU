@@ -16,8 +16,8 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   nx( _p->getnx()),
                                                   nt( _p->getnt()),
                                                   E( 0.0),
-                                                  chunk_h(_p->getnx(), make_cuDoubleComplex(1,1)),
-                                                  chunkl_d(_p->getnx(), make_cuDoubleComplex(1,1)),
+                                                  chunk_h( _p->getnx(), make_cuDoubleComplex(1,1)),
+                                                  chunkl_d( _p->getnx(), make_cuDoubleComplex(1,1)),
                                                   chunkr_d( _p->getnx(), make_cuDoubleComplex(1,1)),
                                                   tmax( _p->gettmax()),
                                                   tmin( _p->gettmin()),
@@ -156,11 +156,11 @@ void CrankNicholson1D::time_solve() {
         cudaEventElapsedTime(&t_el, start, stop);
         std::cout<<"Generated the "<<i<<"-th frame" <<std::endl;
         std::cout<<"Frame generation time: " << t_el << "ms"<< std::endl;
-        if(i % 100 == 0)
-            saveblank(chunkr_d, &fl, i + 1 );
+        if(i % 10 == 0)
+            saveblank(chunkr_d, &fl, i + 1);
 
-        if(i == 714281) {
-            saveblank(chunkr_d, &fl, 714281);
+        if(i == 3000) { //714281)
+            saveblank(chunkr_d, &fl, 1e3);
             i = 2*nt;
         }
 
