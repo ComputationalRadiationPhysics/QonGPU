@@ -50,7 +50,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
     int oset = blockDim.x * gridDim.x;
     cuDoubleComplex s1,s2;
     const double h = ( xmax - xmin) / ( double) nx;
-    const cuDoubleComplex h1 = make_cuDoubleComplex( -1.0/2*(h*h), 0);
+    const cuDoubleComplex h1 = make_cuDoubleComplex( -1.0/(2*(h*h)), 0);
     const cuDoubleComplex h2 = make_cuDoubleComplex( -tau/2,0);
     double x = 0;
 
