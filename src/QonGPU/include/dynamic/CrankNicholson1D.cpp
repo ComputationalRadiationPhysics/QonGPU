@@ -1,15 +1,17 @@
 
 #define DEBUG2(x) std::cout<<x<<std::endl
 
-
+//#define CUSPARSE_ON
 
 
 #include "CrankNicholson1D.hpp"
 #include <chrono>
+#include <cuda_runtime.h>
 
 #include "CNKernels.h"
 #include "hdf5.h"
 #include "hdf5_hl.h"
+#include "cusparse.h"
 
 
 CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
@@ -115,58 +117,113 @@ void CrankNicholson1D::time_solve() {
     // constants of the diagonal
     const double c =  - tau / (4.0 * pow(h,2.0));
 
+    // set t to starting point
     double t = param->gettmin();
+
+    // cast to raw pointers for Kernel usage
     cuDoubleComplex* dev_d = raw_pointer_cast(d.data());
     cuDoubleComplex* dev_du = raw_pointer_cast(du.data());
     cuDoubleComplex* dev_dl = raw_pointer_cast(dl.data());
     cuDoubleComplex* dev_rhs = raw_pointer_cast(chunkr_d.data());
 
-    // Check
+
+    // fill lower and upper diagonal
+    // these stay constat for the whole time!
     create_const_diag<<<512 ,3>>>( raw_pointer_cast(dl.data()),
             raw_pointer_cast(du.data()),
             c , nx);
-    saveblank(dl, &cfl, 0);
-    saveblank(du, &cfl, 1);
+    //saveblank(dl, &cfl, 0);
+    //saveblank(du, &cfl, 1);
 
+    // Use cudaevent for time measurement!
     cudaEvent_t start,stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     float t_el = 0;
-    //save copy!
-    //saveblank(chunkl_d, &fl, 0);
+
+    // save copy!
+    // saveblank(chunkl_d, &fl, 0);
+
+
+    #ifdef CUSPARSE_ON
+    // Initialize cusparse if it's required
+    cusparseStatus_t status;
+    cusparseHandle_t handle = 0;
+    status  = cusparseCreate(&handle);
+    if(status != CUSPARSE_STATUS_SUCCESS) {
+
+        std::cout<<"Error Init failed!"<<std::endl;
+
+    }
+
+    #endif
+
     for( int i = 0; i < nt; i++) {
 
 
         t += tau * (double) i;
+
         // check
         rhs_rt(c);
-        //saveblank(chunkr_d,  &fl, 2*i);
+        // saveblank(chunkr_d,  &fl, 2*i);
 
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
         update_diagl<<< 512, 3>>>( dev_d, tau, h, xmin, nx);
+
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
         cudaEventRecord(start);
-        gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
-        cudaEventRecord(stop);
 
+        #ifndef CUSPARSE_ON
+        gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
+
+        #endif
+
+        #ifdef CUSPARSE_ON
+        status  = cusparseZgtsv(handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
+        if(status != CUSPARSE_STATUS_SUCCESS) {
+            std::cout<<" Calulation went wrong"<<std::endl;
+            assert(status == CUSPARSE_STATUS_SUCCESS);
+        }
+        cudaEventRecord(stop);
+        #endif
+
+        // Write RHS to LHS
         thrust::copy(chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
+
+        // Calculate Time
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&t_el, start, stop);
+
+        // Debug Messages
         std::cout<<"Generated the "<<i<<"-th frame" <<std::endl;
         std::cout<<"Frame generation time: " << t_el << "ms"<< std::endl;
+
         if(i % 10 == 0)
             saveblank(chunkr_d, &fl, i + 1);
 
+
         if(i == 3000) { //714281)
-            saveblank(chunkr_d, &fl, 1e3);
+            saveblank(chunkr_d, &fl, 3000);
             i = 2*nt;
         }
 
 
         //saveblank(chunkl_d, &fl, i + 1);
     }
+
     std::cout<<"The starting Energy was: "<< param->geten()<<std::endl;
+
+    #ifdef CUSPARSE_ON
+    // Destroy cusparse
+    status = cusparseDestroy(handle);
+    if(status != CUSPARSE_STATUS_SUCCESS){
+
+        std::cout<<"Error cusparse couldn't be destroyed!"<<std::endl;
+
+    }
+    #endif
+
     H5Fclose(fl);
 }
