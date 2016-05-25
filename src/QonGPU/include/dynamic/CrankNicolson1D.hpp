@@ -21,7 +21,7 @@ class CrankNicolson1D : TimeOperator1D {
     /** This class implements the Crank Nicholson
      *  algorithm for the 1Dim Schroedinger Equation
      *  in Cuda C. The idea is that each Timestep
-     *  calculation is done by using the cusparse
+     *  calculation is done by using the cusparse/SpikeCR
      *  Tridiagonal solver Algorithm(which is hopefully
      *  fast/accurate enough for our application)
      */

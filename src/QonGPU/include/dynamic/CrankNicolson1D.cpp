@@ -18,8 +18,8 @@ CrankNicolson1D::CrankNicolson1D(Params1D *_p): param(_p),
                                                   nx( _p->getnx()),
                                                   nt( _p->getnt()),
                                                   E( 0.0),
-                                                  chunkl_d( _p->getnx(), make_cuDoubleComplex(1,1)),
-                                                  chunkr_d( _p->getnx(), make_cuDoubleComplex(1,1)),
+                                                  chunkl_d( _p->getnx()),
+                                                  chunkr_d( _p->getnx()),
                                                   tmax( _p->gettmax()),
                                                   tmin( _p->gettmin()),
                                                   xmax( _p->getxmax()),
@@ -36,6 +36,7 @@ CrankNicolson1D::CrankNicolson1D(Params1D *_p): param(_p),
 CrankNicolson1D::~CrankNicolson1D() {}
 
 void CrankNicolson1D::rhs_rt( const double c) {
+
     // Prepare the rhs by using a triangular
     // matrix multiplication on rhs_rt
     // note that chunkl_d = chunkr_d since
@@ -51,6 +52,7 @@ void CrankNicolson1D::rhs_rt( const double c) {
 
 void CrankNicolson1D::write_p(hid_t *f) {
     
+    // Fill parameter Vector and save Simulation params
     std::vector<double> p_sav(8);
     p_sav[0] = param->getxmax();
     p_sav[1] = param->getxmin();
@@ -64,6 +66,7 @@ void CrankNicolson1D::write_p(hid_t *f) {
     hsize_t rank = 1;
     hsize_t size = p_sav.size();
     H5LTmake_dataset(*f, "/params", rank, &size, H5T_NATIVE_DOUBLE,  p_sav.data() );
+
 }
 
 
@@ -72,21 +75,25 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
 
     thrust::host_vector<cuDoubleComplex> h(v.size());
     thrust::copy(v.begin(),v.end(), h.begin());
-    //h = v;
     std::vector<double> cs_rl(h.size());
 
-    for(auto i = 0u; i < v.size(); ++i){
+    for(auto i = 0; i < v.size(); ++i){
+
         cs_rl[i] = h[i].x;
-        //if(i < v.size()/1)
-            //DEBUG2("Real part:"<<h[i].x);
+
     }
+
     std::string name = "/dset" + std::to_string(it) +"real";
     hsize_t rank = 1;
     hsize_t dim = cs_rl.size();
     H5LTmake_dataset(*fl, name.c_str(),rank, &dim,H5T_NATIVE_DOUBLE, cs_rl.data());
+
     for(auto i = 0; i < v.size(); ++i){
+
         cs_rl[i] = h[i].y;
+
     }
+
     name = "/dset" + std::to_string(it) +"img";
     H5LTmake_dataset(*fl, name.c_str(),rank, &dim,H5T_NATIVE_DOUBLE, cs_rl.data());
 
@@ -190,6 +197,7 @@ void CrankNicolson1D::time_solve() {
         // Write RHS to LHS
         thrust::copy(chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
 
+
         // Calculate Time
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&t_el, start, stop);
@@ -202,11 +210,12 @@ void CrankNicolson1D::time_solve() {
             saveblank(chunkr_d, &fl, i + 1);
 
 
-        if(i == 3000) { //714281)
+        if(i == 3000) {
+
             saveblank(chunkr_d, &fl, 3000);
             i = 2*nt;
-        }
 
+        }
 
         //saveblank(chunkl_d, &fl, i + 1);
     }

@@ -7,15 +7,21 @@ device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a,
                                          device_vector<cuDoubleComplex> b) {
 
     for(int i = 0; i < a.size(); ++i) {
+
         a[i] += b[i];
+
     }
+
     return a;
 }
+
 
 __device__ __host__ cuDoubleComplex inline pot(double x){
 
     return make_cuDoubleComplex( - 2.0 /sqrt(x * x + 1.0),0);
+
 }
+
 
 __device__ __host__ inline void mult_rhs( cuDoubleComplex* in1,
                                           cuDoubleComplex* in2,
@@ -42,6 +48,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
                               double xmax,
                               double xmin,
                               double tau, double c) {
+
     // This function multiplies the psi(t)
     // with the Crank Nicholson time
     // Time evolution operator
@@ -61,6 +68,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
                   &s1, &s2, h1, h2, x);
         ind += oset;
     }
+
 }
 
 
@@ -68,20 +76,25 @@ __global__ void create_const_diag(cuDoubleComplex* dl,
                                   cuDoubleComplex* du,
                                   double c,
                                   size_t nx) {
-    // Tested and works!
+
 
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
     cuDoubleComplex cc = make_cuDoubleComplex(0,c);
+
     while( tid < nx) {
+
         du[tid] = cc;
         dl[tid] = cc;
         tid += oset;
+
     }
+
     du[nx-1] = make_cuDoubleComplex(0,0);
     dl[0] = make_cuDoubleComplex(0,0);
 
 }
+
 
 __device__ __host__ inline void transform_diag( cuDoubleComplex& d,
                                                 cuDoubleComplex& s1,
@@ -99,26 +112,30 @@ __device__ __host__ inline void transform_diag( cuDoubleComplex& d,
 
 }
 
+
 __global__ void update_diagl( cuDoubleComplex* d,
                               const double tau,
                               const double h,
                               const double xmin,
-                              const size_t nx){
+                              const size_t nx) {
 
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
     auto t1 = make_cuDoubleComplex( tau/2 ,0);
+
     // 2  and  - is left out since, you can make the
     // expression easier by that!
     double c = 1 / ( h * h);
     double x = xmin;
     cuDoubleComplex s1 = make_cuDoubleComplex(1.0 , 0);
     cuDoubleComplex s2;
+
     while( tid < nx) {
 
         x += h * (double) tid;
         transform_diag( d[tid], s1, s2, c, x, t1);
         tid += oset;
+
     }
 
 }
