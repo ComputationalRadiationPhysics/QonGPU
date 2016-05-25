@@ -4,7 +4,7 @@
 //#define CUSPARSE_ON
 
 
-#include "CrankNicholson1D.hpp"
+#include "CrankNicolson1D.hpp"
 #include <chrono>
 #include <cuda_runtime.h>
 
@@ -14,7 +14,7 @@
 #include "cusparse.h"
 
 
-CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
+CrankNicolson1D::CrankNicolson1D(Params1D *_p): param(_p),
                                                   nx( _p->getnx()),
                                                   nt( _p->getnt()),
                                                   E( 0.0),
@@ -33,9 +33,9 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
 
 }
 
-CrankNicholson1D::~CrankNicholson1D() {}
+CrankNicolson1D::~CrankNicolson1D() {}
 
-void CrankNicholson1D::rhs_rt( const double c) {
+void CrankNicolson1D::rhs_rt( const double c) {
     // Prepare the rhs by using a triangular
     // matrix multiplication on rhs_rt
     // note that chunkl_d = chunkr_d since
@@ -49,7 +49,7 @@ void CrankNicholson1D::rhs_rt( const double c) {
 }
 
 
-void CrankNicholson1D::write_p(hid_t *f) {
+void CrankNicolson1D::write_p(hid_t *f) {
     
     std::vector<double> p_sav(8);
     p_sav[0] = param->getxmax();
@@ -93,7 +93,7 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
 }
 
 
-void CrankNicholson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
+void CrankNicolson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
     hid_t fl = H5Fcreate("copytest.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     thrust::copy(v.begin(), v.end(), chunkr_d.begin());
@@ -102,7 +102,7 @@ void CrankNicholson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
     saveblank(chunkl_d, &fl, 0);
     H5Fclose(fl);
 }
-void CrankNicholson1D::time_solve() {
+void CrankNicolson1D::time_solve() {
 
     // Allocate necessary attributes
     hid_t fl = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);

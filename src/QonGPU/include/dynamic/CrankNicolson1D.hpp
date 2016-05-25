@@ -16,7 +16,7 @@
 
 using namespace thrust;
 
-class CrankNicholson1D : TimeOperator1D {
+class CrankNicolson1D : TimeOperator1D {
 
     /** This class implements the Crank Nicholson
      *  algorithm for the 1Dim Schroedinger Equation
@@ -29,8 +29,8 @@ class CrankNicholson1D : TimeOperator1D {
 public:
 
     // Define constructor und destructor
-    CrankNicholson1D(Params1D *_p);
-    ~CrankNicholson1D();
+    CrankNicolson1D(Params1D *_p);
+    ~CrankNicolson1D();
 
     // Define Solver Function
     void time_solve();

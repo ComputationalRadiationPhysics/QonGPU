@@ -14,7 +14,7 @@
 #include <params/Params1D.hpp>
 #include "../TimeOperator1D.hpp"
 #include "../TimeOperator.hpp"
-#include "../CrankNicholson1D.cpp"
+#include "../CrankNicolson1D.cpp"
 
 #include <dynamic/CNKernels.h>
 
