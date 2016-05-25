@@ -15,7 +15,9 @@
 
 
 using namespace thrust;
+
 class CrankNicholson1D : TimeOperator1D {
+
     /** This class implements the Crank Nicholson
      *  algorithm for the 1Dim Schroedinger Equation
      *  in Cuda C. The idea is that each Timestep
@@ -23,57 +25,49 @@ class CrankNicholson1D : TimeOperator1D {
      *  Tridiagonal solver Algorithm(which is hopefully
      *  fast/accurate enough for our application)
      */
+
 public:
+
+    // Define constructor und destructor
     CrankNicholson1D(Params1D *_p);
     ~CrankNicholson1D();
+
+    // Define Solver Function
     void time_solve();
-    size_t getnx(){ return nx;};
-    size_t getnt(){ return nt;}
-    double gettmax(){ return tmax;};
-    double gettmin(){ return tmin;};
-    double getxmax(){ return xmax;};
-    double getxmin(){ return xmin;};
 
     // get a function to copy the initial state!
     void setstate(const thrust::host_vector<cuDoubleComplex>& v);
 
 private:
+
     Params1D* param;
-    IOHandle1D io;
     const size_t nx,nt;
     const double E;
     const double tau;
     const size_t csize = 100;
     double tmax, xmax;
     double tmin, xmin;
-    host_vector<cuDoubleComplex> inital;
-    host_vector<cuDoubleComplex> chunk_h;
+
+
     // lefthand side chunk on Device
     device_vector<cuDoubleComplex>  chunkl_d;
+
     // righthand side chunk on Device
     device_vector<cuDoubleComplex> chunkr_d;
+
     // Diagonals of the triangular matrix
     device_vector<cuDoubleComplex> d, dl, du;
 
 
-
+    // Filename from Command line input
     std::string filename;
-
-    // Define necessary members
-    cusparseStatus_t status, status2;
-    cusparseHandle_t handle = 0;
-
-    void cusparse_sv();
 
     // Define necessary member functions
     void rhs_rt( const double c);
-    void lhs_rt( double x, double t,
-                 cuDoubleComplex* d,
-                 cuDoubleComplex* du,
-                 cuDoubleComplex* dl);
-    void prp_rt();
     void printinitial();
     void write_p(hid_t *f);
+
+    // Define saving methods
     void savechunk(int step);
     void save_vector(int step, const thrust::device_vector<cuDoubleComplex>& v);
     void save_vectorh(int step, const thrust::host_vector<cuDoubleComplex>& v);
