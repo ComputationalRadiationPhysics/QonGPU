@@ -27,7 +27,7 @@ void solve_tridiagonal(const device_vector<cuDoubleComplex>& dev_du,
     thrust::copy( dev_du.begin(), dev_du.end(), du.begin());
     thrust::copy( dev_dl.begin(), dev_dl.end(), dl.begin());
     thrust::copy( dev_d.begin(), dev_d.end(), d.begin());
-    thrust::copy(dev_rhs.begin(), dev_rhs.end(), rhs.begin());
+    thrust::copy( dev_rhs.begin(), dev_rhs.end(), rhs.begin());
 
 
 
@@ -35,10 +35,9 @@ void solve_tridiagonal(const device_vector<cuDoubleComplex>& dev_du,
     host_vector<cuDoubleComplex> rhs2(dev_d.size());
 
     thrust::copy( du.begin(), du.end(), du2.begin());
-    assert(rhs[100].x < 1e3);
-    assert(rhs[100].y < 1e3);
-    DEBUG2(rhs[100].x << " " << res[100].y);
-    thrust::copy( rhs.begin(), rhs.end(), rhs2.begin());
+    DEBUG2(rhs[100].x << " " << rhs[100].y);
+    assert(abs(rhs[100].x) < 1e2);
+    //thrust::copy( rhs.begin(), rhs.end(), rhs2.begin());
 
     du2[0] = du[0] / d[0];
     rhs2[0] = rhs[0] / d[0];
@@ -47,16 +46,19 @@ void solve_tridiagonal(const device_vector<cuDoubleComplex>& dev_du,
     cuDoubleComplex temp2 = make_cuDoubleComplex( 0, 0);
 
     // get maximum index
-    const int m = du.size() -1;
+    const int m = du.size() -1 ;
 
-    for(int i = 1; i < rhs.size()-1; i++) {
+    for(int i = 1; i < m; i++) {
 
-        temp1 = d[i] - dl[i] * du2[i - 1];
+
+        temp1 = d[i] - (dl[i] * du2[i - 1]);
+
         du2[i] = du[i] / temp1;
 
-        temp1 = rhs[i] - dl[i] * rhs2[ i -1 ];
-        temp2 = d[i] - dl[i] * du2[i -1];
-        assert(temp2.x != 0);
+        temp1 = rhs[i] - (rhs2[ i -1 ] * dl[i]);
+        //DEBUG2("temp1: "<< temp1.x << " " << temp1.y);
+        temp2 = d[i] - (du2[i -1] * dl[i]);
+
         rhs2[i] = temp1 / temp2;
 
     }
@@ -69,7 +71,7 @@ void solve_tridiagonal(const device_vector<cuDoubleComplex>& dev_du,
     res[m]  = rhs2[m];
     for(int i = m - 1; i >= 0; i--) {
 
-        res[i] = rhs2[i] - du2[i] * rhs[i + 1];
+        res[i] = rhs2[i] - du2[i] * res[i + 1];
     }
 
     thrust::copy(res.begin(), res.end(), dev_rhs.begin());

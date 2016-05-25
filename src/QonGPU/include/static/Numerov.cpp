@@ -74,7 +74,7 @@ void Numerov::solve(){
                                     sizeof(double) * nx * dev_ne,
                                     cudaMemcpyHostToDevice));
             cudaThreadSynchronize();
-            En = dE * (double) index + 0.54;
+            En = dE * (double) index + 0.548;
             DEBUG2("Calculating with starting energy: " << -En);
             iter1 <<< 512, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 

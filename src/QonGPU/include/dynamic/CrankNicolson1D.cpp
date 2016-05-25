@@ -3,6 +3,7 @@
 
 //#define CUSPARSE_ON
 #define USE_SERIAL
+//#define USE_SPIKE
 
 #include "CrankNicolson1D.hpp"
 #include <chrono>
@@ -177,6 +178,11 @@ void CrankNicolson1D::time_solve() {
 
 
         t += tau * (double) i;
+        chunkr_d[0] = make_cuDoubleComplex(0,0);
+        chunkl_d[0] = make_cuDoubleComplex(0,0);
+        chunkr_d[nx-1] = make_cuDoubleComplex(0,0);
+        chunkl_d[nx-1] = make_cuDoubleComplex(0,0);
+
 
         // Perform RHS multiplication
         rhs_rt( -c);
@@ -184,15 +190,16 @@ void CrankNicolson1D::time_solve() {
 
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
-        update_diagl<<< 512, 1>>>( dev_d, tau, h, xmin, nx);
+        if(i == 0)
+            update_diagl<<< 512, 1>>>( dev_d, tau, h, xmin, nx);
 
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
         cudaEventRecord(start);
 
-        #ifndef CUSPARSE_ON
-        //gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
-
+        #ifdef USE_SPIKE
+        gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
+        DEBUG2("Spike Called!");
         #endif
 
         #ifdef CUSPARSE_ON
@@ -227,7 +234,7 @@ void CrankNicolson1D::time_solve() {
             saveblank(chunkr_d, &fl, i + 1);
 
 
-        if(i == 3e3) {
+        if(i == 3e4) {
 
             saveblank(chunkr_d, &fl, 3e3);
             i = 2*nt;

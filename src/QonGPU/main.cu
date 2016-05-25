@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     std::complex<double> tmi = 0.0;
     std::complex<double> tma = 20.0;
     cudaDeviceReset();
-    Params1D p(xma, xmi, tma, tmi, 100000, 1000000, 1e6,1,str);
+    Params1D p(xma, xmi, tma, tmi, 1e4, 1000000, 1e6,1,str);
     SimDef<Numerov, CrankNicolson1D, Core1D, Params1D, 1> s(&p);
 #ifndef TOTEST
     s.staticsolve();
