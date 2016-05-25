@@ -11,42 +11,19 @@
 
 
 
-#include <params/Params1D.hpp>
+#include "../../params/Params1D.hpp"
 #include "../TimeOperator1D.hpp"
 #include "../TimeOperator.hpp"
 #include "../CrankNicolson1D.cpp"
 
-#include <dynamic/CNKernels.h>
+#include "../CNKernels.h"
 
 #define BOOST_TEST_MODULE "DynTest"
 #include "boost/test/included/unit_test.hpp"
 
 
-BOOST_AUTO_TEST_CASE(constructor) {
 
-        std::complex<double> xma = 0.0;
-    std::complex<double> xmi = 0.0;
-    std::complex<double> tmi = 0.0;
-    std::complex<double> tma = 0.0;
-    const  size_t s1 = 3;
-    const size_t s2 = 5;
-    const size_t s3 = 6;
-    const size_t s4 = 2;
-    vector<cuDoubleComplex> v(s1);
-    Params1D p( xma, xmi, tma, tmi, s1, s2, s3, s4);
-    CrankNicholson1D cn(&p, v);
-    BOOST_CHECK_EQUAL(cn.getnx(), s1);
-    BOOST_CHECK_EQUAL(cn.getnt(), s3);
-    BOOST_CHECK_EQUAL(cn.getxmax(),0.0);
-    BOOST_CHECK_EQUAL(cn.getxmin(),0.0);
-    BOOST_CHECK_EQUAL(cn.gettmax(),0.0);
-    BOOST_CHECK_EQUAL(cn.gettmin(),0.0);
-    cn.cusparse_init();
-    cn.cusparse_destr();
-
-
-}
-
+/*
 BOOST_AUTO_TEST_CASE(devicefunctions) {
 // check the potential function
     cuDoubleComplex c0 = make_cuDoubleComplex(1.0,0);
@@ -78,14 +55,48 @@ BOOST_AUTO_TEST_CASE(devicefunctions) {
     const double c_rhs = 5.0;
     const double x_rhs = 0;
     cuDoubleComplex t1 = make_cuDoubleComplex( 1.0, 2.0);
-    transform_diag( &d, &s1, &s2, c_rhs, x_rhs,t1);
+    transform_diag( d, s1, s2, c_rhs, x_rhs,t1);
     BOOST_CHECK_EQUAL(d.x,19.0);
     BOOST_CHECK_EQUAL(d.y,-9.0);
 }
+*/
+
+BOOST_AUTO_TEST_CASE(BinaryDeviceOperators) {
+        cuDoubleComplex res = make_cuDoubleComplex(4.5,1.0);
+        cuDoubleComplex l1 = make_cuDoubleComplex(1.0,1.0);
+        cuDoubleComplex l2 = make_cuDoubleComplex(2.0,1.0);
+
+        res = l1 + l2 + res;
+
+        BOOST_CHECK_EQUAL(res.x, 7.5);
+        BOOST_CHECK_EQUAL(res.y, 3.0);
+
+        std::cout<< res.x<<" "<<res.y<<std::endl;
+
+        res = make_cuDoubleComplex(2.0,1.9);
+        l1 = make_cuDoubleComplex(4.0,5.0);
+        l2 = make_cuDoubleComplex(5.0,5.0);
 
 
-void dummy(){
+        res = res*l1*l2;
+        BOOST_CHECK_EQUAL(res.x, -95.5);
+        BOOST_CHECK_EQUAL(res.y, 80.5);
+        std::cout<< res.x<<" "<<res.y<<std::endl;
 
+        res = make_cuDoubleComplex(2.0,1.9);
+        l1 = make_cuDoubleComplex(4.0,5.0);
+        res = res / l1;
+        BOOST_REQUIRE_CLOSE(res.x, 0.426829268292683, 1e-4);
+        BOOST_REQUIRE_CLOSE(res.y, -0.05853658536585366, 1e-4);
+
+        std::cout<< res.x<<" "<<res.y<<std::endl;
+
+        res = make_cuDoubleComplex(2.0,1.9);
+        l1 = make_cuDoubleComplex(4.0,5.0);
+
+        res = res - l1;
+        BOOST_REQUIRE_CLOSE(res.x, -2.0, 1e-4);
+        BOOST_REQUIRE_CLOSE(res.y, -3.1, 1e-4);
 }
 
 

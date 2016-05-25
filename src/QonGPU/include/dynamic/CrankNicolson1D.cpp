@@ -2,7 +2,7 @@
 #define DEBUG2(x) std::cout<<x<<std::endl
 
 //#define CUSPARSE_ON
-
+#define USE_SERIAL
 
 #include "CrankNicolson1D.hpp"
 #include <chrono>
@@ -12,9 +12,9 @@
 #include "hdf5.h"
 #include "hdf5_hl.h"
 #include "cusparse.h"
+#include "ThomasSerial.h"
 
-
-CrankNicolson1D::CrankNicolson1D(Params1D *_p): param(_p),
+CrankNicolson1D::CrankNicolson1D(Params1D *_p):   param(_p),
                                                   nx( _p->getnx()),
                                                   nt( _p->getnt()),
                                                   E( 0.0),
@@ -43,10 +43,13 @@ void CrankNicolson1D::rhs_rt( const double c) {
     // only given chunkr_d to the routine would make
     // a temporal allocated field necessary!
 
-    transform_rhs<<<512,3>>>(raw_pointer_cast(chunkl_d.data()),
-            raw_pointer_cast(chunkr_d.data()),
-            nx, xmax,
-            xmin,tau,c);
+    transform_rhs<<<512,1>>>(raw_pointer_cast(chunkl_d.data()),
+                             raw_pointer_cast(chunkr_d.data()),
+                             nx,
+                             xmax,
+                             xmin,
+                             tau,
+                             c);
 }
 
 
@@ -71,7 +74,7 @@ void CrankNicolson1D::write_p(hid_t *f) {
 
 
 void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
-               hid_t *fl, int it){
+               hid_t *fl, int it) {
 
     thrust::host_vector<cuDoubleComplex> h(v.size());
     thrust::copy(v.begin(),v.end(), h.begin());
@@ -101,14 +104,19 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
 
 
 void CrankNicolson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
+
     hid_t fl = H5Fcreate("copytest.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     thrust::copy(v.begin(), v.end(), chunkr_d.begin());
     saveblank(chunkr_d, &fl, 1);
+
     thrust::copy(v.begin(), v.end(), chunkl_d.begin());
     saveblank(chunkl_d, &fl, 0);
     H5Fclose(fl);
+
 }
+
+
 void CrankNicolson1D::time_solve() {
 
     // Allocate necessary attributes
@@ -120,7 +128,7 @@ void CrankNicolson1D::time_solve() {
     const double h = (xmax - xmin) / (double) nx;
 
     // constants of the diagonal
-    const double c =  - tau / (4.0 * pow(h,2.0));
+    const double c =  - tau / (4.0 * h * h);
 
     // set t to starting point
     double t = param->gettmin();
@@ -134,11 +142,13 @@ void CrankNicolson1D::time_solve() {
 
     // fill lower and upper diagonal
     // these stay constat for the whole time!
-    create_const_diag<<<512 ,3>>>( raw_pointer_cast(dl.data()),
-            raw_pointer_cast(du.data()),
-            c , nx);
-    //saveblank(dl, &cfl, 0);
-    //saveblank(du, &cfl, 1);
+    create_const_diag<<<512 ,1>>>( raw_pointer_cast(dl.data()),
+                                   raw_pointer_cast(du.data()),
+                                   c,
+                                   nx);
+    // Save Diagonals for debug purposes
+    saveblank(dl, &cfl, 0);
+    saveblank(du, &cfl, 1);
 
     // Use cudaevent for time measurement!
     cudaEvent_t start,stop;
@@ -168,20 +178,20 @@ void CrankNicolson1D::time_solve() {
 
         t += tau * (double) i;
 
-        // check
-        rhs_rt(c);
+        // Perform RHS multiplication
+        rhs_rt( -c);
         // saveblank(chunkr_d,  &fl, 2*i);
 
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
-        update_diagl<<< 512, 3>>>( dev_d, tau, h, xmin, nx);
+        update_diagl<<< 512, 1>>>( dev_d, tau, h, xmin, nx);
 
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
         cudaEventRecord(start);
 
         #ifndef CUSPARSE_ON
-        gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
+        //gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
 
         #endif
 
@@ -191,8 +201,15 @@ void CrankNicolson1D::time_solve() {
             std::cout<<" Calulation went wrong"<<std::endl;
             assert(status == CUSPARSE_STATUS_SUCCESS);
         }
-        cudaEventRecord(stop);
+
         #endif
+
+
+        #ifdef USE_SERIAL
+        solve_tridiagonal(du, dl, d, chunkr_d);
+        #endif
+
+        cudaEventRecord(stop);
 
         // Write RHS to LHS
         thrust::copy(chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
@@ -210,9 +227,9 @@ void CrankNicolson1D::time_solve() {
             saveblank(chunkr_d, &fl, i + 1);
 
 
-        if(i == 3000) {
+        if(i == 3e3) {
 
-            saveblank(chunkr_d, &fl, 3000);
+            saveblank(chunkr_d, &fl, 3e3);
             i = 2*nt;
 
         }

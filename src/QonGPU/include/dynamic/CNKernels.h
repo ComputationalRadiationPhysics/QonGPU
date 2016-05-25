@@ -18,7 +18,7 @@ device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a,
 
 __device__ __host__ cuDoubleComplex inline pot(double x){
 
-    return make_cuDoubleComplex( - 2.0 /sqrt(x * x + 1.0),0);
+    return make_cuDoubleComplex( - 2.0 /sqrt(x * x + 1.0), 0);
 
 }
 
@@ -33,7 +33,7 @@ __device__ __host__ inline void mult_rhs( cuDoubleComplex* in1,
                                           const cuDoubleComplex& h2,
                                           double x) {
 
-    *s1 = h1 * h2 * ((*in2) + *(in3)  - make_cuDoubleComplex( 2.0, 0) * (*in1));
+    *s1 = h1 * h2 * ( (*in2) + (*in3)  - make_cuDoubleComplex( 2.0, 0) * (*in1));
     *s2 = h2 * pot(x) * (*in1);
     *s1 = (*s1) + (*s2);
     *s1 = make_cuDoubleComplex( -s1->y, s1->x);
@@ -54,11 +54,11 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
     // Time evolution operator
     int ind = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
-    cuDoubleComplex s1 = make_cuDoubleComplex(1,1);
-    cuDoubleComplex s2 = make_cuDoubleComplex(1,1);
+    cuDoubleComplex s1 = make_cuDoubleComplex( 0, 0);
+    cuDoubleComplex s2 = make_cuDoubleComplex( 0, 0);
     const double h = ( xmax - xmin) / ( double) nx;
-    const cuDoubleComplex h1 = make_cuDoubleComplex( -1.0/(2*h*h), 0);
-    const cuDoubleComplex h2 = make_cuDoubleComplex( -tau/2,0);
+    const cuDoubleComplex h1 = make_cuDoubleComplex( -1.0 / ( 2.0 * h * h), 0);
+    const cuDoubleComplex h2 = make_cuDoubleComplex( -tau / 2.0 ,0);
     double x = xmin;
 
     while(ind < nx) {
@@ -121,14 +121,14 @@ __global__ void update_diagl( cuDoubleComplex* d,
 
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
-    auto t1 = make_cuDoubleComplex( tau/2 ,0);
+    auto t1 = make_cuDoubleComplex( tau / 2.0 ,0);
 
     // 2  and  - is left out since, you can make the
     // expression easier by that!
-    double c = 1 / ( h * h);
+    double c =  1.0 / ( h * h);
     double x = xmin;
-    cuDoubleComplex s1 = make_cuDoubleComplex(1.0 , 0);
-    cuDoubleComplex s2;
+    cuDoubleComplex s1 = make_cuDoubleComplex( 1.0 , 0);
+    cuDoubleComplex s2 = make_cuDoubleComplex( 0, 0);
 
     while( tid < nx) {
 
