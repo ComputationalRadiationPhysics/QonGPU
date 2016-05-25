@@ -99,10 +99,10 @@ private:
 	list<vector<double>> results;
     list<double> eval;
 	vector<double> res;
-    const int nx,ne;
+    volatile const int nx,ne;
     int z;
     double E;
-    const double xmax,xmin;
+    volatile const double xmax,xmin;
     Params1D *param;
 
     void prepstates();
