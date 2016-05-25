@@ -14,16 +14,16 @@ int main(int argc, char** argv) {
         return -1;
     }
     std::string str = argv[1];
-    std::complex<double> xma = 5.0;
+
+    std::complex<double> xma = 15.0;
     std::complex<double> xmi = 0.0;
     std::complex<double> tmi = 0.0;
     std::complex<double> tma = 8.0;
     cudaDeviceReset();
-    Params1D p(xma, xmi, tma, tmi, 1e2, 1e3, 1e6,1,str);
+    Params1D p(xma, xmi, tma, tmi, 1e4, 3*1e3, 1e6,1,str);
     SimDef<Numerov, CrankNicholson1D, Core1D, Params1D, 1> s(&p);
     s.staticsolve();
     s.timerev();
-
 
     return EXIT_SUCCESS;
 

@@ -33,6 +33,8 @@ public:
     void setz(double zn);
     double getz();
  	std::string getname() {return filename;};
+	void seten(double _E) { E = _E;};
+	double geten(){ return E;};
 private:
 	std::string filename;
     std::complex<double> xmax;
@@ -42,6 +44,8 @@ private:
     size_t nx,nt,ne;
     int x1,y1,z1;
     complex<double> z;
+	double E  = 0;
+
 };
 
 double Params1D::getxmax(){

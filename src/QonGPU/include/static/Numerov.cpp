@@ -4,6 +4,17 @@
 #include "Numerov.hpp"
 
 
+static void HandleError( cudaError_t err,
+                         const char *file,
+                         int line ) {
+    if (err != cudaSuccess) {
+        printf( "%s in %s at line %d\n", cudaGetErrorString( err ),
+                file, line );
+        exit( EXIT_FAILURE );
+    }
+}
+#define HANDLE_ERROR( err ) (HandleError( err, __FILE__, __LINE__ ))
+
 Numerov::Numerov():nx(0),ne(0),xmax(0),xmin(0){}
 
 Numerov::Numerov(Params1D *pa): param(pa),
@@ -13,7 +24,8 @@ Numerov::Numerov(Params1D *pa): param(pa),
                                 ne(pa->getne()),
                                 z(pa->getz()),
                                 xmax(pa->getxmax()),
-                                xmin(pa->getxmin()) {
+                                xmin(pa->getxmin())
+                                 {
 
     // initialize the cache, with the inital values
     for(auto it = cache.begin(); it != cache.end(); it += nx) {
@@ -35,39 +47,52 @@ void Numerov::solve(){
     for(auto j = 1; j < 2; j++) {
         z = j;
         DEBUG2("Solving for Z ="<<z);
-
         double *dev_ptr;
 
-        int dev_ne = 0;
+        int dev_ne = CHUNKSIZE;
         // Next let's allocate the required chunk memory on the device side
-        cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * CHUNKSIZE);
+        HANDLE_ERROR(cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne));
         // Make use of some local variables
         int index = 0;
         double dE = V(0, 0, z) / (double) ne;
         // This will be the starting energy for each chunk calculation
         double En = 0.0;
+        int numlvl = 1;
         while (index < ne) {
             //copy initals on device
             dev_ne = CHUNKSIZE;
             if (index + CHUNKSIZE > ne) {
+                DEBUG2("Changing Device memory");
                 dev_ne = ne - index;
                 cudaFree(dev_ptr);
                 cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne);
             }
             DEBUG2("Calculating chunk: " << index / CHUNKSIZE);
-            cudaMemcpy(dev_ptr, cache.data(), sizeof(double) * nx * dev_ne, cudaMemcpyHostToDevice);
-            En = dE * (double) index;
+            cudaThreadSynchronize();
+            HANDLE_ERROR(cudaMemcpy(dev_ptr,
+                                    cache.data(),
+                                    sizeof(double) * nx * dev_ne,
+                                    cudaMemcpyHostToDevice));
+            cudaThreadSynchronize();
+            En = dE * (double) index + 0.53;
             DEBUG2("Calculating with starting energy: " << -En);
-            iter1 <<< dev_ne, 1 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
-            cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost);
-            if(bisect(En)) index = ne;
+            iter1 <<< 512, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
+
+
+            cudaThreadSynchronize();
+            DEBUG2(dev_ne);
+            HANDLE_ERROR(cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost));
+            DEBUG2(chunk[nx-1]<<" "<<chunk[nx-2]);
+            cudaThreadSynchronize();
+            if(bisect(En, numlvl)) index = ne;
+
             index += CHUNKSIZE;
 
         }
     }
     // After all the calculations done we can save our energy levels!
     prepstates();
-    savelevels();
+    //savelevels();
 }
 
 void Numerov::savelevels(){
@@ -114,19 +139,26 @@ bool Numerov::sign(double s){
 
 
 
-int Numerov::bisect(double j) {
+int Numerov::bisect(double j, int& numelvl) {
+
     // Iterate through chunk data
     // create local variable for the offset
     // off is the index of the last Element
-    const int off = nx - 1;
+    const int off = nx;
     auto it = chunk.begin();
     vector<double> temp( nx);
     double dE = -V(0,0,z)/ne;
     double En = 0;
+
 //#pragma omp parallel for
-    for( auto i = 2 * off; i < chunk.size(); i += nx){
+    for( int i = 2 * off - 1 ; i < chunk.size(); i += nx){
+
+        //DEBUG2("1. chunk[i] = "<< chunk[i]);
+        //DEBUG2("2. chunk[i-nx] = " << chunk[i - nx]);
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
+
             if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-3) {
+
                 res.resize(res.size()+nx);
                 auto iter = res.end()-nx;
                 std::copy(it+i,it+i+nx,iter);
@@ -135,9 +167,13 @@ int Numerov::bisect(double j) {
                 std::cout << "Detected energy level: "<< En << std::endl;
                 eval.push_back(En);
                 DEBUG2("Checked element: "<< chunk[i]);
-                return 1;
+                if(numelvl > 0)
+                    return 1;
+                numelvl += 1;
+
             }
             else {
+
                 if(chunk[i-nx]<1e-3) {
                     res.resize(res.size()+nx);
                     auto iter = res.end()-nx;
@@ -148,11 +184,16 @@ int Numerov::bisect(double j) {
                     std::cout << "Detected energy level: "<< En << std::endl;
                     DEBUG2("Checked element: "<< chunk[i-nx]);
                     eval.push_back(En);
+                    if(numelvl > 0)
+                        return 1;
+                    numelvl += 1;
 
-                    return 1;
                 }
+
             }
+
         }
+
     }
     return 0;
 }
@@ -161,31 +202,45 @@ double Numerov::trapez(int first, int last) {
 
     double h = (xmax - xmin) / (double) nx;
     auto temp = 0.0;
+
     for(auto i = first; i < last; ++i){
-        temp += res[i]*res[i] * 2.0;
+
+        temp += res[i]*res[i];
+
     }
+
+    temp  *= 2.0;
     temp -= (res[first]*res[first] + res[last]*res[last]);
     temp *= h/2;
     return 1/sqrt(temp);
+
 }
+
 
 void Numerov::mult_const(int first, int last, double c) {
 
     for( auto i = first; i < last; ++i) {
+
         res[i] *= c;
+
     }
 }
 
 void Numerov::prepstates() {
+
     // This function normalizes the
     // static Solutions of the Numerov solution and
     // Writes them to the
 
     double c_temp = 0;
+
     for(auto i = 0; i < res.size(); i += nx+1) {
-        c_temp = trapez(i, i+nx);
+
+        c_temp = trapez(i, i+nx-1);
         mult_const( i, i+nx, c_temp);
+
     }
+
 }
 
 void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
@@ -193,7 +248,13 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     int o = nx*ind;
 
     for(auto i = 0u; i < nx; ++i) {
+
         v[i] = make_cuDoubleComplex(res[i + o], 0);
-        DEBUG2("Result:"<< res[i+o]);
+        //DEBUG2("Result:"<< res[i+o]);
+
     }
+
+    param->seten( eval[ind]);
+
+
 }

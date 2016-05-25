@@ -25,7 +25,18 @@ public:
         t.setstate(psi0);
     }
     void timerev() {
+
+        std::chrono::high_resolution_clock::time_point t1 =
+                std::chrono::high_resolution_clock::now();
+
         t.time_solve();
+        std::chrono::high_resolution_clock::time_point t2 =
+                std::chrono::high_resolution_clock::now();
+        auto duration =
+                std::chrono::duration_cast<std::chrono::minutes>( t2 - t1 ).count();
+
+        std::cout<<"It took "<< duration <<" minutes for the whole simulation!"<<std::endl;
+
     }
     void printres() {
     }
