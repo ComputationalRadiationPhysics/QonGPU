@@ -29,12 +29,13 @@ CrankNicolson1D::CrankNicolson1D(Params1D *_p):   param(_p),
                                                   du( _p->getnx()),
                                                   dl( _p->getnx()),
                                                   filename( _p->getname()),
-                                                  tau(( _p->gettmax()- _p->gettmin()) /_p->getnt())
+                                                  tau(( _p->gettmax() - _p->gettmin()) /_p->getnt())
 {
 
 }
 
 CrankNicolson1D::~CrankNicolson1D() {}
+
 
 void CrankNicolson1D::rhs_rt( const double c) {
 
@@ -56,8 +57,9 @@ void CrankNicolson1D::rhs_rt( const double c) {
 
 
 void CrankNicolson1D::write_p(hid_t *f) {
-    
-    // Fill parameter Vector and save Simulation params
+
+    // Allocate and fill vector to save
+    // Simulation parameters
     std::vector<double> p_sav(8);
     p_sav[0] = param->getxmax();
     p_sav[1] = param->getxmin();
@@ -121,39 +123,42 @@ void CrankNicolson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
 
 void CrankNicolson1D::time_solve() {
 
-    // Allocate necessary attributes
+    // Define HDF5 File
     hid_t fl = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    hid_t cfl = H5Fcreate("matr.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
-    // This routine is now slightly longer
+#ifdef MATRIX_OUTPUT
+    hid_t cfl = H5Fcreate("matr.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+#endif
+
+    // Write Parameters and define h as our discretization step
     write_p(&fl);
     const double h = (xmax - xmin) / (double) nx;
 
     // constants of the diagonal
-    const double c =  - tau / (4.0 * h * h);
+    const double c = -tau / (4.0 * h * h);
 
     // set t to starting point
     double t = param->gettmin();
 
     // cast to raw pointers for Kernel usage
-    cuDoubleComplex* dev_d = raw_pointer_cast(d.data());
-    cuDoubleComplex* dev_du = raw_pointer_cast(du.data());
-    cuDoubleComplex* dev_dl = raw_pointer_cast(dl.data());
-    cuDoubleComplex* dev_rhs = raw_pointer_cast(chunkr_d.data());
+    cuDoubleComplex * dev_d = raw_pointer_cast(d.data());
+    cuDoubleComplex * dev_du = raw_pointer_cast(du.data());
+    cuDoubleComplex * dev_dl = raw_pointer_cast(dl.data());
+    cuDoubleComplex * dev_rhs = raw_pointer_cast(chunkr_d.data());
 
 
     // fill lower and upper diagonal
     // these stay constat for the whole time!
-    create_const_diag<<<512 ,3>>>( raw_pointer_cast(dl.data()),
-                                   raw_pointer_cast(du.data()),
-                                   c,
-                                   nx);
+    create_const_diag << < 512, 3 >> > (raw_pointer_cast(dl.data()),
+            raw_pointer_cast(du.data()),
+            c,
+            nx);
     // Save Diagonals for debug purposes
-    saveblank(dl, &cfl, 0);
-    saveblank(du, &cfl, 1);
+    //saveblank(dl, &cfl, 0);
+    //saveblank(du, &cfl, 1);
 
     // Use cudaevent for time measurement!
-    cudaEvent_t start,stop;
+    cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     float t_el = 0;
@@ -162,7 +167,7 @@ void CrankNicolson1D::time_solve() {
     // saveblank(chunkl_d, &fl, 0);
 
 
-    #ifdef CUSPARSE_ON
+#ifdef CUSPARSE_ON
     // Initialize cusparse if it's required
     cusparseStatus_t status;
     cusparseHandle_t handle = 0;
@@ -173,16 +178,16 @@ void CrankNicolson1D::time_solve() {
 
     }
 
-    #endif
+#endif
 
 
-    for( int i = 0; i < nt; i++) {
+    for (int i = 0; i < nt; i++) {
 
 
         t += tau * (double) i;
 
         // Perform RHS multiplication
-        rhs_rt( -c);
+        rhs_rt(-c);
         cuDoubleComplex check = chunkr_d[100];
         DEBUG2(check.x << " " << check.y);
 
@@ -191,30 +196,30 @@ void CrankNicolson1D::time_solve() {
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
 
-        update_diagl<<< 512, 3>>>( dev_d, tau, h, xmin, nx);
+        update_diagl << < 512, 3 >> > (dev_d, tau, h, xmin, nx);
 
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
         cudaEventRecord(start);
 
-        #ifdef USE_SPIKE
-        gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
+#ifdef USE_SPIKE
+        gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex, double>(dev_dl, dev_d, dev_du, dev_rhs, nx);
         DEBUG2("Spike Called!");
-        #endif
+#endif
 
-        #ifdef CUSPARSE_ON
+#ifdef CUSPARSE_ON
         status  = cusparseZgtsv(handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
         if(status != CUSPARSE_STATUS_SUCCESS) {
             std::cout<<" Calulation went wrong"<<std::endl;
             assert(status == CUSPARSE_STATUS_SUCCESS);
         }
 
-        #endif
+#endif
 
 
-        #ifdef USE_SERIAL
+#ifdef USE_SERIAL
         solve_tridiagonal(du, dl, d, chunkr_d);
-        #endif
+#endif
 
         cudaEventRecord(stop);
 
@@ -227,30 +232,30 @@ void CrankNicolson1D::time_solve() {
         cudaEventElapsedTime(&t_el, start, stop);
 
         // Debug Messages
-        std::cout<<"Generated the "<<i<<"-th frame" <<std::endl;
-        std::cout<<"Frame generation time: " << t_el << "ms"<< std::endl;
+        std::cout << "Generated the " << i << "-th frame" << std::endl;
+        std::cout << "Frame generation time: " << t_el << "ms" << std::endl;
 
 
-        assert(check.x < 100 );
+        assert(check.x < 100);
         assert(check.y < 100);
 
-        if(i % 10 == 0)
+        if (i % 10 == 0)
             saveblank(chunkl_d, &fl, i + 1);
 
 
-        if(i == 3e4) {
+        if (i == 3e4) {
 
             saveblank(chunkl_d, &fl, 3e4);
-            i = 2*nt;
+            i = 2 * nt;
 
         }
 
         //saveblank(chunkl_d, &fl, i + 1);
     }
 
-    std::cout<<"The starting Energy was: "<< param->geten()<<std::endl;
+    std::cout << "The starting Energy was: " << param->geten() << std::endl;
 
-    #ifdef CUSPARSE_ON
+#ifdef CUSPARSE_ON
     // Destroy cusparse
     status = cusparseDestroy(handle);
     if(status != CUSPARSE_STATUS_SUCCESS){
@@ -258,7 +263,12 @@ void CrankNicolson1D::time_solve() {
         std::cout<<"Error cusparse couldn't be destroyed!"<<std::endl;
 
     }
-    #endif
+#endif
 
     H5Fclose(fl);
+
+#ifdef MATRIX_OUTPUT
+    H5Fclose(cfl);
+#endif
+
 }
