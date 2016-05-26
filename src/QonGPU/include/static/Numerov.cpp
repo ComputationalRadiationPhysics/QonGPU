@@ -54,10 +54,10 @@ void Numerov::solve(){
         HANDLE_ERROR(cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne));
         // Make use of some local variables
         int index = 0;
-        double dE = V(0, 0, z) / (double) ne;
+        double dE =  V(0, 0, z) / (double) ne;
         // This will be the starting energy for each chunk calculation
         double En = 0.0;
-        int numlvl = 0;
+        int numlvl = -1;
         while (index < ne) {
             //copy initals on device
             dev_ne = CHUNKSIZE;
@@ -75,7 +75,7 @@ void Numerov::solve(){
                                     cudaMemcpyHostToDevice));
             cudaThreadSynchronize();
             En = dE * (double) index;
-            DEBUG2("Calculating with starting energy: " << -En);
+            DEBUG2("Calculating with starting energy: " << En);
             iter1 <<< 512, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 
 
@@ -147,7 +147,7 @@ int Numerov::bisect(double j, int& numelvl) {
     const int off = nx;
     auto it = chunk.begin();
     vector<double> temp( nx);
-    double dE = -V(0,0,z)/ne;
+    double dE =  V(0,0,z)/ne;
     double En = 0;
 
 //#pragma omp parallel for
@@ -162,7 +162,7 @@ int Numerov::bisect(double j, int& numelvl) {
                 res.resize(res.size()+nx);
                 auto iter = res.end()-nx;
                 std::copy(it+i,it+i+nx,iter);
-                En = ( -j + i/nx * dE);
+                En = ( j + i/nx * dE);
                 std::cout << "Energy level found" << std::endl;
                 std::cout << "Detected energy level: "<< En << std::endl;
                 eval.push_back(En);
@@ -178,7 +178,7 @@ int Numerov::bisect(double j, int& numelvl) {
                     res.resize(res.size()+nx);
                     auto iter = res.end()-nx;
                     std::copy(it+i,it+i+nx,iter);
-                    En = (-j + (i/nx - 1) * dE);
+                    En = (j + (i/nx - 1) * dE);
 
                     std::cout << "Energy level found" << std::endl;
                     std::cout << "Detected energy level: "<< En << std::endl;
@@ -247,7 +247,8 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 
     int o = nx*ind;
 
-    for(auto i = 0u; i < nx; ++i) {
+    v[0] = make_cuDoubleComplex(0,0);
+    for(int i = 1; i < nx; ++i) {
 
         v[i] = make_cuDoubleComplex(res[i + o], 0);
         //DEBUG2("Result:"<< res[i+o]);

@@ -15,7 +15,8 @@ using namespace std;
 #define CHUNKSIZE 500
 
 __host__ __device__  double V(double x, double t,double z) {
-  return - 2*z/sqrt(1+x*x);
+
+	return -2*z/sqrt(1+x*x);
 };
 //NumerovKernel to iterate from right to left!
 __global__ void iter2(double* psi,
