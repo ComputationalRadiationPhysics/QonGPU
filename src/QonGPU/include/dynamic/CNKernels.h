@@ -122,9 +122,10 @@ __device__ __host__ inline void transform_diag( cuDoubleComplex& d,
                                                 const double x,
                                                 const cuDoubleComplex& t1) {
 
-    s2 = make_cuDoubleComplex( c , 0) + pot(x);
+    temp1 = make_cuDoubleComplex( c, 0);
+    s2 = temp1 + pot(x);
     s2 = s2 * t1;
-    s2 = make_cuDoubleComplex( s2.y * (-1.0), s2.x);
+    s2 = make_cuDoubleComplex( - s2.y , s2.x);
     d = s1 + s2;
     //printf("pot(x) = %lf \n", pot(x).x);
     //printf("D = %lf \n", d.y);
@@ -140,7 +141,7 @@ __global__ void update_diagl( cuDoubleComplex* d,
 
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     int oset = blockDim.x * gridDim.x;
-    auto t1 = make_cuDoubleComplex( tau / 2.0 ,0);
+    cuDoubleComplex t1 = make_cuDoubleComplex( tau / 2.0 ,0);
 
     // 2  and  - is left out since, you can make the
     // expression easier by that!

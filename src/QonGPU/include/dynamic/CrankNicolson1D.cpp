@@ -51,6 +51,7 @@ void CrankNicolson1D::rhs_rt( const double c) {
                              xmin,
                              tau,
                              c);
+
 }
 
 
