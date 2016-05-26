@@ -3,19 +3,6 @@
 //
 #pragma once
 
-device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a,
-                                         device_vector<cuDoubleComplex> b) {
-
-    for(int i = 0; i < a.size(); ++i) {
-
-        a[i] += b[i];
-
-    }
-
-    return a;
-}
-
-
 __device__ __host__ cuDoubleComplex inline pot(double x){
 
     return make_cuDoubleComplex( - 2.0 /sqrt(x * x + 1.0), 0);
@@ -63,7 +50,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
 
     if(ind == 0 ) {
 
-        cuDoubleComplex bound = make_cuDoubleComplex(0, 0);
+        cuDoubleComplex bound = make_cuDoubleComplex(0.0, 0.0);
         mult_rhs(in[ind], bound, in[ind + 1], out[ind], s1, s2, h1, h2, x);
 
     }

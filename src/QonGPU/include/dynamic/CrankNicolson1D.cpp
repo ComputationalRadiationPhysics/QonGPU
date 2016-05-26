@@ -2,8 +2,8 @@
 #define DEBUG2(x) std::cout<<x<<std::endl
 
 //#define CUSPARSE_ON
-#define USE_SERIAL
-//#define USE_SPIKE
+//#define USE_SERIAL
+#define USE_SPIKE
 
 #include "CrankNicolson1D.hpp"
 #include <chrono>
@@ -44,7 +44,7 @@ void CrankNicolson1D::rhs_rt( const double c) {
     // only given chunkr_d to the routine would make
     // a temporal allocated field necessary!
 
-    transform_rhs<<<512,1>>>(raw_pointer_cast(chunkl_d.data()),
+    transform_rhs<<<512,3>>>(raw_pointer_cast(chunkl_d.data()),
                              raw_pointer_cast(chunkr_d.data()),
                              nx,
                              xmax,
@@ -144,7 +144,7 @@ void CrankNicolson1D::time_solve() {
 
     // fill lower and upper diagonal
     // these stay constat for the whole time!
-    create_const_diag<<<512 ,1>>>( raw_pointer_cast(dl.data()),
+    create_const_diag<<<512 ,3>>>( raw_pointer_cast(dl.data()),
                                    raw_pointer_cast(du.data()),
                                    c,
                                    nx);
@@ -191,7 +191,7 @@ void CrankNicolson1D::time_solve() {
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
 
-        update_diagl<<< 512, 1>>>( dev_d, tau, h, xmin, nx);
+        update_diagl<<< 512, 3>>>( dev_d, tau, h, xmin, nx);
 
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd

@@ -80,9 +80,7 @@ void Numerov::solve(){
 
 
             cudaThreadSynchronize();
-            DEBUG2(dev_ne);
             HANDLE_ERROR(cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost));
-            DEBUG2(chunk[nx-1]<<" "<<chunk[nx-2]);
             cudaThreadSynchronize();
             if(bisect(En, numlvl)) index = ne;
 
@@ -104,7 +102,7 @@ void Numerov::savelevels(){
     hid_t file_id;
     vector<double> buffer2(eval.size());
 
-    for(auto it = 0; it < eval.size(); it++) {
+    for(int it = 0; it < eval.size(); it++) {
         // We do the analog thing for the enegy
         // It's a lot simpler!
         buffer2[it] = eval.back();
@@ -247,6 +245,8 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 
     int o = nx*ind;
 
+    // Something( I suspect the Kernel) messes up the first Value therefore
+    // set it to 0
     v[0] = make_cuDoubleComplex(0,0);
     for(int i = 1; i < nx; ++i) {
 
