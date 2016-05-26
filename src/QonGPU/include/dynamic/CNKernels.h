@@ -3,7 +3,7 @@
 //
 #pragma once
 
-__device__ __host__ cuDoubleComplex inline pot(double x){
+__device__ __host__ cuDoubleComplex pot(double x) {
 
     return make_cuDoubleComplex( - 2.0 /sqrt(x * x + 1.0), 0);
 
@@ -20,10 +20,11 @@ __device__ __host__ inline void mult_rhs( cuDoubleComplex& in1,
                                           const cuDoubleComplex& h2,
                                           double x) {
 
-    s1 = h1 * h2 * ( (in2) + (in3)  - make_cuDoubleComplex( 2.0, 0) * (in1));
+
+    s1 = (h1 * h2) * ( (in2) + (in3)  - make_cuDoubleComplex(2 * in1.x, 2 * in1.y));
     s2 = h2 * pot(x) * (in1);
     s1 = (s1) + (s2);
-    s1 = make_cuDoubleComplex( -s1.y, s1.x);
+    s1 = cuCmul(s1,make_cuDoubleComplex(0,1));
     out =  (in1) + (s1) ;
 
 }

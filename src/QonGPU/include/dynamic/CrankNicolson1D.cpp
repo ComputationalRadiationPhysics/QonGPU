@@ -2,9 +2,9 @@
 #define DEBUG2(x) std::cout<<x<<std::endl
 
 //#define CUSPARSE_ON
-//#define USE_SERIAL
-#define USE_SPIKE
-
+#define USE_SERIAL
+//#define USE_SPIKE
+#define MATRIX_OUTPUT
 #include "CrankNicolson1D.hpp"
 #include <chrono>
 #include <cuda_runtime.h>
@@ -149,13 +149,14 @@ void CrankNicolson1D::time_solve() {
 
     // fill lower and upper diagonal
     // these stay constat for the whole time!
-    create_const_diag << < 512, 3 >> > (raw_pointer_cast(dl.data()),
+    create_const_diag <<< 512, 3 >>> (raw_pointer_cast(dl.data()),
             raw_pointer_cast(du.data()),
             c,
             nx);
+
     // Save Diagonals for debug purposes
-    //saveblank(dl, &cfl, 0);
-    //saveblank(du, &cfl, 1);
+    saveblank(dl, &cfl, 0);
+    saveblank(du, &cfl, 1);
 
     // Use cudaevent for time measurement!
     cudaEvent_t start, stop;
@@ -181,23 +182,25 @@ void CrankNicolson1D::time_solve() {
 #endif
 
 
-    for (int i = 0; i < nt; i++) {
+    saveblank(chunkl_d, &fl, 0);
+    for (int i = 0; i < 200; i++) {
 
 
         t += tau * (double) i;
 
         // Perform RHS multiplication
         rhs_rt(-c);
+
         cuDoubleComplex check = chunkr_d[100];
         DEBUG2(check.x << " " << check.y);
 
-        // saveblank(chunkr_d,  &fl, 2*i);
+
 
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
 
-        update_diagl << < 512, 3 >> > (dev_d, tau, h, xmin, nx);
-
+        update_diagl <<< 512, 3 >>> (dev_d, tau, h, xmin, nx);
+        saveblank(chunkr_d,  &cfl, i+1);
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
         cudaEventRecord(start);
