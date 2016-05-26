@@ -165,7 +165,7 @@ void CrankNicolson1D::time_solve() {
     // Initialize cusparse if it's required
     cusparseStatus_t status;
     cusparseHandle_t handle = 0;
-    status  = cusparseCreate(&handle);
+    status  = cusparseCreat(&handle);
     if(status != CUSPARSE_STATUS_SUCCESS) {
 
         std::cout<<"Error Init failed!"<<std::endl;
@@ -174,24 +174,23 @@ void CrankNicolson1D::time_solve() {
 
     #endif
 
+
     for( int i = 0; i < nt; i++) {
 
 
         t += tau * (double) i;
-        chunkr_d[0] = make_cuDoubleComplex(0,0);
-        chunkl_d[0] = make_cuDoubleComplex(0,0);
-        chunkr_d[nx-1] = make_cuDoubleComplex(0,0);
-        chunkl_d[nx-1] = make_cuDoubleComplex(0,0);
-
 
         // Perform RHS multiplication
         rhs_rt( -c);
+        cuDoubleComplex check = chunkr_d[100];
+        DEBUG2(check.x << " " << check.y);
+
         // saveblank(chunkr_d,  &fl, 2*i);
 
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
-        if(i == 0)
-            update_diagl<<< 512, 1>>>( dev_d, tau, h, xmin, nx);
+
+        update_diagl<<< 512, 1>>>( dev_d, tau, h, xmin, nx);
 
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
@@ -230,13 +229,17 @@ void CrankNicolson1D::time_solve() {
         std::cout<<"Generated the "<<i<<"-th frame" <<std::endl;
         std::cout<<"Frame generation time: " << t_el << "ms"<< std::endl;
 
+
+        assert(check.x < 100 );
+        assert(check.y < 100);
+
         if(i % 10 == 0)
             saveblank(chunkr_d, &fl, i + 1);
 
 
         if(i == 3e4) {
 
-            saveblank(chunkr_d, &fl, 3e3);
+            saveblank(chunkr_d, &fl, 3e4);
             i = 2*nt;
 
         }
