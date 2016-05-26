@@ -14,7 +14,7 @@ device_vector<cuDoubleComplex> operator+(device_vector<cuDoubleComplex> a,
 
 __device__ __host__ cuDoubleComplex inline pot(double x){
 
-    return make_cuDoubleComplex( - 2.0 /sqrt(x * x + 1.0),0);
+    return make_cuDoubleComplex(  2.0 /sqrt(x * x + 1.0),0);
 }
 
 __device__ __host__ inline void mult_rhs( cuDoubleComplex* in1,

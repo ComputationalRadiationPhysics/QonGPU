@@ -30,7 +30,7 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   dl( _p->getnx()),
                                                   inital( _p->getnx()),
                                                   filename( _p->getname()),
-                                                  tau(( _p->gettmax()- _p->gettmin()) /_p->getnt())
+                                                  tau(( _p->gettmax() - _p->gettmin()) /_p->getnt())
 {
 
 }
@@ -38,6 +38,7 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
 CrankNicholson1D::~CrankNicholson1D() {}
 
 void CrankNicholson1D::rhs_rt( const double c) {
+
     // Prepare the rhs by using a triangular
     // matrix multiplication on rhs_rt
     // note that chunkl_d = chunkr_d since
@@ -52,7 +53,9 @@ void CrankNicholson1D::rhs_rt( const double c) {
 
 
 void CrankNicholson1D::write_p(hid_t *f) {
-    
+
+    // Allocate and fill vector to save
+    // Simulation parameters
     std::vector<double> p_sav(8);
     p_sav[0] = param->getxmax();
     p_sav[1] = param->getxmin();
@@ -66,6 +69,7 @@ void CrankNicholson1D::write_p(hid_t *f) {
     hsize_t rank = 1;
     hsize_t size = p_sav.size();
     H5LTmake_dataset(*f, "/params", rank, &size, H5T_NATIVE_DOUBLE,  p_sav.data() );
+
 }
 
 
@@ -96,6 +100,7 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
 
 
 void CrankNicholson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
+
     hid_t fl = H5Fcreate("copytest.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     thrust::copy(v.begin(), v.end(), chunkr_d.begin());
@@ -103,14 +108,20 @@ void CrankNicholson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
     thrust::copy(v.begin(), v.end(), chunkl_d.begin());
     saveblank(chunkl_d, &fl, 0);
     H5Fclose(fl);
+
 }
+
+
 void CrankNicholson1D::time_solve() {
 
-    // Allocate necessary attributes
+    // Define HDF5 File
     hid_t fl = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    hid_t cfl = H5Fcreate("matr.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
-    // This routine is now slightly longer
+    #ifdef MATRIX_OUTPUT
+    hid_t cfl = H5Fcreate("matr.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    #endif
+
+    // Write Parameters and define h as our discretization step
     write_p(&fl);
     const double h = (xmax - xmin) / (double) nx;
 
@@ -128,12 +139,15 @@ void CrankNicholson1D::time_solve() {
 
 
     // fill lower and upper diagonal
-    // these stay constat for the whole time!
+    // these stay constant for the whole time!
     create_const_diag<<<512 ,3>>>( raw_pointer_cast(dl.data()),
             raw_pointer_cast(du.data()),
             c , nx);
-    //saveblank(dl, &cfl, 0);
-    //saveblank(du, &cfl, 1);
+
+    #ifdef MATRIX_OUTPUT
+    saveblank(dl, &cfl, 0);
+    saveblank(du, &cfl, 1);
+    #endif
 
     // Use cudaevent for time measurement!
     cudaEvent_t start,stop;
@@ -163,7 +177,6 @@ void CrankNicholson1D::time_solve() {
 
         t += tau * (double) i;
 
-        // check
         rhs_rt(c);
         // saveblank(chunkr_d,  &fl, 2*i);
 
@@ -176,6 +189,7 @@ void CrankNicholson1D::time_solve() {
         cudaEventRecord(start);
 
         #ifndef CUSPARSE_ON
+
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
 
         #endif
@@ -226,4 +240,9 @@ void CrankNicholson1D::time_solve() {
     #endif
 
     H5Fclose(fl);
+
+    #ifdef MATRIX_OUTPUT
+    H5Fclose(cfl);
+    #endif
+
 }
