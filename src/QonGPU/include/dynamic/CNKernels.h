@@ -122,7 +122,7 @@ __device__ __host__ inline void transform_diag( cuDoubleComplex& d,
                                                 const double x,
                                                 const cuDoubleComplex& t1) {
 
-    temp1 = make_cuDoubleComplex( c, 0);
+    cuDoubleComplex temp1 = make_cuDoubleComplex( - 2 * c, 0);
     s2 = temp1 + pot(x);
     s2 = s2 * t1;
     s2 = make_cuDoubleComplex( - s2.y , s2.x);
@@ -145,7 +145,7 @@ __global__ void update_diagl( cuDoubleComplex* d,
 
     // 2  and  - is left out since, you can make the
     // expression easier by that!
-    double c =  1.0 / ( h * h);
+    double c =  -1.0 / (2 * h * h);
     double x = xmin;
     cuDoubleComplex s1 = make_cuDoubleComplex( 1.0 , 0);
     cuDoubleComplex s2 = make_cuDoubleComplex( 0, 0);

@@ -235,12 +235,12 @@ void CrankNicolson1D::time_solve() {
         assert(check.y < 100);
 
         if(i % 10 == 0)
-            saveblank(chunkr_d, &fl, i + 1);
+            saveblank(chunkl_d, &fl, i + 1);
 
 
         if(i == 3e4) {
 
-            saveblank(chunkr_d, &fl, 3e4);
+            saveblank(chunkl_d, &fl, 3e4);
             i = 2*nt;
 
         }
