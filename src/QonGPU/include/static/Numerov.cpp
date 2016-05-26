@@ -54,10 +54,10 @@ void Numerov::solve(){
         HANDLE_ERROR(cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne));
         // Make use of some local variables
         int index = 0;
-        double dE = V(0, 0, z) / (double) ne;
+        double dE =  V(0, 0, z) / (double) ne;
         // This will be the starting energy for each chunk calculation
         double En = 0.0;
-        int numlvl = 1;
+        int numlvl = -1;
         while (index < ne) {
             //copy initals on device
             dev_ne = CHUNKSIZE;
@@ -74,8 +74,8 @@ void Numerov::solve(){
                                     sizeof(double) * nx * dev_ne,
                                     cudaMemcpyHostToDevice));
             cudaThreadSynchronize();
-            En = dE * (double) index + 0.53;
-            DEBUG2("Calculating with starting energy: " << -En);
+            En = dE * (double) index;
+            DEBUG2("Calculating with starting energy: " << En);
             iter1 <<< 512, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 
 
@@ -140,24 +140,29 @@ bool Numerov::sign(double s){
 
 
 int Numerov::bisect(double j, int& numelvl) {
+
     // Iterate through chunk data
     // create local variable for the offset
     // off is the index of the last Element
     const int off = nx;
     auto it = chunk.begin();
     vector<double> temp( nx);
-    double dE = -V(0,0,z)/ne;
+    double dE =  V(0,0,z)/ne;
     double En = 0;
+
 //#pragma omp parallel for
     for( int i = 2 * off - 1 ; i < chunk.size(); i += nx){
+
         //DEBUG2("1. chunk[i] = "<< chunk[i]);
         //DEBUG2("2. chunk[i-nx] = " << chunk[i - nx]);
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
+
             if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-3) {
+
                 res.resize(res.size()+nx);
                 auto iter = res.end()-nx;
                 std::copy(it+i,it+i+nx,iter);
-                En = ( -j + i/nx * dE);
+                En = ( j + i/nx * dE);
                 std::cout << "Energy level found" << std::endl;
                 std::cout << "Detected energy level: "<< En << std::endl;
                 eval.push_back(En);
@@ -165,13 +170,15 @@ int Numerov::bisect(double j, int& numelvl) {
                 if(numelvl > 0)
                     return 1;
                 numelvl += 1;
+
             }
             else {
+
                 if(chunk[i-nx]<1e-3) {
                     res.resize(res.size()+nx);
                     auto iter = res.end()-nx;
                     std::copy(it+i,it+i+nx,iter);
-                    En = (-j + (i/nx - 1) * dE);
+                    En = (j + (i/nx - 1) * dE);
 
                     std::cout << "Energy level found" << std::endl;
                     std::cout << "Detected energy level: "<< En << std::endl;
@@ -180,9 +187,13 @@ int Numerov::bisect(double j, int& numelvl) {
                     if(numelvl > 0)
                         return 1;
                     numelvl += 1;
+
                 }
+
             }
+
         }
+
     }
     return 0;
 }
@@ -193,22 +204,30 @@ double Numerov::trapez(int first, int last) {
     auto temp = 0.0;
 
     for(auto i = first; i < last; ++i){
+
         temp += res[i]*res[i];
+
     }
+
     temp  *= 2.0;
     temp -= (res[first]*res[first] + res[last]*res[last]);
     temp *= h/2;
     return 1/sqrt(temp);
+
 }
+
 
 void Numerov::mult_const(int first, int last, double c) {
 
     for( auto i = first; i < last; ++i) {
+
         res[i] *= c;
+
     }
 }
 
 void Numerov::prepstates() {
+
     // This function normalizes the
     // static Solutions of the Numerov solution and
     // Writes them to the
@@ -216,18 +235,27 @@ void Numerov::prepstates() {
     double c_temp = 0;
 
     for(auto i = 0; i < res.size(); i += nx+1) {
+
         c_temp = trapez(i, i+nx-1);
         mult_const( i, i+nx, c_temp);
+
     }
+
 }
 
 void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 
     int o = nx*ind;
 
-    for(auto i = 0u; i < nx; ++i) {
+    v[0] = make_cuDoubleComplex(0,0);
+    for(int i = 1; i < nx; ++i) {
+
         v[i] = make_cuDoubleComplex(res[i + o], 0);
         //DEBUG2("Result:"<< res[i+o]);
+
     }
+
     param->seten( eval[ind]);
+
+
 }

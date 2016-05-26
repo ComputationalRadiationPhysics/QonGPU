@@ -2,9 +2,10 @@
 #define DEBUG2(x) std::cout<<x<<std::endl
 
 //#define CUSPARSE_ON
+#define USE_SERIAL
+//#define USE_SPIKE
 
-
-#include "CrankNicholson1D.hpp"
+#include "CrankNicolson1D.hpp"
 #include <chrono>
 #include <cuda_runtime.h>
 
@@ -12,15 +13,14 @@
 #include "hdf5.h"
 #include "hdf5_hl.h"
 #include "cusparse.h"
+#include "ThomasSerial.h"
 
-
-CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
+CrankNicolson1D::CrankNicolson1D(Params1D *_p):   param(_p),
                                                   nx( _p->getnx()),
                                                   nt( _p->getnt()),
                                                   E( 0.0),
-                                                  chunk_h( _p->getnx(), make_cuDoubleComplex(1,1)),
-                                                  chunkl_d( _p->getnx(), make_cuDoubleComplex(1,1)),
-                                                  chunkr_d( _p->getnx(), make_cuDoubleComplex(1,1)),
+                                                  chunkl_d( _p->getnx()),
+                                                  chunkr_d( _p->getnx()),
                                                   tmax( _p->gettmax()),
                                                   tmin( _p->gettmin()),
                                                   xmax( _p->getxmax()),
@@ -28,14 +28,15 @@ CrankNicholson1D::CrankNicholson1D(Params1D *_p): param(_p),
                                                   d( _p->getnx()),
                                                   du( _p->getnx()),
                                                   dl( _p->getnx()),
-                                                  inital( _p->getnx()),
                                                   filename( _p->getname()),
                                                   tau(( _p->gettmax() - _p->gettmin()) /_p->getnt())
 {
 
 }
 
-CrankNicholson1D::~CrankNicholson1D() {}
+CrankNicolson1D::~CrankNicolson1D() {}
+
+void CrankNicolson1D::rhs_rt( const double c) {
 
 void CrankNicholson1D::rhs_rt( const double c) {
 
@@ -45,10 +46,14 @@ void CrankNicholson1D::rhs_rt( const double c) {
     // only given chunkr_d to the routine would make
     // a temporal allocated field necessary!
 
-    transform_rhs<<<512,3>>>(raw_pointer_cast(chunkl_d.data()),
-            raw_pointer_cast(chunkr_d.data()),
-            nx, xmax,
-            xmin,tau,c);
+    transform_rhs<<<512,1>>>(raw_pointer_cast(chunkl_d.data()),
+                             raw_pointer_cast(chunkr_d.data()),
+                             nx,
+                             xmax,
+                             xmin,
+                             tau,
+                             c);
+
 }
 
 
@@ -74,25 +79,29 @@ void CrankNicholson1D::write_p(hid_t *f) {
 
 
 void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
-               hid_t *fl, int it){
+               hid_t *fl, int it) {
 
     thrust::host_vector<cuDoubleComplex> h(v.size());
     thrust::copy(v.begin(),v.end(), h.begin());
-    //h = v;
     std::vector<double> cs_rl(h.size());
 
-    for(auto i = 0u; i < v.size(); ++i){
+    for(auto i = 0; i < v.size(); ++i){
+
         cs_rl[i] = h[i].x;
-        //if(i < v.size()/1)
-            //DEBUG2("Real part:"<<h[i].x);
+
     }
+
     std::string name = "/dset" + std::to_string(it) +"real";
     hsize_t rank = 1;
     hsize_t dim = cs_rl.size();
     H5LTmake_dataset(*fl, name.c_str(),rank, &dim,H5T_NATIVE_DOUBLE, cs_rl.data());
+
     for(auto i = 0; i < v.size(); ++i){
+
         cs_rl[i] = h[i].y;
+
     }
+
     name = "/dset" + std::to_string(it) +"img";
     H5LTmake_dataset(*fl, name.c_str(),rank, &dim,H5T_NATIVE_DOUBLE, cs_rl.data());
 
@@ -105,6 +114,7 @@ void CrankNicholson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
 
     thrust::copy(v.begin(), v.end(), chunkr_d.begin());
     saveblank(chunkr_d, &fl, 1);
+
     thrust::copy(v.begin(), v.end(), chunkl_d.begin());
     saveblank(chunkl_d, &fl, 0);
     H5Fclose(fl);
@@ -126,7 +136,7 @@ void CrankNicholson1D::time_solve() {
     const double h = (xmax - xmin) / (double) nx;
 
     // constants of the diagonal
-    const double c =  - tau / (4.0 * pow(h,2.0));
+    const double c =  - tau / (4.0 * h * h);
 
     // set t to starting point
     double t = param->gettmin();
@@ -139,15 +149,14 @@ void CrankNicholson1D::time_solve() {
 
 
     // fill lower and upper diagonal
-    // these stay constant for the whole time!
-    create_const_diag<<<512 ,3>>>( raw_pointer_cast(dl.data()),
-            raw_pointer_cast(du.data()),
-            c , nx);
-
-    #ifdef MATRIX_OUTPUT
+    // these stay constat for the whole time!
+    create_const_diag<<<512 ,1>>>( raw_pointer_cast(dl.data()),
+                                   raw_pointer_cast(du.data()),
+                                   c,
+                                   nx);
+    // Save Diagonals for debug purposes
     saveblank(dl, &cfl, 0);
     saveblank(du, &cfl, 1);
-    #endif
 
     // Use cudaevent for time measurement!
     cudaEvent_t start,stop;
@@ -163,7 +172,7 @@ void CrankNicholson1D::time_solve() {
     // Initialize cusparse if it's required
     cusparseStatus_t status;
     cusparseHandle_t handle = 0;
-    status  = cusparseCreate(&handle);
+    status  = cusparseCreat(&handle);
     if(status != CUSPARSE_STATUS_SUCCESS) {
 
         std::cout<<"Error Init failed!"<<std::endl;
@@ -172,26 +181,32 @@ void CrankNicholson1D::time_solve() {
 
     #endif
 
+
     for( int i = 0; i < nt; i++) {
 
 
         t += tau * (double) i;
 
-        rhs_rt(c);
+        // Perform RHS multiplication
+        rhs_rt( -c);
+        cuDoubleComplex check = chunkr_d[100];
+        DEBUG2(check.x << " " << check.y);
+
         // saveblank(chunkr_d,  &fl, 2*i);
 
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
-        update_diagl<<< 512, 3>>>( dev_d, tau, h, xmin, nx);
+
+        update_diagl<<< 512, 1>>>( dev_d, tau, h, xmin, nx);
 
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
         cudaEventRecord(start);
 
-        #ifndef CUSPARSE_ON
-
+        #ifdef USE_SPIKE
+>>>>>>> 7975d1b452021f43080128de53dfbf4c35b7be7b:src/QonGPU/include/dynamic/CrankNicolson1D.cpp
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex,double>(dev_dl, dev_d, dev_du, dev_rhs,nx);
-
+        DEBUG2("Spike Called!");
         #endif
 
         #ifdef CUSPARSE_ON
@@ -200,11 +215,19 @@ void CrankNicholson1D::time_solve() {
             std::cout<<" Calulation went wrong"<<std::endl;
             assert(status == CUSPARSE_STATUS_SUCCESS);
         }
-        cudaEventRecord(stop);
+
         #endif
+
+
+        #ifdef USE_SERIAL
+        solve_tridiagonal(du, dl, d, chunkr_d);
+        #endif
+
+        cudaEventRecord(stop);
 
         // Write RHS to LHS
         thrust::copy(chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
+
 
         // Calculate Time
         cudaEventSynchronize(stop);
@@ -214,15 +237,20 @@ void CrankNicholson1D::time_solve() {
         std::cout<<"Generated the "<<i<<"-th frame" <<std::endl;
         std::cout<<"Frame generation time: " << t_el << "ms"<< std::endl;
 
+
+        assert(check.x < 100 );
+        assert(check.y < 100);
+
         if(i % 10 == 0)
-            saveblank(chunkr_d, &fl, i + 1);
+            saveblank(chunkl_d, &fl, i + 1);
 
 
-        if(i == 3000) { //714281)
-            saveblank(chunkr_d, &fl, 3000);
+        if(i == 3e4) {
+
+            saveblank(chunkl_d, &fl, 3e4);
             i = 2*nt;
-        }
 
+        }
 
         //saveblank(chunkl_d, &fl, i + 1);
     }

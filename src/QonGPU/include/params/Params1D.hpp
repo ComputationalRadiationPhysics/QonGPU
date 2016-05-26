@@ -14,16 +14,17 @@ public:
              int gridE,
              double zin,
              std::string name):
-            xmax(xma),
-            xmin(xmi),
-            tmax(tma),
-            tmin(tmi),
-            nx(gridX),
-            nt(gridT),
-            ne(gridE),
-            z(zin),
-            filename(name){};
-    size_t getnx();
+			 xmax(xma),
+             xmin(xmi),
+             tmax(tma),
+             tmin(tmi),
+             nx(gridX),
+             nt(gridT),
+             ne(gridE),
+             z(zin),
+             filename(name){};
+
+	size_t getnx();
     size_t getne();
     size_t getnt();
     double getxmax();
