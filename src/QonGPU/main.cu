@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     }
     std::string str = argv[1];
 
-    std::complex<double> xma = 15.0;
+    std::complex<double> xma = 10.0;
     std::complex<double> xmi = 0.0;
     std::complex<double> tmi = 0.0;
     std::complex<double> tma = 8.0;

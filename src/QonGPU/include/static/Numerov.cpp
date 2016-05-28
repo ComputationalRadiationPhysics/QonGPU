@@ -57,7 +57,7 @@ void Numerov::solve(){
         double dE =  V(0, 0, z) / (double) ne;
         // This will be the starting energy for each chunk calculation
         double En = 0.0;
-        int numlvl = -1;
+        int numlvl = 1;
         while (index < ne) {
             //copy initals on device
             dev_ne = CHUNKSIZE;

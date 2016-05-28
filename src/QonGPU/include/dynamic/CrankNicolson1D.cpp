@@ -183,7 +183,7 @@ void CrankNicolson1D::time_solve() {
 
 
     saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 5; i++) {
 
 
         t += tau * (double) i;
@@ -239,8 +239,8 @@ void CrankNicolson1D::time_solve() {
         std::cout << "Frame generation time: " << t_el << "ms" << std::endl;
 
 
-        assert(check.x < 100);
-        assert(check.y < 100);
+        //assert(check.x < 100);
+        //assert(check.y < 100);
 
         if (i % 10 == 0)
             saveblank(chunkl_d, &fl, i + 1);
