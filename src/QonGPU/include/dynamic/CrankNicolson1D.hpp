@@ -4,13 +4,20 @@
 #include <thrust/device_vector.h>
 #include <cuda_runtime.h>
 #include <cusparse_v2.h>
+#include <chrono>
+#include <cuda_runtime.h>
 
-
-
+#include "ComplexOperators.h"
+#include "hdf5.h"
+#include "hdf5_hl.h"
+#include "cusparse.h"
 #include "../output/IOHandle1D.cpp"
 #include "TimeOperator1D.hpp"
-#include "ComplexOperators.h"
 #include "spike_host.cu"
+#include "ThomasSerial.h"
+#include "CNKernels.h"
+#include "MatrixGeneration.h"
+#include "TridiagMult.h"
 
 
 

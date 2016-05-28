@@ -69,6 +69,10 @@ __host__ __device__ __inline__ cuDoubleComplex operator/(cuDoubleComplex a, cuDo
 __host__ __device__ __inline__ cuDoubleComplex operator+=(cuDoubleComplex a, cuDoubleComplex b){
     return a+b;
 }
+__host__ __device__ __inline__ cuDoubleComplex operator*(const double a, cuDoubleComplex b) {
+
+    return make_cuDoubleComplex(b.x*a, a*b.y);
+}
 
 
 std::ostream& operator<<( std::ostream &out, const cuDoubleComplex z) {

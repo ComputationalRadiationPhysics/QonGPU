@@ -1,4 +1,4 @@
-// Copyright Maxmilian Böhme
+// Currently under MIT license
 
 //#define DEBUG(x) std::cout<<x<<std::endl;
 //#define STATUS(x) std::cout<<x<<"...";

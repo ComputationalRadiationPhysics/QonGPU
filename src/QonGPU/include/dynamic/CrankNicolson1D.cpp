@@ -6,14 +6,7 @@
 #define USE_SPIKE
 #define MATRIX_OUTPUT
 #include "CrankNicolson1D.hpp"
-#include <chrono>
-#include <cuda_runtime.h>
 
-#include "CNKernels.h"
-#include "hdf5.h"
-#include "hdf5_hl.h"
-#include "cusparse.h"
-#include "ThomasSerial.h"
 
 CrankNicolson1D::CrankNicolson1D(Params1D *_p):   param(_p),
                                                   nx( _p->getnx()),
