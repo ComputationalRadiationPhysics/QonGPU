@@ -6,10 +6,10 @@ using namespace std;
 class Params1D: Params{
 
 public:
-	Params1D(complex<double> xma,
-             complex<double> xmi,
-             complex<double> tma,
-             complex<double> tmi,
+	Params1D(double xma,
+             double xmi,
+             double tma,
+             double tmi,
              int gridX,int gridT,
              int gridE,
              double zin,
@@ -38,10 +38,10 @@ public:
 	double geten(){ return E;};
 private:
 	std::string filename;
-    std::complex<double> xmax;
-    std::complex<double> xmin;
-    std::complex<double> tmax;
-    std::complex<double> tmin;
+    double xmax;
+    double xmin;
+    double tmax;
+    double tmin;
     size_t nx,nt,ne;
     int x1,y1,z1;
     complex<double> z;
@@ -50,12 +50,12 @@ private:
 };
 
 double Params1D::getxmax(){
-	return xmax.real();
+	return xmax;
 }
-double Params1D::getxmin(){return xmin.real();}
-double Params1D::gettmax(){return tmax.real();}
-double Params1D::gettmin(){return tmin.real();}
-double Params1D::getz(){return z.real();}
+double Params1D::getxmin(){ return xmin;}
+double Params1D::gettmax(){ return tmax;}
+double Params1D::gettmin(){ return tmin;}
+double Params1D::getz(){ return z1;}
 size_t Params1D::getne(){return ne;}
 size_t Params1D::getnx(){return nx;}
 size_t Params1D::getnt(){return nt;}

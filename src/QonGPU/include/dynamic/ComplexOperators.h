@@ -45,19 +45,36 @@ struct  abs {
     }
 };
 
+
 __host__ __device__ __inline__ cuDoubleComplex operator+(cuDoubleComplex a,const cuDoubleComplex& b) {
     return cuCadd(a,b);
 }
+
+
 __host__ __device__ __inline__ cuDoubleComplex operator-(cuDoubleComplex a, const cuDoubleComplex& b) {
     return cuCsub(a,b);
 }
+
+
 __host__ __device__ __inline__ cuDoubleComplex operator*(cuDoubleComplex a, cuDoubleComplex b) {
     return cuCmul(a,b);
 }
+
+
 __host__ __device__ __inline__ cuDoubleComplex operator/(cuDoubleComplex a, cuDoubleComplex b) {
     return cuCdiv(a,b);
 }
+
+
 __host__ __device__ __inline__ cuDoubleComplex operator+=(cuDoubleComplex a, cuDoubleComplex b){
     return a+b;
+}
+
+
+std::ostream& operator<<( std::ostream &out, const cuDoubleComplex z) {
+
+    out<<" "<< z.x << " " << z.y;
+
+    return out;
 }
 #endif

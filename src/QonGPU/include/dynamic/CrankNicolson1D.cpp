@@ -2,8 +2,8 @@
 #define DEBUG2(x) std::cout<<x<<std::endl
 
 //#define CUSPARSE_ON
-#define USE_SERIAL
-//#define USE_SPIKE
+//#define USE_SERIAL
+#define USE_SPIKE
 #define MATRIX_OUTPUT
 #include "CrankNicolson1D.hpp"
 #include <chrono>
@@ -169,6 +169,7 @@ void CrankNicolson1D::time_solve() {
 
 
 #ifdef CUSPARSE_ON
+
     // Initialize cusparse if it's required
     cusparseStatus_t status;
     cusparseHandle_t handle = 0;
@@ -183,7 +184,7 @@ void CrankNicolson1D::time_solve() {
 
 
     saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 100; i++) {
 
 
         t += tau * (double) i;
@@ -192,7 +193,7 @@ void CrankNicolson1D::time_solve() {
         rhs_rt(-c);
 
         cuDoubleComplex check = chunkr_d[100];
-        DEBUG2(check.x << " " << check.y);
+        DEBUG2(check);
 
 
 
@@ -200,17 +201,20 @@ void CrankNicolson1D::time_solve() {
         // Then update the non-constant main-diagonal!
 
         update_diagl <<< 512, 3 >>> (dev_d, tau, h, xmin, nx);
-        saveblank(chunkr_d,  &cfl, i+1);
+        //saveblank(chunkr_d,  &cfl, i+1);
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
         cudaEventRecord(start);
 
 #ifdef USE_SPIKE
+
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex, double>(dev_dl, dev_d, dev_du, dev_rhs, nx);
         DEBUG2("Spike Called!");
+
 #endif
 
 #ifdef CUSPARSE_ON
+
         status  = cusparseZgtsv(handle, nx, 1, dev_dl, dev_d, dev_du, dev_rhs, nx);
         if(status != CUSPARSE_STATUS_SUCCESS) {
             std::cout<<" Calulation went wrong"<<std::endl;
@@ -221,8 +225,10 @@ void CrankNicolson1D::time_solve() {
 
 
 #ifdef USE_SERIAL
+
         solve_tridiagonal(du, dl, d, chunkr_d);
-#endif
+
+        #endif
 
         cudaEventRecord(stop);
 
@@ -271,7 +277,9 @@ void CrankNicolson1D::time_solve() {
     H5Fclose(fl);
 
 #ifdef MATRIX_OUTPUT
+
     H5Fclose(cfl);
+
 #endif
 
 }
