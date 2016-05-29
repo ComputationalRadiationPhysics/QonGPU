@@ -2096,7 +2096,7 @@ __global__ void spike_GPU_local_solving_x1(
 		sh_w[2*b_dim-1]=0.0;
 		sh_v[0]=0.0;
 		sh_v[2*b_dim-1]=0.0;
-		/**/
+		*/
 		
 	}
 	__syncthreads();
