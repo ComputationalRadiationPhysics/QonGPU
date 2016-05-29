@@ -57,7 +57,7 @@ void Numerov::solve(){
         double dE =  V(0, 0, z) / (double) ne;
         // This will be the starting energy for each chunk calculation
         double En = 0.0;
-        int numlvl = 1;
+        int numlvl = -1;
         while (index < ne) {
             //copy initals on device
             dev_ne = CHUNKSIZE;
@@ -74,9 +74,9 @@ void Numerov::solve(){
                                     sizeof(double) * nx * dev_ne,
                                     cudaMemcpyHostToDevice));
             cudaThreadSynchronize();
-            En = dE * (double) index;
+            En = dE * (double) index ;
             DEBUG2("Calculating with starting energy: " << En);
-            iter1 <<< 512, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
+            iter1 <<< 2048, 5 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 
 
             cudaThreadSynchronize();
@@ -102,7 +102,7 @@ void Numerov::savelevels(){
     hid_t file_id;
     vector<double> buffer2(eval.size());
 
-    for(int it = 0; it < eval.size(); it++) {
+    for(auto it = 0u; it < eval.size(); it++) {
         // We do the analog thing for the enegy
         // It's a lot simpler!
         buffer2[it] = eval.back();
@@ -149,7 +149,7 @@ int Numerov::bisect(double j, int& numelvl) {
     double En = 0;
 
 //#pragma omp parallel for
-    for( int i = 2 * off - 1 ; i < chunk.size(); i += nx){
+    for( auto i = 2 * off - 1 ; i < chunk.size(); i += nx){
 
         //DEBUG2("1. chunk[i] = "<< chunk[i]);
         //DEBUG2("2. chunk[i-nx] = " << chunk[i - nx]);
@@ -232,7 +232,7 @@ void Numerov::prepstates() {
 
     double c_temp = 0;
 
-    for(auto i = 0; i < res.size(); i += nx+1) {
+    for(auto i = 0u; i < res.size(); i += nx+1) {
 
         c_temp = trapez(i, i+nx-1);
         mult_const( i, i+nx, c_temp);
@@ -245,15 +245,32 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 
     int o = nx*ind;
 
-    // Something( I suspect the Kernel) messes up the first Value therefore
-    // set it to 0
-    v[0] = make_cuDoubleComplex(0,0);
-    for(int i = 1; i < nx; ++i) {
 
-        v[i] = make_cuDoubleComplex(res[i + o], 0);
-        //DEBUG2("Result:"<< res[i+o]);
+    thrust::host_vector<double> real(nx);
+    thrust::host_vector<double> imag(nx);
+
+    thrust::copy(res.begin()+o, res.begin()+o+nx, real.begin());
+
+    double E = eval.at(ind);
+    double tmax = param->gettmax();
+    double tmin = param->gettmin();
+    int nt = param->getnt();
+    double dt = (tmax - tmin)/nt;
+
+    double t0 = tmin + 1e4*dt;
+
+    real[0] = 0;
+    real[1] = 1e-10;
+    for(auto i = 0u; i < real.size(); i++) {
+        real[i] = cos(E * t0) * real[i];
+        imag[i] = -sin(E * t0) * real[i];
+    }
+    for(auto i = 0u; i < v.size(); i++) {
+
+        v[i] = make_cuDoubleComplex(real[i], imag[i]);
 
     }
+
 
     param->seten( eval[ind]);
 

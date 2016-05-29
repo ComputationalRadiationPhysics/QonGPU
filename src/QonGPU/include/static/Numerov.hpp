@@ -12,7 +12,7 @@
 using namespace std;
 
 
-#define CHUNKSIZE 500
+#define CHUNKSIZE 1000
 
 __host__ __device__  double V(double x, double t,double z) {
 
@@ -86,7 +86,7 @@ __global__ void iter1(double* psi,
 	while( tid < ne * nx) {
 
 		E -= tid * dE / (double)(nx);
-		for(int i = 1; i < nx - 1  ; i++){
+		for(auto i = 1u; i < nx - 1  ; i++){
 
 			f1 = 1.0 / (1.0 + dx * dx  / 12.0 *  ( heff * (  - V( ( i + 1) * dx + xmin, 0 , z) + E)));
 			f2 = ( 1.0 - 5.0 * dx * dx / 12.0 * ( heff *(  - V( i * dx + xmin, 0, z) + E)));

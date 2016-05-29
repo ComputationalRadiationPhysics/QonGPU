@@ -1,7 +1,16 @@
 #pragma once
 
+#ifndef __GCC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
+#endif
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
+#ifndef __GCC__
+#pragma GCC diagnostic pop
+#endif
+
 #include <cuda_runtime.h>
 #include <cusparse_v2.h>
 #include <chrono>

@@ -10,12 +10,12 @@ void create_diags(thrust::device_vector<cuDoubleComplex>& dl,
                   cuDoubleComplex c) {
 
     thrust::host_vector<cuDoubleComplex> vec( dl.size());
-    fetch_vec f;
-    push_vec p;
+    fetch_vec f();
+    push_vec p();
 
 
-    f(dl, vec);
-
+    //f(dl, vec);
+    thrust::copy(dl.begin(), dl.end(), vec.begin());
     for( auto&& i : vec) {
 
         i = c;
@@ -24,10 +24,10 @@ void create_diags(thrust::device_vector<cuDoubleComplex>& dl,
 
     vec[0] = make_cuDoubleComplex(0,0);
 
-    p(vec, dl);
-
-    f(du, vec);
-
+    //p(vec, dl);
+    thrust::copy(vec.begin(), vec.end(), dl.begin());
+    //f(du, vec);
+    thrust::copy(du.begin(), du.end(), vec.begin());
     for( auto&& i : vec) {
 
         i = c;
@@ -35,8 +35,8 @@ void create_diags(thrust::device_vector<cuDoubleComplex>& dl,
 
     vec[dl.size() - 1 ] = make_cuDoubleComplex(0, 0);
 
-    p(vec, du);
-
+    //p(vec, du);
+    thrust::copy(vec.begin(), vec.end(), du.begin());
 }
 
 void update_mdiag(thrust::device_vector<cuDoubleComplex>& d,
@@ -50,14 +50,14 @@ void update_mdiag(thrust::device_vector<cuDoubleComplex>& d,
 
     thrust::host_vector<cuDoubleComplex> vec(d);
 
-    push_vec p;
+    //push_vec p();
 
     double x = xmin;
 
     cuDoubleComplex tmem = make_cuDoubleComplex(0,0);
     cuDoubleComplex one = make_cuDoubleComplex(1, 0);
 
-    for( int i = 0; i < vec.size(); i++) {
+    for( auto i = 0u; i < vec.size(); i++) {
 
         x += h * (double) i;
         tmem = tauc * (hconst + pot(x));
@@ -65,5 +65,6 @@ void update_mdiag(thrust::device_vector<cuDoubleComplex>& d,
         vec[i] = one + tmem;
 
     }
-    p(vec, d);
+    //p(vec, d);
+    thrust::copy(vec.begin(), vec.end(), d.begin());
 }

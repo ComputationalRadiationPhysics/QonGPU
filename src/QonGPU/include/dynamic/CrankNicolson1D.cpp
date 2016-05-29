@@ -2,8 +2,8 @@
 #define DEBUG2(x) std::cout<<x<<std::endl
 
 //#define CUSPARSE_ON
-//#define USE_SERIAL
-#define USE_SPIKE
+#define USE_SERIAL
+//#define USE_SPIKE
 #define MATRIX_OUTPUT
 #include "CrankNicolson1D.hpp"
 
@@ -77,7 +77,7 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
     thrust::copy(v.begin(),v.end(), h.begin());
     std::vector<double> cs_rl(h.size());
 
-    for(auto i = 0; i < v.size(); ++i){
+    for(auto i = 0u; i < v.size(); ++i){
 
         cs_rl[i] = h[i].x;
 
@@ -88,7 +88,7 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
     hsize_t dim = cs_rl.size();
     H5LTmake_dataset(*fl, name.c_str(),rank, &dim,H5T_NATIVE_DOUBLE, cs_rl.data());
 
-    for(auto i = 0; i < v.size(); ++i){
+    for(auto i = 0u; i < v.size(); ++i){
 
         cs_rl[i] = h[i].y;
 
@@ -125,7 +125,9 @@ void CrankNicolson1D::time_solve() {
 
     // Write Parameters and define h as our discretization step
     write_p(&fl);
-    const double h = (xmax - xmin) / (double) nx;
+    double h = (xmax - xmin) / (double) nx;
+    DEBUG2("Tau = "<<tau);
+    DEBUG2("h = "<<h);
 
     // constants of the diagonal
     const double c = -tau / (4.0 * h * h);
@@ -142,14 +144,16 @@ void CrankNicolson1D::time_solve() {
 
     // fill lower and upper diagonal
     // these stay constat for the whole time!
+
     create_const_diag <<< 512, 3 >>> (raw_pointer_cast(dl.data()),
             raw_pointer_cast(du.data()),
             c,
             nx);
 
+
     // Save Diagonals for debug purposes
-    saveblank(dl, &cfl, 0);
-    saveblank(du, &cfl, 1);
+    //saveblank(dl, &cfl, 0);
+    //saveblank(du, &cfl, 1);
 
     // Use cudaevent for time measurement!
     cudaEvent_t start, stop;
@@ -166,7 +170,7 @@ void CrankNicolson1D::time_solve() {
     // Initialize cusparse if it's required
     cusparseStatus_t status;
     cusparseHandle_t handle = 0;
-    status  = cusparseCreat(&handle);
+    status  = cusparseCreate(&handle);
     if(status != CUSPARSE_STATUS_SUCCESS) {
 
         std::cout<<"Error Init failed!"<<std::endl;
@@ -177,13 +181,15 @@ void CrankNicolson1D::time_solve() {
 
 
     saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
 
 
         t += tau * (double) i;
 
         // Perform RHS multiplication
+        saveblank(chunkr_d, &cfl, 2*i);
         rhs_rt(-c);
+        saveblank(chunkr_d, &cfl, 2*i+1);
 
         cuDoubleComplex check = chunkr_d[100];
         DEBUG2(check);
@@ -194,11 +200,12 @@ void CrankNicolson1D::time_solve() {
         // Then update the non-constant main-diagonal!
 
         update_diagl <<< 512, 3 >>> (dev_d, tau, h, xmin, nx);
-        //saveblank(chunkr_d,  &cfl, i+1);
+        //saveblank(d,  &cfl, i+1);
+        //update_mdiag(d, tau, h, xmin);
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
         cudaEventRecord(start);
-
+        //fast_mult(chunkr_d, tau, h, xmin);
 #ifdef USE_SPIKE
 
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex, double>(dev_dl, dev_d, dev_du, dev_rhs, nx);
@@ -221,7 +228,7 @@ void CrankNicolson1D::time_solve() {
 
         solve_tridiagonal(du, dl, d, chunkr_d);
 
-        #endif
+#endif
 
         cudaEventRecord(stop);
 
@@ -238,16 +245,16 @@ void CrankNicolson1D::time_solve() {
         std::cout << "Frame generation time: " << t_el << "ms" << std::endl;
 
 
-        //assert(check.x < 100);
-        //assert(check.y < 100);
+        assert(check.x < 100);
+        assert(check.y < 100);
 
         if (i % 10 == 0)
-            saveblank(chunkl_d, &fl, i + 1);
+            saveblank(chunkr_d, &fl, i + 1);
 
 
-        if (i == 3e4) {
+        if (i == 1e5) {
 
-            saveblank(chunkl_d, &fl, 3e4);
+            saveblank(chunkr_d, &fl, 1e5);
             i = 2 * nt;
 
         }
