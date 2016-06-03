@@ -16,12 +16,12 @@ int main(int argc, char** argv) {
     }
     std::string str = argv[1];
 
-    double xma = 20.0;
-    double xmi = 0.0;
+    double xma = 100;
+    double xmi = -100;
     double tmi = 0.0;
-    double tma = 8.0;
+    double tma = 2200.0;
     cudaDeviceReset();
-    Params1D p(xma, xmi, tma, tmi, 1e5, 1e5, 1e6,1,str);
+    Params1D p(xma, xmi, tma, tmi, 1e5, 1e6, 1e8,1,str);
     SimDef<Numerov, CrankNicolson1D, Core1D, Params1D, 1> s(&p);
 #ifndef TOTEST
     s.staticsolve();

@@ -2,9 +2,9 @@
 #define DEBUG2(x) std::cout<<x<<std::endl
 
 //#define CUSPARSE_ON
-#define USE_SERIAL
-//#define USE_SPIKE
-#define MATRIX_OUTPUT
+//#define USE_SERIAL
+#define USE_SPIKE
+//#define MATRIX_OUTPUT
 #include "CrankNicolson1D.hpp"
 
 
@@ -102,15 +102,30 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
 
 void CrankNicolson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
 
-    hid_t fl = H5Fcreate("copytest.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
+    hid_t fl = H5Fcreate("copytest.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    /*
     thrust::copy(v.begin(), v.end(), chunkr_d.begin());
     saveblank(chunkr_d, &fl, 1);
 
     thrust::copy(v.begin(), v.end(), chunkl_d.begin());
     saveblank(chunkl_d, &fl, 0);
     H5Fclose(fl);
+    */
+    thrust::host_vector<cuDoubleComplex> initial(nx);
 
+    double h = (xmax - xmin)/nx;
+    double ground = 0;
+    double e = 0;
+    for(int i = 0; i < nx; i++) {
+
+        e = xmin + i * h;
+        ground = std::exp(-e*e/2)*std::pow(M_PI,0.25);
+        chunkr_d[i] = make_cuDoubleComplex(ground, 0);
+        chunkl_d[i] = make_cuDoubleComplex(ground, 0);
+    }
+    saveblank(chunkl_d, &fl, 0);
+    H5Fclose(fl);
 }
 
 
@@ -181,16 +196,19 @@ void CrankNicolson1D::time_solve() {
 
 
     saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 10000; i++) {
 
 
         t += tau * (double) i;
 
         // Perform RHS multiplication
+#ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i);
+#endif
         rhs_rt(-c);
+#ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i+1);
-
+#endif
         cuDoubleComplex check = chunkr_d[100];
         DEBUG2(check);
 
@@ -252,7 +270,7 @@ void CrankNicolson1D::time_solve() {
             saveblank(chunkr_d, &fl, i + 1);
 
 
-        if (i == 1e5) {
+        if (i == 1e9) {
 
             saveblank(chunkr_d, &fl, 1e5);
             i = 2 * nt;

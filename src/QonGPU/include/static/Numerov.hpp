@@ -12,12 +12,12 @@
 using namespace std;
 
 
-#define CHUNKSIZE 1500
+#define CHUNKSIZE 14000
 
 __host__ __device__  double V(double x, double t,double z) {
 
 
-	return -2*z/sqrt(1+x*x);
+	return -1.0*z/sqrt(x*x+1.0);
 };
 //NumerovKernel to iterate from right to left!
 __global__ void iter2(double* psi,

@@ -22,8 +22,8 @@ public:
     SimDef(Params3D *p):da(p) {}
 
     void staticsolve() {
-        s.solve();
-        s.copystate(1, psi0);
+        //s.solve();
+        //s.copystate(1, psi0);
         t.setstate(psi0);
     }
 

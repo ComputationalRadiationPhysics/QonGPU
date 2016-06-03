@@ -32,7 +32,7 @@ Numerov::Numerov(Params1D *pa): param(pa),
         // the first entry always has to be zero, the second
         // is an arbitrary small value
         *(it) = 0;
-        *(it+1) = 1e-10;
+        *(it+1) = 1e-7;
     }
     //get the minimal energy E_n is in [V(0,0,z),0]
     //We'll define it as positive
@@ -76,7 +76,7 @@ void Numerov::solve(){
             cudaThreadSynchronize();
             En = dE * (double) index ;
             DEBUG2("Calculating with starting energy: " << En);
-            iter1 <<< 2048, 5 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
+            iter1 <<< 1024, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 
 
             cudaThreadSynchronize();
@@ -87,10 +87,12 @@ void Numerov::solve(){
             index += CHUNKSIZE;
 
         }
+        cudaFree(dev_ptr);
     }
     // After all the calculations done we can save our energy levels!
     prepstates();
     //savelevels();
+
 }
 
 void Numerov::savelevels(){
@@ -155,7 +157,7 @@ int Numerov::bisect(double j, int& numelvl) {
         //DEBUG2("2. chunk[i-nx] = " << chunk[i - nx]);
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
 
-            if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&&chunk[i]<1e-3) {
+            if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&& (abs(chunk[i])<1e-3)) {
 
                 res.resize(res.size()+nx);
                 auto iter = res.end()-nx;
@@ -172,7 +174,7 @@ int Numerov::bisect(double j, int& numelvl) {
             }
             else {
 
-                if(chunk[i-nx]<1e-3) {
+                if(abs(chunk[i-nx])<1e-3) {
                     res.resize(res.size()+nx);
                     auto iter = res.end()-nx;
                     std::copy(it+i,it+i+nx,iter);
@@ -260,10 +262,11 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     double t0 = tmin + 1e4*dt;
 
     real[0] = 0;
-    real[1] = 1e-10;
+    real[1] = 1e-7;
     for(auto i = 0u; i < real.size(); i++) {
-        real[i] = cos(E * t0) * real[i];
-        imag[i] = -sin(E * t0) * real[i];
+        //real[i] = cos(E * t0) * real[i];
+
+        imag[i] = 0;//-sin(E * t0) * real[i];
     }
     for(auto i = 0u; i < v.size(); i++) {
 
