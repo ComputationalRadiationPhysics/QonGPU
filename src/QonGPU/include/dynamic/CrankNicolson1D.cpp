@@ -30,7 +30,7 @@ CrankNicolson1D::CrankNicolson1D(Params1D *_p):   param(_p),
 CrankNicolson1D::~CrankNicolson1D() {}
 
 
-void CrankNicolson1D::rhs_rt( const double c) {
+void CrankNicolson1D::rhs_rt() {
 
     // Prepare the rhs by using a triangular
     // matrix multiplication on rhs_rt
@@ -43,8 +43,7 @@ void CrankNicolson1D::rhs_rt( const double c) {
                              nx,
                              xmax,
                              xmin,
-                             tau,
-                             c);
+                             tau);
 
 }
 
@@ -141,11 +140,9 @@ void CrankNicolson1D::time_solve() {
     // Write Parameters and define h as our discretization step
     write_p(&fl);
     double h = (xmax - xmin) / (double) nx;
-    DEBUG2("Tau = "<<tau);
-    DEBUG2("h = "<<h);
 
     // constants of the diagonal
-    const double c = -tau / (4.0 * h * h);
+    const double c = - tau / (4.0 * h * h);
 
     // set t to starting point
     double t = param->gettmin();
@@ -161,9 +158,9 @@ void CrankNicolson1D::time_solve() {
     // these stay constat for the whole time!
 
     create_const_diag <<< 512, 3 >>> (raw_pointer_cast(dl.data()),
-            raw_pointer_cast(du.data()),
-            c,
-            nx);
+                                      raw_pointer_cast(du.data()),
+                                                                c,
+                                                              nx);
 
 
     // Save Diagonals for debug purposes
@@ -196,7 +193,7 @@ void CrankNicolson1D::time_solve() {
 
 
     saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < 5000; i++) {
+    for (int i = 0; i < 300; i++) {
 
 
         t += tau * (double) i;
@@ -205,7 +202,7 @@ void CrankNicolson1D::time_solve() {
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i);
 #endif
-        rhs_rt(-c);
+        rhs_rt();
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i+1);
 #endif
@@ -266,7 +263,7 @@ void CrankNicolson1D::time_solve() {
         assert(check.x < 100);
         assert(check.y < 100);
 
-        if (i % 100 == 0)
+        if (i % 10 == 0)
             saveblank(chunkr_d, &fl, i + 1);
 
 
@@ -302,5 +299,6 @@ void CrankNicolson1D::time_solve() {
     DEBUG2("h was: "<<h);
     DEBUG2("tau was: "<< tau);
     DEBUG2("C was: "<< c);
+    DEBUG2("Z : "<< param->getz());
 
 }

@@ -83,7 +83,7 @@ private:
     std::string filename;
 
     // Define necessary member functions
-    void rhs_rt( const double c);
+    void rhs_rt();
     void printinitial();
     void write_p(hid_t *f);
 

@@ -44,7 +44,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
                               size_t nx,
                               double xmax,
                               double xmin,
-                              double tau, double c) {
+                              double tau) {
 
     // This function multiplies the psi(t)
     // with the Crank Nicholson time
@@ -65,7 +65,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
     }
 
     if(ind == 1) {
-        x += h;
+        x = xmin + h;
         //mult_rhs(in[1], in[0], in[2], out[1], h1, h2, x);
         cuDoubleComplex s1 = make_cuDoubleComplex( 0, 0);
         cuDoubleComplex s2 = make_cuDoubleComplex( 0, 0);
@@ -105,11 +105,24 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
 
 
         while (ind < nx) {
-            x += h * (double) ind;
+            x = xmin + h * (double) ind;
             if(ind == nx-1) {
 
+                cuDoubleComplex s1 = make_cuDoubleComplex( 0, 0);
+                cuDoubleComplex s2 = make_cuDoubleComplex( 0, 0);
+
                 cuDoubleComplex  bound = make_cuDoubleComplex(0,0);
-                mult_rhs(in[ind], in[ind - 1], bound, out[ind],  h1, h2 ,x);
+                s1 = in[nx-2];
+                s1 = cuCadd(s1, make_cuDoubleComplex(-2* in[ind].x, -2 * in[ind].y));
+                s1 = cuCmul(h1,s1);
+                s1= cuCmul(h2, s1);
+
+                s2 = cuCmul(h2, pot(x));
+                s2 = cuCmul(s2, in[ind]);
+                s1 = cuCadd(s1,s2);
+                s1 = make_cuDoubleComplex( -s1.y, s1.x);
+                out[ind] = cuCadd(in[ind], s1);
+                ind += oset;
 
             }
             else {
@@ -119,6 +132,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
             }
             //printf("out = %lf + i %lf \n", out[ind].x, out[ind].y);
             ind += oset;
+
         }
 
 
@@ -186,7 +200,7 @@ __global__ void update_diagl( cuDoubleComplex* d,
 
     while( tid < nx) {
 
-        x += h * (double) tid;
+        x = xmin + h * (double) tid;
         transform_diag( d[tid], s1, s2, c, x, t1);
         tid += oset;
 

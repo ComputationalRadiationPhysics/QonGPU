@@ -21,7 +21,7 @@ public:
              nx(gridX),
              nt(gridT),
              ne(gridE),
-             z(zin),
+             z1(zin),
              filename(name){};
 
 	size_t getnx();

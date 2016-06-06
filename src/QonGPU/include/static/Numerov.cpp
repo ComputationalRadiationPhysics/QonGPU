@@ -74,7 +74,7 @@ void Numerov::solve(){
                                     sizeof(double) * nx * dev_ne,
                                     cudaMemcpyHostToDevice));
             cudaThreadSynchronize();
-            En = dE * (double) index -0.092;
+            En = dE * (double) index- 0.046;
             DEBUG2("Calculating with starting energy: " << En);
             iter1 <<< 1024, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 
@@ -264,9 +264,9 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     real[0] = 0;
     real[1] = 1e-7;
     for(auto i = 0u; i < real.size(); i++) {
-        //real[i] = cos(E * t0) * real[i];
+        real[i] = cos(E * t0) * real[i];
 
-        imag[i] = 0;//-sin(E * t0) * real[i];
+        imag[i] = -sin(E * t0) * real[i];
     }
     for(auto i = 0u; i < v.size(); i++) {
 
