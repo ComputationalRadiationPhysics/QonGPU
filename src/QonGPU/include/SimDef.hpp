@@ -15,23 +15,25 @@ class SimDef{
 public:
 
     SimDef(Params1D *p):da(p), s(p),t(p), psi0(p->getnx()){
-
+        DEBUG2("CONSTRUCTOR");
     }
 
     SimDef(Params2D *p):da(p) {}
     SimDef(Params3D *p):da(p) {}
 
     void staticsolve() {
-        //s.solve();
-        //s.copystate(1, psi0);
+        s.solve();
+        s.copystate(0, psi0);
+        DEBUG2("Setstate");
         t.setstate(psi0);
+        DEBUG2("Setstate2");
     }
 
     void timerev() {
 
         std::chrono::high_resolution_clock::time_point t1 =
                 std::chrono::high_resolution_clock::now();
-
+        DEBUG2("Time Solve");
         t.time_solve();
         std::chrono::high_resolution_clock::time_point t2 =
                 std::chrono::high_resolution_clock::now();

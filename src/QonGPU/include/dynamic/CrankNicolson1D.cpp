@@ -57,7 +57,7 @@ void CrankNicolson1D::write_p(hid_t *f) {
     p_sav[0] = param->getxmax();
     p_sav[1] = param->getxmin();
     p_sav[2] = param->gettmax();
-    p_sav[3] = param->getxmin();
+    p_sav[3] = param->gettmin();
     p_sav[4] = param->getnx();
     p_sav[5] = param->getnt();
     p_sav[6] = param->getz();
@@ -102,21 +102,21 @@ void saveblank(const thrust::device_vector<cuDoubleComplex>& v,
 
 void CrankNicolson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
 
-
     hid_t fl = H5Fcreate("copytest.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    /*
+
     thrust::copy(v.begin(), v.end(), chunkr_d.begin());
     saveblank(chunkr_d, &fl, 1);
 
     thrust::copy(v.begin(), v.end(), chunkl_d.begin());
     saveblank(chunkl_d, &fl, 0);
     H5Fclose(fl);
-    */
+    /*
     thrust::host_vector<cuDoubleComplex> initial(nx);
 
     double h = (xmax - xmin)/nx;
     double ground = 0;
     double e = 0;
+    DEBUG2("Setstate CALL");
     for(int i = 0; i < nx; i++) {
 
         e = xmin + i * h;
@@ -125,7 +125,7 @@ void CrankNicolson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
         chunkl_d[i] = make_cuDoubleComplex(ground, 0);
     }
     saveblank(chunkl_d, &fl, 0);
-    H5Fclose(fl);
+    H5Fclose(fl);*/
 }
 
 
@@ -196,7 +196,7 @@ void CrankNicolson1D::time_solve() {
 
 
     saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 5000; i++) {
 
 
         t += tau * (double) i;
@@ -266,7 +266,7 @@ void CrankNicolson1D::time_solve() {
         assert(check.x < 100);
         assert(check.y < 100);
 
-        if (i % 10 == 0)
+        if (i % 100 == 0)
             saveblank(chunkr_d, &fl, i + 1);
 
 
@@ -299,5 +299,8 @@ void CrankNicolson1D::time_solve() {
     H5Fclose(cfl);
 
 #endif
+    DEBUG2("h was: "<<h);
+    DEBUG2("tau was: "<< tau);
+    DEBUG2("C was: "<< c);
 
 }

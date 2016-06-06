@@ -57,7 +57,7 @@ void Numerov::solve(){
         double dE =  V(0, 0, z) / (double) ne;
         // This will be the starting energy for each chunk calculation
         double En = 0.0;
-        int numlvl = -1;
+        int numlvl = 1;
         while (index < ne) {
             //copy initals on device
             dev_ne = CHUNKSIZE;
@@ -74,7 +74,7 @@ void Numerov::solve(){
                                     sizeof(double) * nx * dev_ne,
                                     cudaMemcpyHostToDevice));
             cudaThreadSynchronize();
-            En = dE * (double) index ;
+            En = dE * (double) index -0.092;
             DEBUG2("Calculating with starting energy: " << En);
             iter1 <<< 1024, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 
@@ -167,7 +167,7 @@ int Numerov::bisect(double j, int& numelvl) {
                 std::cout << "Detected energy level: "<< En << std::endl;
                 eval.push_back(En);
                 DEBUG2("Checked element: "<< chunk[i]);
-                if(numelvl > 0)
+                if(numelvl == 1)
                     return 1;
                 numelvl += 1;
 
@@ -184,7 +184,7 @@ int Numerov::bisect(double j, int& numelvl) {
                     std::cout << "Detected energy level: "<< En << std::endl;
                     DEBUG2("Checked element: "<< chunk[i-nx]);
                     eval.push_back(En);
-                    if(numelvl > 0)
+                    if(numelvl == 1)
                         return 1;
                     numelvl += 1;
 
@@ -273,6 +273,7 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
         v[i] = make_cuDoubleComplex(real[i], imag[i]);
 
     }
+    v[v.size()-1] = make_cuDoubleComplex(0,0);
 
 
     param->seten( eval[ind]);
