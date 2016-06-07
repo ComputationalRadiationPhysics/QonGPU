@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     }
     std::string str = argv[1];
 
-    double xma = 40.0;
+    double xma = 70.0;
     double xmi = 0.0;
     double tma = 39.0;
     double tmi = 0.0;
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 #ifndef TOTEST
     s.staticsolve();
 
-    s.timerev();
+    //s.timerev();
 #endif
     return EXIT_SUCCESS;
 

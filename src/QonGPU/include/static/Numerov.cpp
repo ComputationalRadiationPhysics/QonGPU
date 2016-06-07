@@ -90,8 +90,8 @@ void Numerov::solve(){
         cudaFree(dev_ptr);
     }
     // After all the calculations done we can save our energy levels!
-    prepstates();
-    //savelevels();
+    //prepstates();
+    savelevels();
 
 }
 
@@ -168,7 +168,7 @@ int Numerov::bisect(double j, int& numelvl) {
                 eval.push_back(En);
                 DEBUG2("Checked element: "<< chunk[i]);
                 if(numelvl == 1)
-                    return 1;
+                    return 0;
                 numelvl += 1;
 
             }
@@ -185,7 +185,7 @@ int Numerov::bisect(double j, int& numelvl) {
                     DEBUG2("Checked element: "<< chunk[i-nx]);
                     eval.push_back(En);
                     if(numelvl == 1)
-                        return 1;
+                        return 0;
                     numelvl += 1;
 
                 }
