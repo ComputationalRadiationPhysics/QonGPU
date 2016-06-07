@@ -2,7 +2,7 @@
 #include <iostream>
 #include <omp.h>
 #include "Numerov.hpp"
-
+#include <cmath>
 
 static void HandleError( cudaError_t err,
                          const char *file,
@@ -57,7 +57,7 @@ void Numerov::solve(){
         double dE =  V(0, 0, z) / (double) ne;
         // This will be the starting energy for each chunk calculation
         double En = 0.0;
-        int numlvl = 1;
+        int numlvl = 0;
         while (index < ne) {
             //copy initals on device
             dev_ne = CHUNKSIZE;
@@ -74,7 +74,7 @@ void Numerov::solve(){
                                     sizeof(double) * nx * dev_ne,
                                     cudaMemcpyHostToDevice));
             cudaThreadSynchronize();
-            En = dE * (double) index- 0.046;
+            En = dE * (double) index- 0.092;
             DEBUG2("Calculating with starting energy: " << En);
             iter1 <<< 1024, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 
@@ -261,20 +261,25 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 
     double t0 = tmin + 1e4*dt;
 
-    real[0] = 0;
-    real[1] = 1e-7;
+    //real[0] = 0;
     for(auto i = 0u; i < real.size(); i++) {
-        real[i] = cos(E * t0) * real[i];
+        //real[i] = cos(E * t0) * real[i];
 
-        imag[i] = -sin(E * t0) * real[i];
+        imag[i] = 0;//-sin(E * t0) * real[i];
     }
     for(auto i = 0u; i < v.size(); i++) {
 
         v[i] = make_cuDoubleComplex(real[i], imag[i]);
 
     }
-    v[v.size()-1] = make_cuDoubleComplex(0,0);
+    /*
+    double h = (xmax - xmin)/nx;
+    double loc = xmax - 100*h;
+    for(auto i = 0u; i < 100; i++) {
+        loc += h;
+        v[v.size()-1-i] = make_cuDoubleComplex(exp(-loc),0);
 
+    }*/
 
     param->seten( eval[ind]);
 

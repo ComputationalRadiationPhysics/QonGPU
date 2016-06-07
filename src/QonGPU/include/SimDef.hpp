@@ -23,7 +23,7 @@ public:
 
     void staticsolve() {
         s.solve();
-        s.copystate(0, psi0);
+        s.copystate(1, psi0);
         DEBUG2("Setstate");
         t.setstate(psi0);
         DEBUG2("Setstate2");
