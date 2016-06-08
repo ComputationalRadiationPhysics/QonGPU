@@ -18,18 +18,23 @@ void fast_mult( thrust::device_vector<cuDoubleComplex> psi_d,
     const cuDoubleComplex hconst = make_cuDoubleComplex( -1.0 / ( 2.0 * h * h), 0);
     const cuDoubleComplex tauc = make_cuDoubleComplex( -tau / 2.0, 0);
 
+	
     cuDoubleComplex helper = make_cuDoubleComplex(0, 0);
     cuDoubleComplex helper2 = make_cuDoubleComplex(0, 0);
-
+	
+	// First handle the first element
     helper = hconst * tauc * ( psi_h[1] - 2 * psi_h[0]);
     helper2 = tauc * pot(0) * psi_h[0];
     helper = helper + helper2;
     helper = make_cuDoubleComplex(-helper.y, helper.x);
     cpy[0] = psi_h[0] + helper;
 
-    for(int i = 1; i < psi_h.size(); i++) {
+	// After that use the other elements
+	// Only the last element is again a special
+	// case!
+    for(int i = 1; i < psi_h.size() - 1 ; i++) {
 
-        x += h * i;
+        x = xmin + h * i;
         helper = hconst * tauc * ( psi_h[i+1] + psi_h[i-1] - psi_h[i]);
         helper2 = tauc * pot(x) * psi_h[i];
         helper = helper + helper2;
@@ -37,15 +42,13 @@ void fast_mult( thrust::device_vector<cuDoubleComplex> psi_d,
         cpy[i] = psi_h[i] + helper;
 
     }
-
-    helper = hconst * tauc * ( psi_h[n-2] - 2*psi_h[n-1]);
-    helper2 = tauc * pot(xmax) * psi_h[n-1];
-    helper = helper + helper2;
-    helper = make_cuDoubleComplex( -helper.y, helper.x);
+    
+	// Now the last element has to be multiplied
+    helper   = hconst * tauc * ( psi_h[n-2] - 2 * psi_h[n-1]);
+    helper2  = tauc * pot(xmax) * psi_h[n-1];
+    helper   = helper + helper2;
+    helper   = make_cuDoubleComplex( -helper.y, helper.x);
     cpy[n-1] = psi_h[n - 1] + helper;
-
+    
     p(cpy, psi_d);
-
-
-
 }

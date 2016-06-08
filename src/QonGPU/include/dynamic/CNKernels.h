@@ -5,13 +5,8 @@
 
 __device__ __host__ cuDoubleComplex pot(double x) {
 
-    //return make_cuDoubleComplex( - 1.0 /sqrt(x * x + 1.0), 0);
-    if(x < 1e-4){
-        return make_cuDoubleComplex(1000000,0);
-    }
-    else{
-        return make_cuDoubleComplex(1/sqrt(x*x+1), 0);
-    }
+	return make_cuDoubleComplex(-3*1/sqrt(x*x+1), 0);
+    
 }
 
 
@@ -24,7 +19,7 @@ __device__ __host__ inline void mult_rhs( cuDoubleComplex& in1,
                                           double x) {
 
 
-    //s1 = (h1 * h2) * ( (in2) + (in3)  - make_cuDoubleComplex(2 * in1.x, 2 * in1.y));
+    //s1 = (h1 * h2) * ( (in2) + (in3)  + make_cuDoubleComplex(-2 * in1.x, 2 * in1.y));
 
     cuDoubleComplex s1 = make_cuDoubleComplex( 0, 0);
     cuDoubleComplex s2 = make_cuDoubleComplex( 0, 0);
@@ -69,35 +64,11 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
 
     }
 
+    /*
     if(ind == 1) {
         x = xmin + h;
-        //mult_rhs(in[1], in[0], in[2], out[1], h1, h2, x);
-        cuDoubleComplex s1 = make_cuDoubleComplex( 0, 0);
-        cuDoubleComplex s2 = make_cuDoubleComplex( 0, 0);
-
-        s1 = cuCadd(in[0] , in[2]);
-        //printf("s1 = %f + i %lf \n", s1.x, s1.y);
-        s1 = cuCadd(s1, make_cuDoubleComplex(-2 * in[1].x, -2 * in[1].y));
-        //printf("s1 = %f + i %lf \n", s1.x, s1.y);
-        s1 = cuCmul(h1, s1);
-        //printf("s1 = %f + i %lf \n", s1.x, s1.y);
-        s1 = cuCmul(h2, s1);
-        //printf("s1 = %f + i %lf \n", s1.x, s1.y);
-
-
-        s2 = cuCmul(h2, pot(x));
-        //printf("s2 = %f + i %lf \n", s2.x, s2.y);
-        s2 = cuCmul(s2, in[1]);
-        //printf("s2 = %f + i %lf \n", s2.x, s2.y);
-
-        s1 = cuCadd(s1, s2);
-        //printf("s1 = %f + i %lf \n", s1.x, s1.y);
-
-        s1 = make_cuDoubleComplex( -s1.y, s1.x);
-        //printf("s1 = %f + i %lf \n", s1.x, s1.y);
-        out[1] =  cuCadd(in[1], s1);
-        //printf("out = %f + i %lf \n", out[1].x, out[1].y);
-
+        cuDoubleComplex bound = make_cuDoubleComplex(0.0, 0.0);
+        mult_rhs(in[ind], )
         ind +=oset;
         //printf("h1 = %f + i %f \n", h1.x, h1.y);
         //printf("h2 = %f + i %f \n", h2.x, h2.y);
@@ -105,7 +76,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
         //printf("in[2] = %f + i %f \n", in[2].x, in[2].y);
         //printf("in[1] = %f + i %f \n", in[1].x, in[1].y);
         //printf("in[0] = %f + i %f \n", in[0].x, in[0].y);
-    }
+    }*/
 
 
 
@@ -144,14 +115,14 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
 }
 
 
-__global__ void create_const_diag(cuDoubleComplex* dl,
-                                  cuDoubleComplex* du,
-                                  double c,
-                                  size_t nx) {
+__global__ void create_const_diag(	cuDoubleComplex* dl,
+									cuDoubleComplex* du,
+									double c,
+									size_t nx ) {
 
 
-    int tid = threadIdx.x + blockDim.x * blockIdx.x;
-    int oset = blockDim.x * gridDim.x;
+	int tid = threadIdx.x + blockDim.x * blockIdx.x;
+	int oset = blockDim.x * gridDim.x;
     cuDoubleComplex cc = make_cuDoubleComplex(0,c);
 
     while( tid < nx) {
@@ -180,8 +151,6 @@ __device__ __host__ inline void transform_diag( cuDoubleComplex& d,
     s2 = cuCmul(s2, t1);
     s2 = make_cuDoubleComplex( - s2.y , s2.x);
     d = cuCadd(s2, s1);
-    //printf("pot(x) = %lf \n", pot(x).x);
-    //printf("D = %lf \n", d.y);
 
 }
 

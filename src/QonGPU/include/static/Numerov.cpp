@@ -57,7 +57,7 @@ void Numerov::solve(){
         double dE =  V(0, 0, z) / (double) ne;
         // This will be the starting energy for each chunk calculation
         double En = 0.0;
-        int numlvl = 0;
+        int numlvl = 1;
         while (index < ne) {
             //copy initals on device
             dev_ne = CHUNKSIZE;
@@ -74,7 +74,7 @@ void Numerov::solve(){
                                     sizeof(double) * nx * dev_ne,
                                     cudaMemcpyHostToDevice));
             cudaThreadSynchronize();
-            En = dE * (double) index- 0.092;
+            En = dE * (double) index - 0.3;
             DEBUG2("Calculating with starting energy: " << En);
             iter1 <<< 1024, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 
@@ -90,7 +90,7 @@ void Numerov::solve(){
         cudaFree(dev_ptr);
     }
     // After all the calculations done we can save our energy levels!
-    //prepstates();
+    prepstates();
     savelevels();
 
 }
@@ -107,29 +107,36 @@ void Numerov::savelevels(){
     for(auto it = 0u; it < eval.size(); it++) {
         // We do the analog thing for the enegy
         // It's a lot simpler!
-        buffer2[it] = eval.back();
-        eval.pop_back();
+        buffer2[it] = eval.at(it);
+        
     }
     // Create a new HDF5 file
 
-    file_id = H5Fcreate("sim1.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+    file_id = H5Fcreate("sim3.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
 
     hsize_t dims = res.size();
 
     // Create a HDF5 Data set and write buffer1
     H5LTmake_dataset(file_id, "/numres", 1, &dims, H5T_NATIVE_DOUBLE, res.data());
+    
     // Analog for buffer2
     dims = buffer2.size();
     H5LTmake_dataset(file_id, "/evals", 1, &dims, H5T_NATIVE_DOUBLE, buffer2.data());
+    
     //Save some necessary parameters
     vector<double> p(3);
     p[0] = nx;
     p[1] = ne;
     p[2] = xmax;
+    
+	// Call the library
     dims = 3 ;
     H5LTmake_dataset( file_id, "/params", 1, &dims, H5T_NATIVE_DOUBLE, p.data());
+    
     // close the file
     H5Fclose(file_id);
+    
+    
 }
 
 
@@ -157,7 +164,7 @@ int Numerov::bisect(double j, int& numelvl) {
         //DEBUG2("2. chunk[i-nx] = " << chunk[i - nx]);
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
 
-            if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))&& (abs(chunk[i])<1e-3)) {
+            if( (fabs( chunk[ i]) < fabs( chunk[i - nx])) /*&& (abs(chunk[i])<1e-3)*/) {
 
                 res.resize(res.size()+nx);
                 auto iter = res.end()-nx;
@@ -166,29 +173,32 @@ int Numerov::bisect(double j, int& numelvl) {
                 std::cout << "Energy level found" << std::endl;
                 std::cout << "Detected energy level: "<< En << std::endl;
                 eval.push_back(En);
+                DEBUG2(eval.size());
                 DEBUG2("Checked element: "<< chunk[i]);
                 if(numelvl == 1)
-                    return 0;
+                    return 1;
                 numelvl += 1;
 
             }
             else {
 
-                if(abs(chunk[i-nx])<1e-3) {
+                // if(abs(chunk[i-nx])<1e-3) {
                     res.resize(res.size()+nx);
-                    auto iter = res.end()-nx;
+                    auto iter = res.end()-nx+1;
                     std::copy(it+i,it+i+nx,iter);
-                    En = (j + (i/nx - 1) * dE);
+                    En = (j + (i/nx) * dE);
 
                     std::cout << "Energy level found" << std::endl;
                     std::cout << "Detected energy level: "<< En << std::endl;
                     DEBUG2("Checked element: "<< chunk[i-nx]);
+                    
                     eval.push_back(En);
+                    DEBUG2(eval.size());
                     if(numelvl == 1)
-                        return 0;
+                        return 1;
                     numelvl += 1;
 
-                }
+               // }
 
             }
 
@@ -197,6 +207,44 @@ int Numerov::bisect(double j, int& numelvl) {
     }
     return 0;
 }
+
+/*
+void bisect2(double Es, int& numlvl) {
+
+    std::vector<double> last(CHUNKSIZE);
+    int upper = CHUNKSIZE-1;
+    int lower = 0;
+
+    for(int i = 0; i < CHUNKSIZE; i++) {
+        last.at(i) = res.at(i*nx-1);
+    }
+
+    while( upper >= lower) {
+
+        if(sign( last.at(upper) != last.at(lower))) {
+
+            int mid = (upper + lower)/2;
+
+            if(sign(mid) == sign(upper)) {
+
+                upper = mid;
+
+            }
+
+            if(sign(mid) == sign(lower)){
+
+                lower = mid;
+            }
+
+        }
+        else {
+            lower += 1;
+        }
+    }
+
+
+}*/
+
 
 double Numerov::trapez(int first, int last) {
 
@@ -251,15 +299,18 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     thrust::host_vector<double> real(nx);
     thrust::host_vector<double> imag(nx);
 
-    thrust::copy(res.begin()+o, res.begin()+o+nx, real.begin());
+    thrust::copy(res.begin()+o, res.begin() + o + nx, real.begin());
 
-    double E = eval.at(ind);
+	DEBUG2("Eval is of size:"<<eval.size());
+    double E = eval.at( ind);
+    DEBUG2("Here");
     double tmax = param->gettmax();
     double tmin = param->gettmin();
     int nt = param->getnt();
     double dt = (tmax - tmin)/nt;
 
     double t0 = tmin + 1e4*dt;
+    
 
     //real[0] = 0;
     for(auto i = 0u; i < real.size(); i++) {

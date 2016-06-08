@@ -12,12 +12,12 @@
 using namespace std;
 
 
-#define CHUNKSIZE 1000
+#define CHUNKSIZE 10000
 
 __host__ __device__  double V(double x, double t,double z) {
 
 
-	return -1.0*z/sqrt(x*x+1.0);
+	return -3.0*z/sqrt(x*x+1.0);
 };
 //NumerovKernel to iterate from right to left!
 __global__ void iter2(double* psi,
@@ -38,7 +38,7 @@ __global__ void iter2(double* psi,
 
 	while(tid < nx * ne) {
 
-        E = dE * (double) tid / (double) nx;
+        E =  dE * (double) tid / (double) nx;
         for(auto i = nx-1; i>1;i--) {
 
             //refine the first pre-factor for psi_(n-1)
@@ -85,12 +85,12 @@ __global__ void iter1(double* psi,
 	//beginning of iterations loop
 	while( tid < ne * nx) {
 
-		E -= tid * dE / (double)(nx);
+		E = Es + tid * dE / (double)(nx);
 		for(auto i = 1u; i < nx - 1  ; i++){
 
-			f1 = 1.0 / (1.0 + dx * dx  / 12.0 *  ( heff * (  - V( ( i + 1) * dx + xmin, 0 , z) + E)));
-			f2 = ( 1.0 - 5.0 * dx * dx / 12.0 * ( heff *(  - V( i * dx + xmin, 0, z) + E)));
-			f3 = ( 1.0 + dx * dx / 12.0 * ( heff *(  - V( ( i - 1) * dx + xmin, 0, z) + E)));
+			f1 = 1.0 / (1.0 + dx * dx  / 12.0 *  ( heff * ( E - V( ( i + 1) * dx + xmin, 0 , z) )));
+			f2 = ( 1.0 - 5.0 * dx * dx / 12.0 * ( heff *( E - V( i * dx + xmin, 0, z) )));
+			f3 = ( 1.0 + dx * dx / 12.0 * ( heff *( E - V( ( i - 1) * dx + xmin, 0, z) )));
 			psi[ i + 1 + tid] = f1 * ( 2.0 * psi[ i + tid] * f2 - psi[ i - 1 + tid] * f3);
 
         };
@@ -124,6 +124,7 @@ private:
     void savelevels();
     bool sign(double s);
     int bisect(double j, int& numlvl);
+	int bisect2(double Es, int& numlvl);
     void tempprint();
     void mult_const(int first, int last, double c);
     double trapez(int first, int last);
