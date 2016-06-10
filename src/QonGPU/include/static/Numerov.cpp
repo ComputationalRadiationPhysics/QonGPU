@@ -45,45 +45,60 @@ Numerov::~Numerov(){}
 void Numerov::solve(){
     // This Loop is used to create
     for(auto j = 1; j < 2; j++) {
+        
         z = j;
         DEBUG2("Solving for Z ="<<z);
         double *dev_ptr;
-
+	
         int dev_ne = CHUNKSIZE;
-        // Next let's allocate the required chunk memory on the device side
-        HANDLE_ERROR(cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne));
         // Make use of some local variables
         int index = 0;
         double dE =  V(0, 0, z) / (double) ne;
         // This will be the starting energy for each chunk calculation
         double En = 0.0;
         int numlvl = 1;
+		
+		HANDLE_ERROR(cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne));
+		
+		cudaHostRegister(chunk.data(),  sizeof(double) * nx * dev_ne, cudaHostRegisterMapped);
+		cudaHostRegister(cache.data(),  sizeof(double) * nx * dev_ne, cudaHostRegisterMapped);
+        
+        cudaEvent_t start, stop;
+		cudaEventCreate(&start);
+		cudaEventCreate(&stop);
+        float t_el = 0;
+        
         while (index < ne) {
+            
             //copy initals on device
             dev_ne = CHUNKSIZE;
+            
             if (index + CHUNKSIZE > ne) {
                 DEBUG2("Changing Device memory");
                 dev_ne = ne - index;
                 cudaFree(dev_ptr);
                 cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne);
             }
+            
             DEBUG2("Calculating chunk: " << index / CHUNKSIZE);
-            cudaThreadSynchronize();
+            
             HANDLE_ERROR(cudaMemcpy(dev_ptr,
                                     cache.data(),
                                     sizeof(double) * nx * dev_ne,
                                     cudaMemcpyHostToDevice));
-            cudaThreadSynchronize();
-            En = dE * (double) index - 0.324;
-            DEBUG2("Calculating with starting energy: " << En);
-            iter1 <<< 1024, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
-
-
-            cudaThreadSynchronize();
+            
+            
+            En = dE * (double) index;
+            
+            iter1 <<< 1024, 8 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
+			
             HANDLE_ERROR(cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost));
-            cudaThreadSynchronize();
+            
+            
+            
             if(bisect(En, numlvl)) index = ne;
 
+			
             index += CHUNKSIZE;
 
         }
@@ -112,7 +127,7 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    file_id = H5Fcreate("sim1.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    file_id = H5Fcreate("sim2.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     hsize_t dims = res.size();
 
@@ -350,8 +365,6 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 	 	
 	}
     
-    DEBUG2("Cindex = "<<cindex);
-	
     for( int i = cindex;  i < nx; i++) {
 		
 		v[i] = make_cuDoubleComplex( corr[ i], 0);

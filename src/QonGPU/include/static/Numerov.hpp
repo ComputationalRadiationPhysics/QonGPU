@@ -13,7 +13,7 @@
 using namespace std;
 
 
-#define CHUNKSIZE 10000
+#define CHUNKSIZE 12000
 
 
 __host__ __device__  double V(double x, double t,double z) {
