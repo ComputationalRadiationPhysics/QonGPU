@@ -74,7 +74,7 @@ void Numerov::solve(){
                                     sizeof(double) * nx * dev_ne,
                                     cudaMemcpyHostToDevice));
             cudaThreadSynchronize();
-            En = dE * (double) index - 0.3;
+            En = dE * (double) index - 0.324;
             DEBUG2("Calculating with starting energy: " << En);
             iter1 <<< 1024, 3 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 
@@ -112,7 +112,7 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    file_id = H5Fcreate("sim3.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+    file_id = H5Fcreate("sim1.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     hsize_t dims = res.size();
 
@@ -176,7 +176,7 @@ int Numerov::bisect(double j, int& numelvl) {
                 DEBUG2(eval.size());
                 DEBUG2("Checked element: "<< chunk[i]);
                 if(numelvl == 1)
-                    return 1;
+                    return 0;
                 numelvl += 1;
 
             }
@@ -195,7 +195,7 @@ int Numerov::bisect(double j, int& numelvl) {
                     eval.push_back(En);
                     DEBUG2(eval.size());
                     if(numelvl == 1)
-                        return 1;
+                        return 0;
                     numelvl += 1;
 
                // }
@@ -207,43 +207,6 @@ int Numerov::bisect(double j, int& numelvl) {
     }
     return 0;
 }
-
-/*
-void bisect2(double Es, int& numlvl) {
-
-    std::vector<double> last(CHUNKSIZE);
-    int upper = CHUNKSIZE-1;
-    int lower = 0;
-
-    for(int i = 0; i < CHUNKSIZE; i++) {
-        last.at(i) = res.at(i*nx-1);
-    }
-
-    while( upper >= lower) {
-
-        if(sign( last.at(upper) != last.at(lower))) {
-
-            int mid = (upper + lower)/2;
-
-            if(sign(mid) == sign(upper)) {
-
-                upper = mid;
-
-            }
-
-            if(sign(mid) == sign(lower)){
-
-                lower = mid;
-            }
-
-        }
-        else {
-            lower += 1;
-        }
-    }
-
-
-}*/
 
 
 double Numerov::trapez(int first, int last) {
@@ -274,6 +237,33 @@ void Numerov::mult_const(int first, int last, double c) {
     }
 }
 
+
+void Numerov::norm_corr( double* psi) {
+	
+	double h = (xmax - xmin) / (double) nx;
+    auto temp = 0.0;
+
+    for(auto i = 0u; i < nx; ++i){
+
+        temp += psi[i]*psi[i];
+
+    }
+
+    temp *= 2.0;
+    temp -= (psi[0]*psi[0] + psi[nx] * psi[nx]);
+    temp *= h / 2.0;
+    
+    temp = 1/sqrt(temp);
+    
+    for( auto i = 0u; i < nx; i++) {
+		
+		psi[i] *= temp;
+		
+	}
+    
+}
+
+
 void Numerov::prepstates() {
 
     // This function normalizes the
@@ -291,19 +281,22 @@ void Numerov::prepstates() {
 
 }
 
+
 void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 
+	// get index inside the results array
     int o = nx*ind;
 
-
+	// Define vectors to copy values in, since casting to cuDoubleComplex
+	// is not that trivial!
     thrust::host_vector<double> real(nx);
     thrust::host_vector<double> imag(nx);
 
+	// copy results to real part
     thrust::copy(res.begin()+o, res.begin() + o + nx, real.begin());
 
-	DEBUG2("Eval is of size:"<<eval.size());
-    double E = eval.at( ind);
-    DEBUG2("Here");
+	
+	double E = eval.at( ind);
     double tmax = param->gettmax();
     double tmin = param->gettmin();
     int nt = param->getnt();
@@ -312,7 +305,7 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     double t0 = tmin + 1e4*dt;
     
 
-    //real[0] = 0;
+    real[0] = 0;
     for(auto i = 0u; i < real.size(); i++) {
         //real[i] = cos(E * t0) * real[i];
 
@@ -323,16 +316,48 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
         v[i] = make_cuDoubleComplex(real[i], imag[i]);
 
     }
-    /*
+    
     double h = (xmax - xmin)/nx;
     double loc = xmax - 100*h;
-    for(auto i = 0u; i < 100; i++) {
-        loc += h;
-        v[v.size()-1-i] = make_cuDoubleComplex(exp(-loc),0);
-
-    }*/
-
+    v[1] = make_cuDoubleComplex(0, 0);
+    
+    thrust::host_vector<double> corr(nx);
+    corr[ nx-1] = 0; 
+    corr[ nx-2] = -1e-7;
+    
+    double* psi = thrust::raw_pointer_cast( corr.data());
+    
+    corr_wf(psi, nx, xmax, xmin, eval[ind], z);  
+    
+    // The next thing is to find a suitable index to 
+    // unify both solutions
+    
+    norm_corr(psi);
+    
+    int unclose = 1; 
+    int cindex = 0;
+    int count = nx-1; 
+    
+    
+    while( unclose) {
+		if( fabs(corr[count] - real[count]) < 1e-5) {
+		
+			cindex  = count;
+			unclose = 0;
+		}
+		
+		count -= 1;
+	 	
+	}
+    
+    DEBUG2("Cindex = "<<cindex);
+	
+    for( int i = cindex;  i < nx; i++) {
+		
+		v[i] = make_cuDoubleComplex( corr[ i], 0);
+		
+	}
+    
     param->seten( eval[ind]);
-
 
 }
