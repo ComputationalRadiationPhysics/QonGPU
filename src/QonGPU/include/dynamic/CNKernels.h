@@ -5,7 +5,7 @@
 
 __device__ __host__ cuDoubleComplex pot(double x) {
 
-	return make_cuDoubleComplex(-3*1/sqrt(x*x+1), 0);
+	return make_cuDoubleComplex(-1/sqrt(x*x+1), 0);
     
 }
 

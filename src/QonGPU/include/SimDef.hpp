@@ -23,8 +23,8 @@ public:
 
     void staticsolve() {
         s.solve();
-        //s.copystate(0, psi0);
-        //t.setstate(psi0);
+        s.copystate(0, psi0);
+        t.setstate(psi0);
        
     }
 

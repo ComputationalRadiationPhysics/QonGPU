@@ -2,8 +2,8 @@
 #define DEBUG2(x) std::cout<<x<<std::endl
 
 //#define CUSPARSE_ON
-#define USE_SERIAL
-//#define USE_SPIKE
+//#define USE_SERIAL
+#define USE_SPIKE
 //#define MATRIX_OUTPUT
 #include "CrankNicolson1D.hpp"
 
@@ -194,7 +194,7 @@ void CrankNicolson1D::time_solve() {
 
 
     saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100000; i++) {
 
 
         t += tau * (double) i;
@@ -266,7 +266,7 @@ void CrankNicolson1D::time_solve() {
         assert(check.x < 100);
         assert(check.y < 100);
 
-        if (i % 10 == 0)
+        if (i % 100 == 0)
             saveblank(chunkr_d, &fl, i + 1);
 
 

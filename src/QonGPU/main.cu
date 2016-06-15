@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 #ifndef TOTEST
     s.staticsolve();
 
-    //s.timerev();
+    s.timerev();
 #endif
     return EXIT_SUCCESS;
 

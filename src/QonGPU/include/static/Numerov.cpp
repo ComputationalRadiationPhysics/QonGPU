@@ -74,10 +74,12 @@ void Numerov::solve(){
             dev_ne = CHUNKSIZE;
             
             if (index + CHUNKSIZE > ne) {
+				
+				
                 DEBUG2("Changing Device memory");
                 dev_ne = ne - index;
-                cudaFree(dev_ptr);
-                cudaMalloc((void **) &dev_ptr, sizeof(double) * nx * dev_ne);
+                cudaFree( dev_ptr);
+                cudaMalloc( (void **) &dev_ptr, sizeof(double) * nx * dev_ne);
             }
             
             DEBUG2("Calculating chunk: " << index / CHUNKSIZE);
@@ -88,8 +90,8 @@ void Numerov::solve(){
                                     cudaMemcpyHostToDevice));
             
             
-            En = dE * (double) index;
-            
+            En = dE * (double) index - 0.274;
+            DEBUG2("Calculating with Energy: "<<En);
             iter1 <<< 1024, 8 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 			
             HANDLE_ERROR(cudaMemcpy(chunk.data(), dev_ptr, sizeof(double) * nx * dev_ne, cudaMemcpyDeviceToHost));
@@ -106,7 +108,7 @@ void Numerov::solve(){
     }
     // After all the calculations done we can save our energy levels!
     prepstates();
-    savelevels();
+    //savelevels();
 
 }
 
@@ -127,7 +129,7 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    file_id = H5Fcreate("sim2.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    file_id = H5Fcreate("sim1.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     hsize_t dims = res.size();
 
@@ -191,7 +193,7 @@ int Numerov::bisect(double j, int& numelvl) {
                 DEBUG2(eval.size());
                 DEBUG2("Checked element: "<< chunk[i]);
                 if(numelvl == 1)
-                    return 0;
+                    return 1;
                 numelvl += 1;
 
             }
@@ -210,7 +212,7 @@ int Numerov::bisect(double j, int& numelvl) {
                     eval.push_back(En);
                     DEBUG2(eval.size());
                     if(numelvl == 1)
-                        return 0;
+                        return 1;
                     numelvl += 1;
 
                // }
@@ -355,7 +357,7 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     
     
     while( unclose) {
-		if( fabs(corr[count] - real[count]) < 1e-5) {
+		if( fabs(corr[count] - real[count]) < 1e-8) {
 		
 			cindex  = count;
 			unclose = 0;
@@ -365,11 +367,23 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 	 	
 	}
     
+    
     for( int i = cindex;  i < nx; i++) {
 		
-		v[i] = make_cuDoubleComplex( corr[ i], 0);
+		real[i] = corr[ i];
 		
 	}
+    
+    norm_corr(thrust::raw_pointer_cast( real.data()));
+	
+	for( int i = 0; i < real.size(); i++) {
+		
+		v[i] = make_cuDoubleComplex( real[i], 0);
+		
+	}
+    
+    
+    
     
     param->seten( eval[ind]);
 
