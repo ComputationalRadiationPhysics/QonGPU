@@ -15,7 +15,7 @@ class SimDef{
 public:
 
     SimDef(Params1D *p):da(p), s(p),t(p), psi0(p->getnx()){
-        DEBUG2("CONSTRUCTOR");
+       
     }
 
     SimDef(Params2D *p):da(p) {}
@@ -24,9 +24,8 @@ public:
     void staticsolve() {
         s.solve();
         s.copystate(0, psi0);
-        DEBUG2("Setstate");
         t.setstate(psi0);
-        DEBUG2("Setstate2");
+       
     }
 
     void timerev() {

@@ -37,7 +37,7 @@ void CrankNicolson1D::rhs_rt() {
     // note that chunkl_d = chunkr_d since
     // only given chunkr_d to the routine would make
     // a temporal allocated field necessary!
-
+	
     transform_rhs<<<512,3>>>(raw_pointer_cast(chunkl_d.data()),
                              raw_pointer_cast(chunkr_d.data()),
                              nx,
@@ -163,6 +163,7 @@ void CrankNicolson1D::time_solve() {
                                                               nx);
 
 
+	// create_diags(dl, du, make_cuDoubleComplex(0,c));
     // Save Diagonals for debug purposes
     //saveblank(dl, &cfl, 0);
     //saveblank(du, &cfl, 1);
@@ -193,7 +194,7 @@ void CrankNicolson1D::time_solve() {
 
 
     saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < 300; i++) {
+    for (int i = 0; i < 100000; i++) {
 
 
         t += tau * (double) i;
@@ -203,6 +204,7 @@ void CrankNicolson1D::time_solve() {
         saveblank(chunkr_d, &cfl, 2*i);
 #endif
         rhs_rt();
+        //fast_mult(chunkr_d, tau, h, xmin);
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i+1);
 #endif
@@ -215,6 +217,7 @@ void CrankNicolson1D::time_solve() {
         // Then update the non-constant main-diagonal!
 
         update_diagl <<< 512, 3 >>> (dev_d, tau, h, xmin, nx);
+        //update_mdiag(d, tau, h, xmin);
         //saveblank(d,  &cfl, i+1);
         //update_mdiag(d, tau, h, xmin);
         // right after that, we can call the cusparse Library
@@ -263,7 +266,7 @@ void CrankNicolson1D::time_solve() {
         assert(check.x < 100);
         assert(check.y < 100);
 
-        if (i % 10 == 0)
+        if (i % 100 == 0)
             saveblank(chunkr_d, &fl, i + 1);
 
 
