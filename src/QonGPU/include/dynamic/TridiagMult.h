@@ -2,7 +2,7 @@
 // Created by zaph0d on 28/05/16.
 //
 #pragma  once
-
+/*
 void fast_mult( thrust::device_vector<cuDoubleComplex> psi_d,
                 double tau, double h, double xmin) {
 
@@ -52,3 +52,4 @@ void fast_mult( thrust::device_vector<cuDoubleComplex> psi_d,
     
     p(cpy, psi_d);
 }
+*/

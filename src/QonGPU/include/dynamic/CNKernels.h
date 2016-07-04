@@ -3,9 +3,26 @@
 //
 #pragma once
 
-__device__ __host__ cuDoubleComplex pot(double x) {
+#ifndef CUDART_PI_F
+#define CUDART_PI_F 3.141592653589793
+#endif
 
-	return make_cuDoubleComplex(-1/sqrt(x*x+1), 0);
+__device__ __host__ cuDoubleComplex pot(double x, double t) {
+	
+	
+	double a = 1.7328679513998632e-5;
+	double t0 = 500.0;
+	double w = 0.00038218888729802834;
+	double k = w/137;
+	double I = 50.0;
+	// Only have time-dependence if t>0
+	
+	
+	double g = exp(-a*(t-t0)*(t-t0));
+	double f = sin(w*t-k*x);
+	double res = -1/sqrt(x*x+1) + g*f*I;
+	
+	return make_cuDoubleComplex(res, 0);
     
 }
 
@@ -16,7 +33,8 @@ __device__ __host__ inline void mult_rhs( cuDoubleComplex& in1,
                                           cuDoubleComplex& out,
                                           const cuDoubleComplex& h1,
                                           const cuDoubleComplex& h2,
-                                          double x) {
+                                          double x,
+                                          double t) {
 
 
     //s1 = (h1 * h2) * ( (in2) + (in3)  + make_cuDoubleComplex(-2 * in1.x, 2 * in1.y));
@@ -29,7 +47,7 @@ __device__ __host__ inline void mult_rhs( cuDoubleComplex& in1,
     s1 = cuCmul(h1, s1);
     s1 = cuCmul(h2, s1);
 
-    s2 = cuCmul(h2, pot(x));
+    s2 = cuCmul(h2, pot(x, t));
     s2 = cuCmul(s2, in1);
 
     s1 = cuCadd(s1, s2);
@@ -44,7 +62,8 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
                               size_t nx,
                               double xmax,
                               double xmin,
-                              double tau) {
+                              double tau,
+                              double t) {
 
     // This function multiplies the psi(t)
     // with the Crank Nicholson time
@@ -59,26 +78,10 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
     if(ind == 0 ) {
 
         cuDoubleComplex bound = make_cuDoubleComplex(0.0, 0.0);
-        mult_rhs(in[ind], bound, in[ind + 1], out[ind], h1, h2, x);
+        mult_rhs(in[ind], bound, in[ind + 1], out[ind], h1, h2, x, t);
         ind += oset;
 
     }
-
-    /*
-    if(ind == 1) {
-        x = xmin + h;
-        cuDoubleComplex bound = make_cuDoubleComplex(0.0, 0.0);
-        mult_rhs(in[ind], )
-        ind +=oset;
-        //printf("h1 = %f + i %f \n", h1.x, h1.y);
-        //printf("h2 = %f + i %f \n", h2.x, h2.y);
-        //printf("The result: out = %f + i %f \n", out[1].x, out[1].y);
-        //printf("in[2] = %f + i %f \n", in[2].x, in[2].y);
-        //printf("in[1] = %f + i %f \n", in[1].x, in[1].y);
-        //printf("in[0] = %f + i %f \n", in[0].x, in[0].y);
-    }*/
-
-
 
         while (ind < nx) {
             x = xmin + h * (double) ind;
@@ -93,7 +96,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
                 s1 = cuCmul(h1,s1);
                 s1= cuCmul(h2, s1);
 
-                s2 = cuCmul(h2, pot(x));
+                s2 = cuCmul(h2, pot(x, t));
                 s2 = cuCmul(s2, in[ind]);
                 s1 = cuCadd(s1,s2);
                 s1 = make_cuDoubleComplex( -s1.y, s1.x);
@@ -103,7 +106,7 @@ __global__ void transform_rhs(cuDoubleComplex* in, // note that in is just an te
             }
             else {
                 mult_rhs(in[ind], in[ind - 1], in[ind + 1], out[ind],
-                          h1, h2, x);
+                          h1, h2, x, t);
 
             }
             //printf("out = %lf + i %lf \n", out[ind].x, out[ind].y);
@@ -144,10 +147,11 @@ __device__ __host__ inline void transform_diag( cuDoubleComplex& d,
                                                 cuDoubleComplex& s2,
                                                 const double c,
                                                 const double x,
-                                                const cuDoubleComplex& t1) {
+                                                const cuDoubleComplex& t1,
+                                                double t) {
 
     cuDoubleComplex temp1 = make_cuDoubleComplex( c, 0);
-    s2 = cuCadd(temp1, pot(x));
+    s2 = cuCadd(temp1, pot(x, t));
     s2 = cuCmul(s2, t1);
     s2 = make_cuDoubleComplex( - s2.y , s2.x);
     d = cuCadd(s2, s1);
@@ -159,9 +163,13 @@ __global__ void update_diagl( cuDoubleComplex* d,
                               const double tau,
                               const double h,
                               const double xmin,
-                              const size_t nx) {
+                              const size_t nx,
+                              double t) {
 
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
+	if(tid == 1000)
+			printf("Diagonal update called! \n");
+
     int oset = blockDim.x * gridDim.x;
     cuDoubleComplex t1 = make_cuDoubleComplex( tau / 2.0 ,0);
 
@@ -175,7 +183,7 @@ __global__ void update_diagl( cuDoubleComplex* d,
     while( tid < nx) {
 
         x = xmin + h * (double) tid;
-        transform_diag( d[tid], s1, s2, c, x, t1);
+        transform_diag( d[tid], s1, s2, c, x, t1, t);
         tid += oset;
 
     }

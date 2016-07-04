@@ -30,7 +30,7 @@ CrankNicolson1D::CrankNicolson1D(Params1D *_p):   param(_p),
 CrankNicolson1D::~CrankNicolson1D() {}
 
 
-void CrankNicolson1D::rhs_rt() {
+void CrankNicolson1D::rhs_rt(double t) {
 
     // Prepare the rhs by using a triangular
     // matrix multiplication on rhs_rt
@@ -43,7 +43,8 @@ void CrankNicolson1D::rhs_rt() {
                              nx,
                              xmax,
                              xmin,
-                             tau);
+                             tau,
+                             t);
 
 }
 
@@ -194,16 +195,16 @@ void CrankNicolson1D::time_solve() {
 
 
     saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < nt; i++) {
 
 
-        t += tau * (double) i;
-
+        t = tau * (double) i + tmin;
+		DEBUG2("Currently at t = "<< t);
         // Perform RHS multiplication
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i);
 #endif
-        rhs_rt();
+        rhs_rt(t-tau);
         //fast_mult(chunkr_d, tau, h, xmin);
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i+1);
@@ -216,7 +217,7 @@ void CrankNicolson1D::time_solve() {
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
 
-        update_diagl <<< 512, 3 >>> (dev_d, tau, h, xmin, nx);
+        update_diagl <<< 512, 3 >>> (dev_d, tau, h, xmin, nx,  t);
         //update_mdiag(d, tau, h, xmin);
         //saveblank(d,  &cfl, i+1);
         //update_mdiag(d, tau, h, xmin);

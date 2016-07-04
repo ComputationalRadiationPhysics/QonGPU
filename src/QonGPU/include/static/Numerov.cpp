@@ -90,7 +90,7 @@ void Numerov::solve(){
                                     cudaMemcpyHostToDevice));
             
             
-            En = dE * (double) index - 0.274;
+            En = dE * (double) index -0.2748;
             DEBUG2("Calculating with Energy: "<<En);
             iter1 <<< 1024, 8 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 			
@@ -340,24 +340,36 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     
     thrust::host_vector<double> corr(nx);
     corr[ nx-1] = 0; 
-    corr[ nx-2] = -1e-7;
+    
+    double pre = real[nx-2]/abs(real[nx-2]);
+    
+    corr[ nx-2] = pre * 1e-7;
     
     double* psi = thrust::raw_pointer_cast( corr.data());
     
     corr_wf(psi, nx, xmax, xmin, eval[ind], z);  
     
+    
+    
+	
     // The next thing is to find a suitable index to 
     // unify both solutions
     
     norm_corr(psi);
     
+    hid_t file = H5Fcreate("corr_wf.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    hsize_t dims = nx;
+    H5LTmake_dataset( file, "/numres", 1, &dims, H5T_NATIVE_DOUBLE,
+                      psi);
+    
+   
     int unclose = 1; 
     int cindex = 0;
     int count = nx-1; 
     
     
     while( unclose) {
-		if( fabs(corr[count] - real[count]) < 1e-8) {
+		if( fabs(corr[count] - real[count]) < 1e-3) {
 		
 			cindex  = count;
 			unclose = 0;

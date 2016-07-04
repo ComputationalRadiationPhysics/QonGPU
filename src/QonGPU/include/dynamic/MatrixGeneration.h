@@ -4,7 +4,7 @@
 #pragma once
 
 #include "MemFunctors.h"
-
+/*
 void create_diags(thrust::device_vector<cuDoubleComplex>& dl,
                   thrust::device_vector<cuDoubleComplex>& du,
                   cuDoubleComplex c) {
@@ -67,4 +67,4 @@ void update_mdiag(thrust::device_vector<cuDoubleComplex>& d,
     }
     //p(vec, d);
     thrust::copy(vec.begin(), vec.end(), d.begin());
-}
+} */
