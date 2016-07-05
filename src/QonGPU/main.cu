@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
     double xma = 30.0;
     double xmi = -xma;
-    double tma = 1000.0;
+    double tma = 5000.0;
     double tmi = 0.0;
     cudaDeviceReset();
     Params1D p(xma, xmi, tma, tmi, 1e5, 1e5, 1e8,1,str);
