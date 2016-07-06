@@ -16,3 +16,6 @@ qsolve
 *.swo
 *flymake*
 .idea/
+*.h5
+simres/
+simres/*
