@@ -267,7 +267,7 @@ void CrankNicolson1D::time_solve() {
         assert(check.x < 100);
         assert(check.y < 100);
 
-        if (i % 100 == 0)
+        if (i % 10 == 0)
             saveblank(chunkr_d, &fl, i + 1);
 
 
