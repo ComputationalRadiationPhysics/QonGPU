@@ -10,18 +10,18 @@
 __device__ __host__ cuDoubleComplex pot(double x, double t) {
 	
 	
-	double a = 6.9314718056e-07;
+	double a = 1.36917961592e-07;
 	double b = 0.0069314718056;
 	double t0 = 2500.0;
-	double w = 14.346606451393388;
+	double w = 0.08607963870836033;
 	double k = w/137;
-	double I = 1.2;
+	double I = 0.3;
 	// Only have time-dependence if t>0
 	
 	
 	double g1 = exp(-a*(t-t0)*(t-t0));
 	double g2 = exp(-b*x*x);
-	double f = pow(sin(w*t - k*x),2);
+	double f = pow(sin(w*t - k*x),1);
 	double res = -1/sqrt(x*x+1) + f*I*g1*g2;
 	
 	return make_cuDoubleComplex(res, 0);

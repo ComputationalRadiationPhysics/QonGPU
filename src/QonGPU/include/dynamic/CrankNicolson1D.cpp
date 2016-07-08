@@ -195,7 +195,7 @@ void CrankNicolson1D::time_solve() {
 
 
     saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < nt; i++) {
+    for (int i = 0; i < nt/2; i++) {
 
 
         t = tau * (double) i + tmin;
@@ -267,7 +267,7 @@ void CrankNicolson1D::time_solve() {
         assert(check.x < 100);
         assert(check.y < 100);
 
-        if (i % 10 == 0)
+        if (i % 1000 == 0)
             saveblank(chunkr_d, &fl, i + 1);
 
 

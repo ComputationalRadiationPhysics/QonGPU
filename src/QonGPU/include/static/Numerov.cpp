@@ -369,8 +369,9 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     
     
     while( unclose) {
-		if( fabs(corr[count] - real[count]) < 1e-3) {
 		
+		if( fabs(corr[count] - real[count]) < 1e-8 ) {
+			
 			cindex  = count;
 			unclose = 0;
 		}
