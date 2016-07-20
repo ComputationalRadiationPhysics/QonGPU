@@ -10,12 +10,12 @@
 __device__ __host__ cuDoubleComplex pot(double x, double t) {
 	
 	
-	double a = 1.36917961592e-07;
-	double b = 0.0069314718056;
+	double a = 6.9314718056e-07;
+	double b = 0.0017328679514;
 	double t0 = 2500.0;
 	double w = 0.08607963870836033;
 	double k = w/137;
-	double I = 0.3;
+	double I = 1.0;
 	// Only have time-dependence if t>0
 	
 	
