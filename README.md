@@ -1,7 +1,7 @@
-# SchroedingerSolver
-This project aims to solve the Schrödinger equation for arbitraty potentials in up to 3 spacial dimensions on CUDA. 
+# QonGPU
+A project to simulate arbitrary quantum systems on GPUs. Currently the simulation is only able
+to hadle one-dimensional systems, but a broadening of spatial degrees of freedom will be done in the future.
 
-The current focus is to write very fast code in order to solve more complex systems!
 ## Method
 ### 1st spacial dimension:
 First a static solver is implented using a model potential. This static solver
@@ -18,19 +18,14 @@ uses the numerov algorithm to calculate the staionary states.
 ##Building
 Only Linux support planned!
 ```{r, engine='bash', count_lines}
-cd /location_to_SchroedingerSolver/
+cd /location_to_QonGPU/
 ./configure.sh
 
 ```
-Configure will compile the program and run it for you. The
-output file configuration is a bit messy and will be fixed later on.
-If you want to see the static results:
-
-To get the Python script going just
-```{r, engine='bash', count_lines}
- cp src/pyscripts/Level2.py build
- cd build/
- python Level2.py
-```
-This is still a very unclean way and will be fixed in the future!
-
+The script will take care of all the build folders etc. The results are saved per default
+in a HDF5 file called  ```  res.h5``` and is located in the build folder. The way the timesteps are saved is that
+one timesteps n creates  2 HDF5 datasets, one for the imaginary and one for the real part of the
+wave-function. These datasets will always have the name ``` dsetN+1real``` and ```dsetN+1img```, where
+N is the number of timesteps calculated. The reason for ```N+1``` is to avoid an overwrite of  the first
+dataset, this will be changed in the future. The stationary states as well as the energies of each stationary state are saved inside the
+HDF5 file ```build/sim1.h5```. All the simulation parameters are set inside the ```main.cu``` file.
