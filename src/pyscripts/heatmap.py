@@ -79,7 +79,7 @@ x = np.linspace(-30, 30, 1e3)
 t0 = 2500
 x0 = 0
 
-plt.imshow(pic,cmap="jet_r",extent=[t[0],t[-1],x[0],x[-1]],aspect='auto',interpolation='nearest')
+plt.imshow(pic,cmap="magma_r",extent=[t[0],t[-1],x[0],x[-1]],aspect='auto',interpolation='nearest')
 plt.plot(t,10*g_t(t)-15, color="white", linewidth=3)
 plt.text(510,-12,r"$g_t(t) $",fontsize=30,color="white")
 plt.xlabel(r"$t  \ (a.u.)$",size=40)
