@@ -1,12 +1,11 @@
 
-#ifndef ALLHEADER_H
-#define ALLHEADER_H
+#pragma once
 
 
 #include <iostream>
 #include <complex>
 
-#include"params/Params.hpp"
+#include "params/Params.hpp"
 #include "params/Params1D.hpp"
 #include "params/Params2D.hpp"
 #include "params/Params3D.hpp"
@@ -35,4 +34,4 @@
 //#include "static/Numerov1D.hpp"
 #include "static/Numerov.cpp"
 
-#endif
+

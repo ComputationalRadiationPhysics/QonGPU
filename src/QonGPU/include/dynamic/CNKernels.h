@@ -10,8 +10,8 @@
 __device__ __host__ cuDoubleComplex pot(double x, double t) {
 	
 	
-	double a = 6.9314718056e-07;
-	double b = 0.0017328679514;
+	double a = 6.9314718055994524e-07;
+	double b = 0.0017328679513998633;
 	double t0 = 2500.0;
 	double w = 0.08607963870836033;
 	double k = w/137;

@@ -201,14 +201,17 @@ void CrankNicolson1D::time_solve() {
         t = tau * (double) i + tmin;
 		DEBUG2("Currently at t = "<< t);
         // Perform RHS multiplication
+        
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i);
 #endif
         rhs_rt(t-tau);
         //fast_mult(chunkr_d, tau, h, xmin);
+
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i+1);
 #endif
+
         cuDoubleComplex check = chunkr_d[100];
         DEBUG2(check);
 
@@ -267,20 +270,11 @@ void CrankNicolson1D::time_solve() {
         assert(check.x < 100);
         assert(check.y < 100);
 
-        if (i % 1000 == 0)
-            saveblank(chunkr_d, &fl, i + 1);
-
-
-        if (i == 1e9) {
-
-            saveblank(chunkr_d, &fl, 1e5);
-            i = 2 * nt;
-
-        }
-
-        //saveblank(chunkl_d, &fl, i + 1);
-    }
-
+        if (i % 100 == 0)
+			saveblank(chunkr_d, &fl, i);
+		
+	}
+ 
     std::cout << "The starting Energy was: " << param->geten() << std::endl;
 
 #ifdef CUSPARSE_ON
