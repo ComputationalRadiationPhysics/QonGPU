@@ -199,7 +199,7 @@ void CrankNicolson1D::time_solve() {
 
 
         t = tau * (double) i + tmin;
-		DEBUG2("Currently at t = "<< t);
+		//DEBUG2("Currently at t = "<< t);
         // Perform RHS multiplication
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i);
@@ -210,7 +210,7 @@ void CrankNicolson1D::time_solve() {
         saveblank(chunkr_d, &cfl, 2*i+1);
 #endif
         cuDoubleComplex check = chunkr_d[100];
-        DEBUG2(check);
+        //DEBUG2(check);
 
 
 
@@ -228,7 +228,7 @@ void CrankNicolson1D::time_solve() {
 #ifdef USE_SPIKE
 
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex, double>(dev_dl, dev_d, dev_du, dev_rhs, nx);
-        DEBUG2("Spike Called!");
+        //DEBUG2("Spike Called!");
 
 #endif
 
@@ -260,14 +260,14 @@ void CrankNicolson1D::time_solve() {
         cudaEventElapsedTime(&t_el, start, stop);
 
         // Debug Messages
-        std::cout << "Generated the " << i << "-th frame" << std::endl;
-        std::cout << "Frame generation time: " << t_el << "ms" << std::endl;
+        //std::cout << "Generated the " << i << "-th frame" << std::endl;
+        //std::cout << "Frame generation time: " << t_el << "ms" << std::endl;
 
 
         assert(check.x < 100);
         assert(check.y < 100);
 
-        if (i % 1000 == 0)
+        if (i % 100 == 0)
             saveblank(chunkr_d, &fl, i + 1);
 
 
