@@ -194,8 +194,8 @@ void CrankNicolson1D::time_solve() {
 #endif
 
 
-    saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < nt; i++) {
+    
+    for (int i = 0; i < 40000; i++) {
 
 
         t = tau * (double) i + tmin;
@@ -263,34 +263,22 @@ void CrankNicolson1D::time_solve() {
         cudaEventElapsedTime(&t_el, start, stop);
 
         // Debug Messages
-        //std::cout << "Generated the " << i << "-th frame" << std::endl;
+        std::cout << "Generated the " << i << "-th frame" << std::endl;
         //std::cout << "Frame generation time: " << t_el << "ms" << std::endl;
 
 
         assert(check.x < 100);
         assert(check.y < 100);
 
-        if (i % 100 == 0)
-<<<<<<< HEAD
-            saveblank(chunkr_d, &fl, i + 1);
-
-
-        if (i == 1e9) {
-
-            saveblank(chunkr_d, &fl, 1e5);
-            i = 2 * nt;
-
-        }
+        //if (i % 100 == 0)
+        //    saveblank(chunkr_d, &fl, i);
+		if(i >= 20000 && i <= 30000)
+			saveblank(chunkr_d, &fl, i);
 
         //saveblank(chunkl_d, &fl, i + 1);
     }
 
-=======
-			saveblank(chunkr_d, &fl, i);
-		
-	}
- 
->>>>>>> d889d83c7d2bc41dd5b4ab0f618a539d5c8faccb
+
     std::cout << "The starting Energy was: " << param->geten() << std::endl;
 
 #ifdef CUSPARSE_ON
