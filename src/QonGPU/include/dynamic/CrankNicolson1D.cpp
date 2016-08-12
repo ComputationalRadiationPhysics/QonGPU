@@ -194,23 +194,26 @@ void CrankNicolson1D::time_solve() {
 #endif
 
 
-    saveblank(chunkl_d, &fl, 0);
-    for (int i = 0; i < nt; i++) {
+    
+    for (int i = 0; i < 40000; i++) {
 
 
         t = tau * (double) i + tmin;
-		DEBUG2("Currently at t = "<< t);
+		//DEBUG2("Currently at t = "<< t);
         // Perform RHS multiplication
+        
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i);
 #endif
         rhs_rt(t-tau);
         //fast_mult(chunkr_d, tau, h, xmin);
+
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i+1);
 #endif
+
         cuDoubleComplex check = chunkr_d[100];
-        DEBUG2(check);
+        //DEBUG2(check);
 
 
 
@@ -228,7 +231,7 @@ void CrankNicolson1D::time_solve() {
 #ifdef USE_SPIKE
 
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex, double>(dev_dl, dev_d, dev_du, dev_rhs, nx);
-        DEBUG2("Spike Called!");
+        //DEBUG2("Spike Called!");
 
 #endif
 
@@ -261,25 +264,20 @@ void CrankNicolson1D::time_solve() {
 
         // Debug Messages
         std::cout << "Generated the " << i << "-th frame" << std::endl;
-        std::cout << "Frame generation time: " << t_el << "ms" << std::endl;
+        //std::cout << "Frame generation time: " << t_el << "ms" << std::endl;
 
 
         assert(check.x < 100);
         assert(check.y < 100);
 
-        if (i % 1000 == 0)
-            saveblank(chunkr_d, &fl, i + 1);
-
-
-        if (i == 1e9) {
-
-            saveblank(chunkr_d, &fl, 1e5);
-            i = 2 * nt;
-
-        }
+        //if (i % 100 == 0)
+        //    saveblank(chunkr_d, &fl, i);
+		if(i >= 20000 && i <= 30000)
+			saveblank(chunkr_d, &fl, i);
 
         //saveblank(chunkl_d, &fl, i + 1);
     }
+
 
     std::cout << "The starting Energy was: " << param->geten() << std::endl;
 

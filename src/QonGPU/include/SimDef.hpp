@@ -14,11 +14,8 @@ class SimDef{
   
 public:
 
-    SimDef(Params1D *p):da(p), s(p),t(p), psi0(p->getnx()){
-       
-    }
-
-    SimDef(Params2D *p):da(p) {}
+    SimDef(Params1D *p):da(p), s(p),t(p), psi0(p->getnx()){}
+    SimDef(Params2D<double> *p):da(p) {}
     SimDef(Params3D *p):da(p) {}
 
     void staticsolve() {

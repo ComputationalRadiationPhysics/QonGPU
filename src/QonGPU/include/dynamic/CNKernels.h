@@ -10,12 +10,12 @@
 __device__ __host__ cuDoubleComplex pot(double x, double t) {
 	
 	
-	double a = 6.9314718056e-07;
-	double b = 0.0017328679514;
+	double a =  6.9314718055994524e-07;
+	double b = 0.0069314718056;
 	double t0 = 2500.0;
 	double w = 0.08607963870836033;
 	double k = w/137;
-	double I = 1.0;
+	double I = 1.2;
 	// Only have time-dependence if t>0
 	
 	
@@ -169,8 +169,7 @@ __global__ void update_diagl( cuDoubleComplex* d,
                               double t) {
 
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
-	if(tid == 1000)
-			printf("Diagonal update called! \n");
+	
 
     int oset = blockDim.x * gridDim.x;
     cuDoubleComplex t1 = make_cuDoubleComplex( tau / 2.0 ,0);
