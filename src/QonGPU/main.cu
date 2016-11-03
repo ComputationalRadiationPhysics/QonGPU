@@ -4,7 +4,13 @@
 //#define STATUS(x) std::cout<<x<<"...";
 //#define ENDSTATUS std::cout<<"DONE!"<<std::endl;
 
+// Current workaround in order to 
+// Curcumvent a refactor of the 
+// potential function in CNKernels.h
+#define TMAX 5000.0
+
 #include "include/SimDef.hpp"
+
 
 
 int main(int argc, char** argv) {
@@ -18,7 +24,7 @@ int main(int argc, char** argv) {
 
     double xma = 30.0;
     double xmi = -xma;
-    double tma = 5000.0;
+    double tma = TMAX;
     double tmi = 0.0;
     cudaDeviceReset();
     Params1D p(xma, xmi, tma, tmi, 1e5, 1e5, 1e8,1,str);

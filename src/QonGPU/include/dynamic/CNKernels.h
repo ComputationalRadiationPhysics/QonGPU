@@ -10,13 +10,11 @@
 
 __device__ __host__ inline cuDoubleComplex pot(double x, double t) {
 	
-	const double weight = 1;
+	const double weight = 0.01;
 	
-	double tmod = t % CUDART_PI_F/2;
+	double y = x * sin(t * CUDART_PI_F / TMAX);
 	
-	double y = x * tan(tmod);
-	
-	double res = -1/sqrt(x*x+1) - y * weight;
+	double res = - 1/sqrt(x*x+1) - y * weight;
 	
 	return make_cuDoubleComplex(res, 0);
     
