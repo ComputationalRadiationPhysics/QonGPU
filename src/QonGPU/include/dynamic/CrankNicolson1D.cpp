@@ -270,10 +270,9 @@ void CrankNicolson1D::time_solve() {
         assert(check.x < 100);
         assert(check.y < 100);
 
-        //if (i % 100 == 0)
-        //    saveblank(chunkr_d, &fl, i);
-		if(i >= 20000 && i <= 30000)
-			saveblank(chunkr_d, &fl, i);
+        if (i % 10 == 0)
+            saveblank(chunkr_d, &fl, i);
+		
 
         //saveblank(chunkl_d, &fl, i + 1);
     }

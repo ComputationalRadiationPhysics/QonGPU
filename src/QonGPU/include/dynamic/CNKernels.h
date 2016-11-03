@@ -1,28 +1,22 @@
-//
-// Created by zaph0d on 27/04/16.
-//
+/**
+ * Created by s0vereign on 27/04/16.
+ **/
+ 
 #pragma once
 
 #ifndef CUDART_PI_F
 #define CUDART_PI_F 3.141592653589793
 #endif
 
-__device__ __host__ cuDoubleComplex pot(double x, double t) {
+__device__ __host__ inline cuDoubleComplex pot(double x, double t) {
 	
+	const double weight = 1;
 	
-	double a =  6.9314718055994524e-07;
-	double b = 0.0069314718056;
-	double t0 = 2500.0;
-	double w = 0.08607963870836033;
-	double k = w/137;
-	double I = 1.2;
-	// Only have time-dependence if t>0
+	double tmod = t % CUDART_PI_F/2;
 	
+	double y = x * tan(tmod);
 	
-	double g1 = exp(-a*(t-t0)*(t-t0));
-	double g2 = exp(-b*x*x);
-	double f = pow(sin(w*t - k*x),1);
-	double res = -1/sqrt(x*x+1) + f*I*g1*g2;
+	double res = -1/sqrt(x*x+1) - y * weight;
 	
 	return make_cuDoubleComplex(res, 0);
     
