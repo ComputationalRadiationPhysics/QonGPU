@@ -10,7 +10,8 @@ public:
              double xmi,
              double tma,
              double tmi,
-             int gridX,int gridT,
+             int gridX,
+             int gridT,
              int gridE,
              double zin,
              std::string name):

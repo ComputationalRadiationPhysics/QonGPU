@@ -90,7 +90,7 @@ void Numerov::solve(){
                                     cudaMemcpyHostToDevice));
             
             
-            En = dE * (double) index -0.2748;
+            En = dE * (double) index;
             DEBUG2("Calculating with Energy: "<<En);
             iter1 <<< 1024, 8 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 			
@@ -98,7 +98,8 @@ void Numerov::solve(){
             
             
             
-            if(bisect(En, numlvl)) index = ne;
+            if(bisect(En, numlvl))
+				
 
 			
             index += CHUNKSIZE;
@@ -107,8 +108,8 @@ void Numerov::solve(){
         cudaFree(dev_ptr);
     }
     // After all the calculations done we can save our energy levels!
-    prepstates();
-    //savelevels();
+    //prepstates();
+    savelevels();
 
 }
 
@@ -129,7 +130,7 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    file_id = H5Fcreate("sim1.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    file_id = H5Fcreate("levels_60_au.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     hsize_t dims = res.size();
 
@@ -174,14 +175,11 @@ int Numerov::bisect(double j, int& numelvl) {
     double dE =  V(0,0,z)/ne;
     double En = 0;
 
-//#pragma omp parallel for
     for( auto i = 2 * off - 1 ; i < chunk.size(); i += nx){
 
-        //DEBUG2("1. chunk[i] = "<< chunk[i]);
-        //DEBUG2("2. chunk[i-nx] = " << chunk[i - nx]);
         if(sign( chunk[ i ]) != sign( chunk[ i - nx])){
 
-            if( (fabs( chunk[ i]) < fabs( chunk[i - nx])) /*&& (abs(chunk[i])<1e-3)*/) {
+            if( (fabs( chunk[ i]) < fabs( chunk[i - nx]))) {
 
                 res.resize(res.size()+nx);
                 auto iter = res.end()-nx;
@@ -199,7 +197,6 @@ int Numerov::bisect(double j, int& numelvl) {
             }
             else {
 
-                // if(abs(chunk[i-nx])<1e-3) {
                     res.resize(res.size()+nx);
                     auto iter = res.end()-nx+1;
                     std::copy(it+i,it+i+nx,iter);
@@ -215,7 +212,6 @@ int Numerov::bisect(double j, int& numelvl) {
                         return 1;
                     numelvl += 1;
 
-               // }
 
             }
 

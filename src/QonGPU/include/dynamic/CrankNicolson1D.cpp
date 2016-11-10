@@ -130,14 +130,17 @@ void CrankNicolson1D::setstate(const thrust::host_vector<cuDoubleComplex>& v) {
 
 
 void CrankNicolson1D::time_solve() {
+	
+	DEBUG2("Numer of timesteps is "<< nt);
 
+	
     // Define HDF5 File
     hid_t fl = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 #ifdef MATRIX_OUTPUT
     hid_t cfl = H5Fcreate("matr.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 #endif
-
+	
     // Write Parameters and define h as our discretization step
     write_p(&fl);
     double h = (xmax - xmin) / (double) nx;

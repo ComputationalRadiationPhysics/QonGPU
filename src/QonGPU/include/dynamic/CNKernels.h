@@ -10,7 +10,7 @@
 
 __device__ __host__ inline cuDoubleComplex pot(double x, double t) {
 	
-	const double weight = 0.05;
+	const double weight = 0.1;
 	
 	double y = x * sin(t * CUDART_PI_F / TMAX);
 	
