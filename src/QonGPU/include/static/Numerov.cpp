@@ -4,6 +4,24 @@
 #include "Numerov.hpp"
 #include <cmath>
 
+
+
+/*
+ * 
+ * 
+ * 
+ * The energy levels for 60 au are:
+ *       (0): -0.00368948, -0.00688858, -0.00980131, -0.0122566, -0.0148239,
+ *       (5): -0.0177232, -0.0217049, -0.0268864, -0.0345997, -0.045489,
+ *       (10): -0.0635267, -0.0926793, -0.151455, -0.274891, -0.669777
+ * 
+ * 
+ * 		Note: The last level is the 1s state!
+ * 
+ * 
+ * 
+ * */
+
 static void HandleError( cudaError_t err,
                          const char *file,
                          int line ) {
