@@ -24,8 +24,8 @@ Numerov::Numerov(Params1D *pa): param(pa),
                                 ne(pa->getne()),
                                 z(pa->getz()),
                                 xmax(pa->getxmax()),
-                                xmin(pa->getxmin())
-                                 {
+                                xmin(pa->getxmin())                                 
+{
 
     // initialize the cache, with the inital values
     for(auto it = cache.begin(); it != cache.end(); it += nx) {
@@ -43,7 +43,7 @@ Numerov::Numerov(Params1D *pa): param(pa),
 Numerov::~Numerov(){}
 
 void Numerov::solve(){
-    // This Loop is used to create
+	
     for(auto j = 1; j < 2; j++) {
         
         z = j;
@@ -90,7 +90,7 @@ void Numerov::solve(){
                                     cudaMemcpyHostToDevice));
             
             
-            En = dE * (double) index;
+            En = dE * (double) index -0.2748;
             DEBUG2("Calculating with Energy: "<<En);
             iter1 <<< 1024, 8 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 			
@@ -99,7 +99,9 @@ void Numerov::solve(){
             
             
             if(bisect(En, numlvl))
-				
+			{
+				index += ne; 
+			}			
 
 			
             index += CHUNKSIZE;
@@ -108,8 +110,8 @@ void Numerov::solve(){
         cudaFree(dev_ptr);
     }
     // After all the calculations done we can save our energy levels!
-    //prepstates();
-    savelevels();
+    prepstates();
+    //savelevels();
 
 }
 
@@ -130,7 +132,7 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    file_id = H5Fcreate("levels_60_au.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    file_id = H5Fcreate("levels_90_au.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     hsize_t dims = res.size();
 
@@ -263,7 +265,7 @@ void Numerov::norm_corr( double* psi) {
     }
 
     temp *= 2.0;
-    temp -= (psi[0]*psi[0] + psi[nx] * psi[nx]);
+    temp -= (psi[0]*psi[0] + psi[nx-1] * psi[nx-1]);
     temp *= h / 2.0;
     
     temp = 1/sqrt(temp);
@@ -298,7 +300,7 @@ void Numerov::prepstates() {
 void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 
 	// get index inside the results array
-    int o = nx*ind;
+	int o = nx*ind;
 
 	// Define vectors to copy values in, since casting to cuDoubleComplex
 	// is not that trivial!
@@ -339,7 +341,7 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     
     double pre = real[nx-2]/abs(real[nx-2]);
     
-    corr[ nx-2] = pre * 1e-7;
+    corr[ nx-2] = 1e-8;
     
     double* psi = thrust::raw_pointer_cast( corr.data());
     
@@ -355,8 +357,6 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     
     hid_t file = H5Fcreate("corr_wf.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     hsize_t dims = nx;
-    H5LTmake_dataset( file, "/numres", 1, &dims, H5T_NATIVE_DOUBLE,
-                      psi);
     
    
     int unclose = 1; 
@@ -364,9 +364,10 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     int count = nx-1; 
     
     
-    while( unclose) {
+    while(unclose) {
 		
-		if( fabs(corr[count] - real[count]) < 1e-8 ) {
+		DEBUG2(fabs(corr[count]) << " " << fabs(real[count]));
+		if( fabs(corr[count] - real[count]) < 1e-12 ) {
 			
 			cindex  = count;
 			unclose = 0;
@@ -382,6 +383,9 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 		real[i] = corr[ i];
 		
 	}
+	
+	
+    
     
     norm_corr(thrust::raw_pointer_cast( real.data()));
 	
@@ -390,10 +394,14 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 		v[i] = make_cuDoubleComplex( real[i], 0);
 		
 	}
+	
     
-    
-    
+    H5LTmake_dataset( file, "/numres", 1, &dims, H5T_NATIVE_DOUBLE, 
+	thrust::raw_pointer_cast(real.data()));
     
     param->seten( eval[ind]);
-
+    
+	H5Fclose(file);
+    
+	
 }

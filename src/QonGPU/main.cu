@@ -13,6 +13,7 @@
 
 
 
+
 int main(int argc, char** argv) {
 
     if(argc < 2){
@@ -27,12 +28,11 @@ int main(int argc, char** argv) {
     double tma = TMAX;
     double tmi = 0.0;
     cudaDeviceReset();
-    Params1D p(xma, xmi, tma, tmi, 1e5, 3e5, 1e8,1,str);
+    Params1D p(xma, xmi, tma, tmi, 1e5, 1e5, 1e8,1,str);
 	SimDef<Numerov, CrankNicolson1D, Core1D, Params1D, 1> s(&p);
 #ifndef TOTEST
     s.staticsolve();
-
-    //s.timerev();
+    s.timerev();
 #endif
     return EXIT_SUCCESS;
 

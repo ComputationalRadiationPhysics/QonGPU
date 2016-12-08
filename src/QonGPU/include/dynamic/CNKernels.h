@@ -1,4 +1,4 @@
-/**
+/*
  * Created by s0vereign on 27/04/16.
  **/
  
@@ -10,9 +10,21 @@
 
 __device__ __host__ inline cuDoubleComplex pot(double x, double t) {
 	
-	const double weight = 0.1;
+	const double weight = 0.07;
 	
-	double y = x * sin(t * CUDART_PI_F / TMAX);
+	if(t>800.0)
+	{
+		t = 800.0;
+	}
+	
+	if(x > 10.0)
+	{
+		x = 0.0;
+	}
+	
+	double y = x * sin(t/2 * CUDART_PI_F / TMAX);
+	
+	
 	
 	double res = - 1/sqrt(x*x+1) - y * weight;
 	

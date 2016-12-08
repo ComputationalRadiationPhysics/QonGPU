@@ -1,0 +1,37 @@
+
+	This module will set up environment variables
+	for PSM-Infinipath (QLogic).
+
+	This module will set up environment variables
+	for PSM-Infinipath (QLogic).
+
+	This module will set up environment variables for gcc/5.3.0.
+gcc/5.3.0(78):ERROR:150: Module 'gcc/5.3.0' conflicts with the currently loaded module(s) 'gcc/4.9.2'
+gcc/5.3.0(78):ERROR:102: Tcl command execution failed: conflict gcc
+
+boost(9):ERROR:105: Unable to locate a modulefile for 'boost/1.5.6'
+
+	This module will set up environment variables for cmake/3.3.0.
+
+	This module will set up environment variables
+	for PSM-Infinipath (QLogic).
+
+	This module will set up environment variables
+	for PSM-Infinipath (QLogic).
+
+	This module will set up environment variables
+	for the Message-Passing Interface environment openmpi/1.8.0.
+openmpi/1.8.0(76):ERROR:150: Module 'openmpi/1.8.0' conflicts with the currently loaded module(s) 'openmpi/1.8.4'
+openmpi/1.8.0(76):ERROR:102: Tcl command execution failed: conflict openmpi
+
+
+	This module will set up environment variables for hdf5/1.8.14.
+
+	This module will set up environment variables for cuda/7.5.
+
+	This module will set up environment variables
+	for tex/texlive/2012.
+/opt/pkg/devel/cuda/7.5/lib64/libcusparse.so
+-- Using CUDA
+mv: »./build/qsolve“ und »./build/qsolve“ sind die gleiche Datei
+./configure_60_au: Zeile 34: testBin/test1: Datei oder Verzeichnis nicht gefunden

@@ -59,17 +59,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 #Find Cuda
 find_package(CUDA REQUIRED)
-#set(LIBS ${LIBS} ${CUDA_LIBRARIES})
-#set(LIBS ${LIBS} ${CUDA_CUBLAS_LIBRARIES})
 set(LIBS ${LIBS} ${CUDA_cusparse_LIBRARY})
+
 # set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" -Xptxas=-v)
 set(CUDA_CXX_FLAGS "${CUDA_CXX_FLAGS} -arch=sm_35")
 message("${CUDA_cusparse_LIBRARY}")
-#message("${CUDA_LIBRARIES}")
-#Find MPI
-#find_package(MPI REQUIRED)
-#set(LIBS "${LIBS} ${MPI_LIBRARIES}")
-#set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS})
+
 
 #Find HDF5 Package for file IO
 FIND_PACKAGE(HDF5 COMPONENTS HL )
@@ -82,10 +77,6 @@ find_package(Boost COMPONENTS unit_test_framework )
 include_directories(${BOOST_INCLUDE_DIR})
 set(LIBS ${LIBS} ${BOOST_LIBRARIES})
 
-# find openMP
-#find_package(OpenMP REQUIRED)
-#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 
 ADD_DEFINITIONS(-D__STRICT_ANSI__)
 if(${CUDA_FOUND})
