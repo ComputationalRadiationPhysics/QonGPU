@@ -22,11 +22,11 @@ __device__ __host__ inline cuDoubleComplex pot(double x, double t) {
 		x = 0.0;
 	}
 	
-	//double y = x * sin(t/2 * CUDART_PI_F / TMAX);
+	double y = x * sin(t/2 * CUDART_PI_F / TMAX);
 	
 	
 	
-	double res = - 1/sqrt(x*x+1);// - y * weight;
+	double res = - 1/sqrt(x*x+1) - y * weight;
 	
 	return make_cuDoubleComplex(res, 0);
     

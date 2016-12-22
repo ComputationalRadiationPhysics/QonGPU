@@ -108,7 +108,7 @@ void Numerov::solve(){
                                     cudaMemcpyHostToDevice));
             
             
-            En = dE * (double) index -0.2748;
+            En = dE * (double) index -0.6697;
             DEBUG2("Calculating with Energy: "<<En);
             iter1 <<< 1024, 8 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
 			
@@ -373,7 +373,7 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     
     norm_corr(psi);
     
-    hid_t file = H5Fcreate("corr_wf.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t file = H5Fcreate("45_au_s1.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     hsize_t dims = nx;
     
    
@@ -384,15 +384,21 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     
     while(unclose) {
 		
-		DEBUG2(fabs(corr[count]) << " " << fabs(real[count]));
-		if( fabs(corr[count] - real[count]) < 1e-12 ) {
+		//DEBUG2(fabs(corr[count]) << " " << fabs(real[count]));
+		if( fabs(fabs(corr[count]) - fabs(real[count])) <= 1e-16 ) {
 			
 			cindex  = count;
+			DEBUG2("cindex="<<cindex);
 			unclose = 0;
 		}
+	
 		
 		count -= 1;
-	 	
+		if(count==0)
+		{
+			cindex=0;
+			unclose=0;
+		}
 	}
     
     
