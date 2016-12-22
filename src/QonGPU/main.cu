@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
 	SimDef<Numerov, CrankNicolson1D, Core1D, Params1D, 1> s(&p);
 #ifndef TOTEST
     s.staticsolve();
-    s.timerev();
+    //s.timerev();
 #endif
     return EXIT_SUCCESS;
 
