@@ -21,6 +21,9 @@
  * 
  * 
  * */
+ 
+ #define CLEVEL -0.2748
+ #define FSTRING "t.h5"
 
 static void HandleError( cudaError_t err,
                          const char *file,
@@ -108,7 +111,7 @@ void Numerov::solve(){
                                     cudaMemcpyHostToDevice));
             
             
-            En = dE * (double) index -0.6697;
+            En = dE * (double) index + CLEVEL;
 
             DEBUG2("Calculating with Energy: "<<En);
             iter1 <<< 1024, 8 >>> (dev_ptr, nx, dev_ne, xmax, xmin, z, En, dE);
@@ -129,8 +132,8 @@ void Numerov::solve(){
         cudaFree(dev_ptr);
     }
     // After all the calculations done we can save our energy levels!
-    //prepstates();
-    savelevels();
+    prepstates();
+    //savelevels();
 
 }
 
@@ -151,7 +154,7 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    file_id = H5Fcreate("90_au_s6.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    file_id = H5Fcreate("45_au_s2.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     hsize_t dims = res.size();
 
@@ -374,7 +377,7 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     
     norm_corr(psi);
     
-    hid_t file = H5Fcreate("45_au_s1.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t file = H5Fcreate(FSTRING, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     hsize_t dims = nx;
     
    
@@ -386,7 +389,7 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
     while(unclose) {
 		
 		//DEBUG2(fabs(corr[count]) << " " << fabs(real[count]));
-		if( fabs(fabs(corr[count]) - fabs(real[count])) <= 1e-16 ) {
+		if( fabs(fabs(corr[count]) - fabs(real[count])) <= 1e-10 ) {
 
 			
 			cindex  = count;
@@ -394,12 +397,13 @@ void Numerov::copystate(int ind, thrust::host_vector<cuDoubleComplex>& v) {
 			unclose = 0;
 		}
 	
-		
 		count -= 1;
 		if(count==0)
 		{
 			cindex=0;
 			unclose=0;
+			DEBUG2("No Unification point found!");
+			
 		}
 	}
     

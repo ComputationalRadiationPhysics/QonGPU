@@ -10,13 +10,13 @@
 
 __device__ __host__ inline cuDoubleComplex pot(double x, double t) {
 	
-	const double weight = 0.07;
-	/*
+	const double weight = 0.05;
+	
 	if(t>1000.0)
 	{
 		t =1000.0;
 	}
-	*/
+	
 	if(x > 7.0)
 	{
 		x = 0.0;
