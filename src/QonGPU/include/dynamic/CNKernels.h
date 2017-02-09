@@ -1,7 +1,7 @@
 /*
  * Created by s0vereign on 27/04/16.
  **/
- 
+
 #pragma once
 
 #ifndef CUDART_PI_F
@@ -9,27 +9,42 @@
 #endif
 
 __device__ __host__ inline cuDoubleComplex pot(double x, double t) {
-	
+
+    /*
 	const double weight = 0.05;
-	
+
 	if(t>1000.0)
 	{
 		t =1000.0;
 	}
-	
+
 	if(x > 7.0)
 	{
 		x = 0.0;
 	}
-	
+
 	double y = x * sin(t/2 * CUDART_PI_F / TMAX);
-	
-	
-	
+
+
+
 	double res = - 1/sqrt(x*x+1) - y * weight;
-	
+	*/
+    double a =  6.9314718055994524e-07;
+	double b = 0.0017328679513998633;
+	double t0 = 2500.0;
+	double w = 0.12343599999999999;
+	double k = w/137;
+	double I = 0.6;
+	// Only have time-dependence if t>0
+
+
+	double g1 = exp(-a*(t-t0)*(t-t0));
+	double g2 = exp(-b*x*x);
+	double f = pow(sin(w*t - k*x),1);
+	double res = -1/sqrt(x*x+1) + f*I*g1*g2;
+
 	return make_cuDoubleComplex(res, 0);
-    
+
 }
 
 
@@ -173,7 +188,7 @@ __global__ void update_diagl( cuDoubleComplex* d,
                               double t) {
 
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
-	
+
 
     int oset = blockDim.x * gridDim.x;
     cuDoubleComplex t1 = make_cuDoubleComplex( tau / 2.0 ,0);
