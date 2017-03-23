@@ -170,10 +170,7 @@ void CrankNicolson1D::time_solve() {
     //saveblank(du, &cfl, 1);
 
     // Use cudaevent for time measurement!
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    float t_el = 0;
+
 
     // save copy!
     // saveblank(chunkl_d, &fl, 0);
@@ -195,43 +192,39 @@ void CrankNicolson1D::time_solve() {
 
 
     
+    double progress = 0;
+    int BarWidth = 70;
     for (int i = 0; i < nt; i++) {
 
 
-        t = tau * (double) i + tmin;
-		//DEBUG2("Currently at t = "<< t);
-        // Perform RHS multiplication
+            t = tau * (double) i + tmin;
+            // Perform RHS multiplication
         
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i);
 #endif
         rhs_rt(t-tau);
-        //fast_mult(chunkr_d, tau, h, xmin);
-
+        
 #ifdef MATRIX_OUTPUT
         saveblank(chunkr_d, &cfl, 2*i+1);
 #endif
 
-        cuDoubleComplex check = chunkr_d[100];
-        //DEBUG2(check);
-
+        
 
 
         // first perform the RHS Matrix multiplication!
         // Then update the non-constant main-diagonal!
 
         update_diagl <<< 512, 3 >>> (dev_d, tau, h, xmin, nx,  t);
-        //update_mdiag(d, tau, h, xmin);
-        //saveblank(d,  &cfl, i+1);
-        //update_mdiag(d, tau, h, xmin);
+        
         // right after that, we can call the cusparse Library
         // to write the Solution to the LHS chunkd
-        cudaEventRecord(start);
+        //cudaEventRecord(start);
         //fast_mult(chunkr_d, tau, h, xmin);
+
 #ifdef USE_SPIKE
 
         gtsv_spike_partial_diag_pivot_v1<cuDoubleComplex, double>(dev_dl, dev_d, dev_du, dev_rhs, nx);
-        //DEBUG2("Spike Called!");
 
 #endif
 
@@ -252,33 +245,37 @@ void CrankNicolson1D::time_solve() {
 
 #endif
 
-        cudaEventRecord(stop);
 
         // Write RHS to LHS
         thrust::copy(chunkr_d.begin(), chunkr_d.end(), chunkl_d.begin());
 
-
-        // Calculate Time
-        cudaEventSynchronize(stop);
-        cudaEventElapsedTime(&t_el, start, stop);
+        
 
         // Debug Messages
-        std::cout << "Generated the " << i << "-th frame" << std::endl;
-        //std::cout << "Frame generation time: " << t_el << "ms" << std::endl;
 
 
-        assert(check.x < 100);
-        assert(check.y < 100);
 
         if (i % 100 == 0)
+        {
             saveblank(chunkr_d, &fl, i);
-		//if(i >= 20000 && i <= 30000)
-		//	saveblank(chunkr_d, &fl, i);
-
-        //saveblank(chunkl_d, &fl, i + 1);
+        }
+        if(i % 1000 == 0)
+        {
+            std::cout << "[";
+            int pos = BarWidth * progress;
+            for(int k = 0; k < BarWidth; k++)
+            {
+                if(k < pos) std::cout << "=";
+                else if(k==pos) std::cout << ">";
+                else std::cout << " ";
+            }
+            std::cout << "]" << int(progress*100 ) << "%\r";
+            std::cout.flush();
+        }
+        progress += 1.0/double(nt);
     }
 
-
+    std::cout << std::endl;
     std::cout << "The starting Energy was: " << param->geten() << std::endl;
 
 #ifdef CUSPARSE_ON
