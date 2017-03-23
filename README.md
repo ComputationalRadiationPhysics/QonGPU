@@ -1,12 +1,12 @@
 # QonGPU
 
-Program from my Bachelorthesis. Its main purpose is to simulate a time resolved 1D ionization with some
+Program from my bachelorthesis. Its main purpose is to simulate a time resolved 1D ionization with some
 python tools to analyze the data.
 
 ## Method
-For any given arbitrary potential
+The solver algorithms are described in my bachelorthesis, which I will link this project to as soon as I have the time to upload a complete corrected version of it. 
 
-##Dependencies
+## Dependencies
 1. CMake >= 3.0
 2. Boost >= 1.5.6
 3. GCC >= 4.9.2
@@ -14,7 +14,7 @@ For any given arbitrary potential
 5. Python 3: Matplotlib & Numpy for data analysis
 6. CUDA comptible with GCC >= 4.9.2
 
-##Building
+## Building
 Since this is single-node HPC application only Linux is currently supported. 
 
 ```{r, engine='bash', count_lines}
