@@ -33,3 +33,4 @@ simres/*
 image/*.pdf
 image/*.png
 *.gch
+.vscode
