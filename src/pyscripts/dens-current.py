@@ -31,22 +31,13 @@ def load_vals(filepath, nt, nx, nstep):
     """
     Loads the whole time dependent wave-function in memory.
     """
-    psi_t = np.zeros([nt,nx])
+    psi_t = np.zeros([nt,nx], dtype=complex)
     print("Loading file")
     with progressbar.ProgressBar(max_value=int(nt)) as bar:
         for i  in range(0, nt, nstep):
-            psi_t[i] = load_timestep(filepath, nt)
+            psi_t[i] = load_timestep(filepath, i)
             bar.update(i)
     return psi_t
-    
-
-def conjugate(psi):
-    """
-    Build the complex conjugate for each timestep 
-    t of psi and returns it.
-    """
-    psi_conj = np.conj(psi)
-    return psi_conj
 
 
 def get_imag_grad(psi, h):
@@ -56,7 +47,9 @@ def get_imag_grad(psi, h):
     interval should be a tuple of indexes, from when to where to
     differentiate from.  
     """
-    psi_conj = conjugate(psi)
+    print("Calculating gradient")
+    print("Calculating conjugate")
+    psi_conj = np.conj(psi)
     psi_diff = np.gradient(psi_conj, h, axis=1)
     return psi_diff
 
@@ -64,11 +57,12 @@ def get_prob_current(psi, psi_diff):
     """
     Calculates the probability current Im{psi d/dx psi^*}. 
     """
+    print("Calculating probability current")
     curr = psi*psi_diff
     return curr.imag
 
 
-def integrate_prob_current(psi, x0, x1, h):
+def integrate_prob_current(psi, n0, n1, h):
     """
     Numerically integrate the probability current, which is
     Im{psi d/dx psi^*} over the given spatial interval. 
@@ -76,9 +70,6 @@ def integrate_prob_current(psi, x0, x1, h):
     psi_diff = get_imag_grad(psi, h)
     curr = get_prob_current(psi, psi_diff)
     
-    # Using an int32 as indexes
-    n0 = np.int32(x0/h)
-    n1 = np.int32(x1/h)
     res = np.zeros(psi.shape[0])
     with progressbar.ProgressBar(max_value=int(psi.shape[0])) as bar:
         for i in range(0, psi.shape[0]):
@@ -90,10 +81,11 @@ def integrate_prob_current(psi, x0, x1, h):
 def main():
 
     filepath = "../../simres/sim_axel.h5"
-    nx = 1e5
-    nt = 1e5
+    nx = np.int32(1e5)
+    nt = np.int32(1e5)
     nstep = 100
     psi = load_vals(filepath, nt, nx, nstep)
+    integrate_prob_current(psi, 50000, 70000, 0.0006)
 
 if __name__ == "__main__":
     main()
