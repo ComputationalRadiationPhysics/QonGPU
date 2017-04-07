@@ -1,4 +1,5 @@
 build/
+src/pyscripts/qongpu
 build/*
 CMakeCache.txt
 Makefile
