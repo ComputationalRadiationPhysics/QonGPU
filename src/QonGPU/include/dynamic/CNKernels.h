@@ -11,22 +11,23 @@ __device__ __host__ cuDoubleComplex pot(double x, double t) {
 	
 	const double a = 6.9314718055994524e-07;
     const double b = 0.0069314718056;
-    const double t0 = 2500.0;
-    const double w = 0.011465666618940851;
-    const double k = w/137;
-    const double I = 3.0;
+    const double t0 = 50.0;
+    const double w = 1.51939;
+    const double k = w/137.0;
+    const double I = 30.0;
     // Only have time-dependence if t>0
 
 
     double g1 = exp(-a*(t-t0)*(t-t0));
     double g2 = exp(-b*x*x);
     double f = I*sin(w*t - k*x);
-    double c = 0; 
-    if(t<2500)
+    double c = 0;
+     
+    if(t<t0)
     {
-        c = g1*f;
+        c = t/t0*f;
     }
-    if(t>2500)
+    if(t>=t0)
     {
         c = f;
     }
