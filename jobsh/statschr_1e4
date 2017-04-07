@@ -12,6 +12,7 @@ module purge
 source ~/module_setup
 echo "Start..."
 
+
 ./configure2.sh
 
 echo "End..."

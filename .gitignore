@@ -1,4 +1,5 @@
 build/
+src/pyscripts/qongpu
 build/*
 CMakeCache.txt
 Makefile
@@ -11,6 +12,17 @@ qsolve
 #*
 .#*
 *~
+*.idea
+std*
+*.bak
+np
+plt 
+stat*
+configure2.sh
+configure_60_au
+configure_90_au
+._.DS_Store
+.DS_Store
 *#
 .ipynb_checkpoints/
 *.swo
@@ -19,3 +31,7 @@ qsolve
 *.h5
 simres/
 simres/*
+image/*.pdf
+image/*.png
+*.gch
+.vscode
