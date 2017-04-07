@@ -5,12 +5,13 @@ import time
 import progressbar
 import sys
 
+
 def load_timestep(filepath,nt,t0=0,):
     """
     Load a timestep from a result file
     and returns it as a complex numpy array.
-    
     """
+
     file = h5py.File(filepath)
     rl = "/dset"+str(nt)+"real"
     im = "/dset"+str(nt)+"img"
@@ -31,11 +32,11 @@ def load_vals(filepath, nt, nx, nstep):
     """
     Loads the whole time dependent wave-function in memory.
     """
-    psi_t = np.zeros([nt,nx], dtype=complex)
+    psi_t = np.zeros([np.int32(nt/nstep),nx], dtype=complex)
     print("Loading file")
     with progressbar.ProgressBar(max_value=int(nt)) as bar:
         for i  in range(0, nt, nstep):
-            psi_t[i] = load_timestep(filepath, i)
+            psi_t[int(i/nstep)] = load_timestep(filepath, i)
             bar.update(i)
     return psi_t
 
@@ -47,10 +48,15 @@ def get_imag_grad(psi, h):
     interval should be a tuple of indexes, from when to where to
     differentiate from.  
     """
-    print("Calculating gradient")
     print("Calculating conjugate")
-    psi_conj = np.conj(psi)
+    psi_conj = np.zeros(psi.shape, dtype=complex)
+    with progressbar.ProgressBar(max_value=int(psi.shape[0])) as bar:
+        for i in range(0, psi.shape[0]):
+            psi_conj[i] = np.conjugate(psi[i,:])
+            bar.update(i)
+    print("Calculating gradient...")
     psi_diff = np.gradient(psi_conj, h, axis=1)
+    print("Finished gradient!")
     return psi_diff
 
 def get_prob_current(psi, psi_diff):
@@ -59,7 +65,7 @@ def get_prob_current(psi, psi_diff):
     """
     print("Calculating probability current")
     curr = psi*psi_diff
-    return curr.imag
+    return -curr.imag
 
 
 def integrate_prob_current(psi, n0, n1, h):
@@ -75,17 +81,28 @@ def integrate_prob_current(psi, n0, n1, h):
         for i in range(0, psi.shape[0]):
             res [i] = np.trapz(curr[i,n0:n1], dx=h)
             bar.update(i)
-    
+    print("Finished calculating the integrated prob. current!")
     return res
 
-def main():
+def integrate_prob(psi, n0, n1, h):
+    """
+    Integrate the |psi|^2
+    """
+    res = np.zeros(psi.shape[0])
+    with progressbar.ProgressBar(max_value=int(psi.shape[0])) as bar:
+        for i in range(0, psi.shape[0]):
+            res[i] = np.trapz(np.abs(psi[i,n0:n1])**2,dx=h)
+            bar.update(i)
+    return res
 
-    filepath = "../../simres/sim_axel.h5"
-    nx = np.int32(1e5)
-    nt = np.int32(1e5)
-    nstep = 100
-    psi = load_vals(filepath, nt, nx, nstep)
-    integrate_prob_current(psi, 50000, 70000, 0.0006)
 
-if __name__ == "__main__":
-    main()
+def get_prob_dens(psi, nt, nstep):
+    """
+    Calculates the probability density for
+    a given wavefunction psi recorded in nt
+    timesteps.
+    """
+    res = np.zeros(psi.shape)
+    for i in range(0, psi.shape[0]):
+        res[i] = psi[i,:].imag**2+psi[i,:].real**2
+    return res
