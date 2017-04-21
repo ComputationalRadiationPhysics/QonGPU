@@ -34,4 +34,5 @@ simres/*
 image/*.pdf
 image/*.png
 *.gch
+src/pyscripts/__pycache__/*
 .vscode
