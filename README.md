@@ -8,14 +8,14 @@ First a static solver is implented using a model potential. This static solver
 uses the numerov algorithm to calculate the staionary states.
 
 
-##Dependencies
+## Dependencies
 1. CMake >= 3.0
 2. Boost >= 1.5.6
 3. GCC >= 4.9.2
 4. HDF5/HDF5lite >= 1.86
 5. Python 3: Matplotlib & Numpy for data analysis
 
-##Building
+## Building
 Only Linux support planned!
 ```{r, engine='bash', count_lines}
 cd /location_to_QonGPU/
