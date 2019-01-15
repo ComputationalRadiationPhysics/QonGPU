@@ -98,7 +98,7 @@ void Numerov::solve(){
             
             
             
-            if(bisect(En, numlvl)) index = ne;
+            bisect(En, numlvl) index = ne;
 
 			
             index += CHUNKSIZE;
@@ -108,7 +108,7 @@ void Numerov::solve(){
     }
     // After all the calculations done we can save our energy levels!
     prepstates();
-    //savelevels();
+    savelevels();
 
 }
 
@@ -129,7 +129,7 @@ void Numerov::savelevels(){
     }
     // Create a new HDF5 file
 
-    file_id = H5Fcreate("sim1.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    file_id = H5Fcreate("EnergyLevels.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     hsize_t dims = res.size();
 

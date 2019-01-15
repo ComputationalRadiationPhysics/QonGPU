@@ -18,7 +18,7 @@ using namespace std;
 
 __host__ __device__  double V(double x, double t,double z) {
 
-	return -1.0 * z/ sqrt( x * x + 1.0);
+	return -4.0 * z/ sqrt( x * x + 1.0);
 
 };
 

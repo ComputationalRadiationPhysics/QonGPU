@@ -72,10 +72,11 @@ message("${CUDA_cusparse_LIBRARY}")
 #set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS})
 
 #Find HDF5 Package for file IO
-FIND_PACKAGE(HDF5 COMPONENTS HL )
+FIND_PACKAGE(HDF5 COMPONENTS HL)
 include_directories(${HDF5_INCLUDE_DIRS})
 
 set(LIBS ${LIBS} ${HDF5_LIBRARIES})
+set(LIBS ${LIBS} ${})
 
 #find Package Boost
 find_package(Boost COMPONENTS unit_test_framework )
